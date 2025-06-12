@@ -1,83 +1,73 @@
 
 import { useState } from "react";
-import { CampaignData } from "../pages/Index";
+import { Info } from 'lucide-react';
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface CampaignBudgetProps {
-  data: CampaignData;
-  updateData: (data: Partial<CampaignData>) => void;
-  onNext: () => void;
+  campaignData: any;
+  updateCampaignData: (updates: any) => void;
 }
 
-const budgetOptions = [
-  { amount: 1000, label: "₹1,000", creators: 25, deliveries: "25 deliveries", features: "Standard category" },
-  { amount: 3000, label: "₹3,000", creators: 13, deliveries: "13 deliveries", features: "Mass creator quality" },
-  { amount: 6000, label: "₹6,000", creators: 7, deliveries: "7 deliveries", features: "Mega creators" },
-  { amount: 10000, label: "₹10,000", creators: 4, deliveries: "4 deliveries", features: "Premium category" },
-  { amount: 25000, label: "₹25,000", creators: 2, deliveries: "2 deliveries", features: "Celebrity tier" },
-  { amount: 50000, label: "₹50,000", creators: 1, deliveries: "1 delivery", features: "Top influencer" },
-];
-
-export const CampaignBudget = ({ data, updateData, onNext }: CampaignBudgetProps) => {
-  const [selectedBudget, setSelectedBudget] = useState(data.budget);
-
-  const handleBudgetSelect = (amount: number) => {
-    setSelectedBudget(amount);
-    updateData({ budget: amount });
-  };
-
-  const handleNext = () => {
-    if (selectedBudget > 0) {
-      onNext();
-    }
-  };
+export const CampaignBudget = ({ campaignData, updateCampaignData }: CampaignBudgetProps) => {
+  const budgetMarks = [5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-8 animate-fade-in">
-      <div className="mb-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">Choose campaign budget</h3>
-        <p className="text-gray-600">Select your budget to see how many creators you can work with</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {budgetOptions.map((option) => (
-          <div
-            key={option.amount}
-            onClick={() => handleBudgetSelect(option.amount)}
-            className={`border-2 rounded-xl p-6 cursor-pointer transition-all hover:shadow-md ${
-              selectedBudget === option.amount
-                ? "border-purple-600 bg-purple-50"
-                : "border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900 mb-2">{option.label}</div>
-              <div className="text-lg font-semibold text-purple-600 mb-2">{option.creators}</div>
-              <div className="text-sm text-gray-600 mb-1">{option.deliveries}</div>
-              <div className="text-sm text-gray-500">{option.features}</div>
+    <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <CardContent className="p-8">
+        <div className="flex items-center space-x-2 mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">Choose campaign budget</h2>
+          <Info className="w-4 h-4 text-gray-400" />
+        </div>
+        
+        <div className="mb-8">
+          <div className="mb-4">
+            <div className="text-3xl font-bold text-blue-600 mb-2">
+              ₹{campaignData.budget.toLocaleString()}
+            </div>
+            <div className="flex space-x-4 text-sm">
+              {budgetMarks.map((mark) => (
+                <span key={mark} className="text-gray-500">₹{mark >= 1000000 ? '10L+' : mark >= 100000 ? `${mark/100000}L` : `${mark/1000}K`}</span>
+              ))}
             </div>
           </div>
-        ))}
-      </div>
+          
+          <Slider
+            value={[campaignData.budget]}
+            onValueChange={(value) => updateCampaignData({ budget: value[0] })}
+            max={1000000}
+            min={5000}
+            step={5000}
+            className="w-full mb-6"
+          />
+          
+          <div className="flex items-center space-x-3 bg-yellow-50 p-4 rounded-lg">
+            <Checkbox
+              checked={campaignData.flexibleBudget}
+              onCheckedChange={(checked) => updateCampaignData({ flexibleBudget: checked as boolean })}
+            />
+            <Label className="text-sm text-gray-700">
+              My budget is slightly flexible (this will allow you to get more creators in your campaign)
+            </Label>
+          </div>
+        </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8">
-        <p className="text-amber-800 text-sm">
-          💡 <strong>Tip:</strong> Higher budgets unlock premium creators with larger audiences and better engagement rates.
-        </p>
-      </div>
-
-      <div className="flex justify-end">
-        <button
-          onClick={handleNext}
-          disabled={selectedBudget === 0}
-          className={`px-8 py-3 rounded-lg font-medium transition-all ${
-            selectedBudget > 0
-              ? "bg-purple-600 text-white hover:bg-purple-700"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
-          }`}
-        >
-          Continue
-        </button>
-      </div>
-    </div>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-start space-x-2">
+            <Info className="w-4 h-4 text-yellow-600 mt-0.5" />
+            <div className="text-sm">
+              <p className="text-yellow-800 font-medium">
+                We'll find partners around your price. Choose a higher price will help you get better creators
+              </p>
+              <p className="text-yellow-700 mt-1">
+                Campaign available for purchase.
+              </p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
