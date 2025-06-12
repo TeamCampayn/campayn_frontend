@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { CheckCircle, Star, Package, Link, DollarSign } from 'lucide-react'
+import { Checkbox } from "@/components/ui/checkbox"
+import { CheckCircle, Star, Package, Link, DollarSign, Info, Play, FileText, Image } from 'lucide-react'
 
 interface CampaignData {
   budget: number;
@@ -25,28 +26,45 @@ interface CampaignData {
 }
 
 const contentTypeOptions = [
-  'Instagram Post', 'Instagram Reel', 'Instagram Story', 
-  'YouTube Video', 'TikTok Video', 'Blog Post'
+  { id: 'reel', name: '30 seconds Reel', duration: 'Add video log', icon: Play },
+  { id: 'story', name: 'Video Story', duration: '', icon: Play },
+  { id: 'post', name: 'Static Post', duration: '', icon: Image }
 ]
 
 const categoryOptions = [
-  'Fashion', 'Lifestyle', 'Beauty', 'Tech', 'Food', 
-  'Travel', 'Fitness', 'Home & Decor'
+  { id: 'fashion', name: 'Fashion', image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=200&h=200&fit=crop' },
+  { id: 'lifestyle', name: 'Lifestyle', image: 'https://images.unsplash.com/photo-1527689368864-3a821dbccc34?w=200&h=200&fit=crop' },
+  { id: 'travel', name: 'Travel', image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=200&h=200&fit=crop' }
+]
+
+const qualityTiers = [
+  { id: 1, stars: 4, name: 'Content quality: High', description: 'Content quality High', cost: '₹2K', selected: false },
+  { id: 2, stars: 3, name: 'Content quality: Medium', description: 'Content quality Medium', cost: '₹1.5K', selected: false },
+  { id: 3, stars: 5, name: 'Content quality: Best', description: 'Content quality Best', cost: '₹3K', selected: true }
 ]
 
 const productCategories = [
-  'Beauty', 'Fashion', 'Tech', 'Home', 'Food', 'Health', 'Books', 'Other'
+  'Beauty', 'Lifestyle', 'Finance', 'Entertainment', 'Parenting', 'Health', 'Travel', 'Food', 'Tech'
+]
+
+const recentCreators = [
+  { name: 'Fatimas.', followers: '4.8M followers', image: 'https://images.unsplash.com/photo-1494790108755-2616b612b829?w=50&h=50&fit=crop&crop=face' },
+  { name: '@shantinupur', followers: '2.1M followers', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face' },
+  { name: 'dane.artist', followers: '1.5M followers', image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=50&h=50&fit=crop&crop=face' },
+  { name: '@thepupil', followers: '923k followers', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face' },
+  { name: 'sarikamann', followers: '820k followers', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop&crop=face' },
+  { name: 'rishiaggarwal4', followers: '750k followers', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=50&h=50&fit=crop&crop=face' }
 ]
 
 function App() {
   const [campaignData, setCampaignData] = useState<CampaignData>({
-    budget: 15000,
+    budget: 25000,
     flexibleBudget: false,
-    contentTypes: [],
+    contentTypes: ['reel'],
     addEdits: false,
-    categories: [],
+    categories: ['fashion'],
     quality: 3,
-    shippingRequired: false,
+    shippingRequired: true,
     productName: '',
     productLink: '',
     retailValue: 0,
@@ -64,419 +82,689 @@ function App() {
       : [...array, item]
   }
 
-  const isFormValid = () => {
-    return campaignData.budget > 0 &&
-           campaignData.contentTypes.length > 0 &&
-           campaignData.categories.length > 0 &&
-           campaignData.productName &&
-           campaignData.productLink &&
-           campaignData.retailValue > 0
-  }
+  const budgetMarks = [5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000]
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="border-b border-gray-100 bg-white sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-light text-gray-900">Create your campaign</h1>
-              <p className="text-sm text-gray-600">Launch your influencer marketing campaign in minutes</p>
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">A</span>
+              </div>
+              <span className="text-xl font-semibold text-gray-900">Amplify</span>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+              </div>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                Login
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Info Bar */}
+      <div className="bg-gradient-to-r from-green-50 to-blue-50 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center space-x-8">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-gray-700">Unmatched pricing</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-gray-700">On-time delivery or money back</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-gray-700">Receive 24 creator options</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-gray-700">Easy cancellation & refunds</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-gray-700">Will buy support anytime</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-          {/* Main Content Area */}
-          <div className="lg:col-span-3 space-y-16">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-3 gap-8">
+          {/* Left Content */}
+          <div className="col-span-2 space-y-8">
             
-            {/* Step 1: Campaign Budget */}
-            <div className="space-y-8">
-              <div className="text-center space-y-2">
-                <h2 className="text-3xl font-light text-gray-900">Set your campaign budget</h2>
-                <p className="text-gray-600">Choose a budget that works for your goals</p>
-              </div>
-              
-              <div className="max-w-md mx-auto space-y-6">
-                <div className="text-center">
-                  <div className="text-4xl font-light text-blue-600 mb-2">
-                    ₹{campaignData.budget.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-gray-500">Campaign Budget</div>
-                </div>
-                
-                <Slider
-                  value={[campaignData.budget]}
-                  onValueChange={(value) => updateCampaignData({ budget: value[0] })}
-                  max={50000}
-                  min={5000}
-                  step={1000}
-                  className="w-full"
-                />
-                
-                <div className="flex justify-between text-xs text-gray-400">
-                  <span>₹5,000</span>
-                  <span>₹50,000+</span>
-                </div>
-                
-                <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
-                  <Label htmlFor="flexible" className="text-sm">My budget is slightly flexible</Label>
-                  <Switch
-                    id="flexible"
-                    checked={campaignData.flexibleBudget}
-                    onCheckedChange={(checked) => updateCampaignData({ flexibleBudget: checked })}
-                  />
-                </div>
-                
-                <div className="text-xs text-center text-gray-500 bg-gray-50 p-3 rounded-lg">
-                  💡 Need help determining your budget? Our team can assist you in finding the perfect range.
+            {/* Campaign Title */}
+            <div className="mb-8">
+              <div className="flex items-center space-x-2 mb-2">
+                <h1 className="text-2xl font-semibold text-gray-900">Create your campaign</h1>
+                <div className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                  Step 1 updated
                 </div>
               </div>
             </div>
 
-            {/* Step 2: Content Requirements */}
-            <div className="space-y-8">
-              <div className="text-center space-y-2">
-                <h2 className="text-3xl font-light text-gray-900">Content requirements per creator</h2>
-                <p className="text-gray-600">Select the type of content you need</p>
-              </div>
-              
-              <div className="max-w-2xl mx-auto space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {contentTypeOptions.map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => updateCampaignData({ 
-                        contentTypes: toggleArrayItem(campaignData.contentTypes, type) 
-                      })}
-                      className={`p-4 rounded-lg border-2 transition-all text-sm font-medium ${
-                        campaignData.contentTypes.includes(type)
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  ))}
+            {/* Campaign Budget Card */}
+            <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <CardContent className="p-8">
+                <div className="flex items-center space-x-2 mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Choose campaign budget</h2>
+                  <Info className="w-4 h-4 text-gray-400" />
                 </div>
                 
-                <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
-                  <div>
-                    <Label htmlFor="edits" className="text-sm font-medium">Add edits via us</Label>
-                    <p className="text-xs text-gray-600">We'll handle content revisions for you</p>
+                <div className="mb-8">
+                  <div className="mb-4">
+                    <div className="text-3xl font-bold text-blue-600 mb-2">
+                      ₹{campaignData.budget.toLocaleString()}
+                    </div>
+                    <div className="flex space-x-4 text-sm">
+                      {budgetMarks.map((mark) => (
+                        <span key={mark} className="text-gray-500">₹{mark >= 1000000 ? '10L+' : mark >= 100000 ? `${mark/100000}L` : `${mark/1000}K`}</span>
+                      ))}
+                    </div>
                   </div>
-                  <Switch
-                    id="edits"
-                    checked={campaignData.addEdits}
-                    onCheckedChange={(checked) => updateCampaignData({ addEdits: checked })}
+                  
+                  <Slider
+                    value={[campaignData.budget]}
+                    onValueChange={(value) => updateCampaignData({ budget: value[0] })}
+                    max={1000000}
+                    min={5000}
+                    step={5000}
+                    className="w-full mb-6"
                   />
-                </div>
-                
-                {campaignData.contentTypes.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {campaignData.contentTypes.map((type) => (
-                      <Badge key={type} variant="secondary" className="bg-blue-100 text-blue-800">
-                        {type}
-                      </Badge>
-                    ))}
+                  
+                  <div className="flex items-center space-x-3 bg-yellow-50 p-4 rounded-lg">
+                    <Checkbox
+                      checked={campaignData.flexibleBudget}
+                      onCheckedChange={(checked) => updateCampaignData({ flexibleBudget: checked as boolean })}
+                    />
+                    <Label className="text-sm text-gray-700">
+                      My budget is slightly flexible (this will allow you to get more creators in your campaign)
+                    </Label>
                   </div>
-                )}
-              </div>
-            </div>
+                </div>
 
-            {/* Step 3: Creator Selection */}
-            <div className="space-y-8">
-              <div className="text-center space-y-2">
-                <h2 className="text-3xl font-light text-gray-900">Choose creator categories</h2>
-                <p className="text-gray-600">Select the niches that align with your brand</p>
-              </div>
-              
-              <div className="max-w-2xl mx-auto space-y-8">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {categoryOptions.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => updateCampaignData({ 
-                        categories: toggleArrayItem(campaignData.categories, category) 
-                      })}
-                      className={`p-4 rounded-lg border-2 transition-all text-sm font-medium ${
-                        campaignData.categories.includes(category)
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-2">
+                    <Info className="w-4 h-4 text-yellow-600 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="text-yellow-800 font-medium">
+                        We'll find partners around your price. Choose a higher price will help you get better creators
+                      </p>
+                      <p className="text-yellow-700 mt-1">
+                        Campaign available for purchase.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Content Requirements Card */}
+            <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <CardContent className="p-8">
+                <div className="flex items-center space-x-2 mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Choose content requirements per creator</h2>
+                  <Info className="w-4 h-4 text-gray-400" />
                 </div>
                 
-                <div className="space-y-4">
-                  <Label className="text-base font-medium">Creator quality preference</Label>
-                  <div className="flex items-center justify-center space-x-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => updateCampaignData({ quality: star })}
-                        className="transition-colors"
+                <p className="text-gray-600 mb-6">
+                  Our pricing is dynamic and is always based on the topics selected.
+                </p>
+
+                <div className="space-y-4 mb-6">
+                  {contentTypeOptions.map((option) => {
+                    const Icon = option.icon
+                    const isSelected = campaignData.contentTypes.includes(option.id)
+                    
+                    return (
+                      <div
+                        key={option.id}
+                        onClick={() => updateCampaignData({ 
+                          contentTypes: toggleArrayItem(campaignData.contentTypes, option.id) 
+                        })}
+                        className={`flex items-center space-x-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                          isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                        }`}
                       >
-                        <Star
-                          className={`w-8 h-8 ${
-                            star <= campaignData.quality
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                  <div className="text-center text-sm text-gray-600">
-                    {campaignData.quality === 1 && "Micro influencers"}
-                    {campaignData.quality === 2 && "Small influencers"} 
-                    {campaignData.quality === 3 && "Mid-tier creators"}
-                    {campaignData.quality === 4 && "Established influencers"}
-                    {campaignData.quality === 5 && "Top-tier creators"}
-                  </div>
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                          isSelected ? 'bg-blue-500' : 'bg-gray-100'
+                        }`}>
+                          <Icon className={`w-6 h-6 ${isSelected ? 'text-white' : 'text-gray-600'}`} />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-900">{option.name}</h3>
+                          {option.duration && (
+                            <p className="text-sm text-gray-500">{option.duration}</p>
+                          )}
+                        </div>
+                        {option.id === 'reel' && (
+                          <Badge className="bg-orange-100 text-orange-800">Hot</Badge>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
-                
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Recently selected creators</h4>
-                  <div className="flex space-x-2">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                    ))}
-                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-xs text-gray-500">
-                      +12
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Step 4: Product & Shipping */}
-            <div className="space-y-8">
-              <div className="text-center space-y-2">
-                <h2 className="text-3xl font-light text-gray-900">Product & shipping details</h2>
-                <p className="text-gray-600">Tell us about what you're promoting</p>
-              </div>
-              
-              <div className="max-w-2xl mx-auto space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="p-6">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <Package className="w-5 h-5 text-blue-600" />
-                      <Label className="font-medium">Shipping Required</Label>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">Physical products need to be shipped to creators</p>
-                    <Switch
-                      checked={campaignData.shippingRequired}
-                      onCheckedChange={(checked) => updateCampaignData({ shippingRequired: checked })}
-                    />
-                  </Card>
-                  
-                  <Card className="p-6">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <DollarSign className="w-5 h-5 text-yellow-600" />
-                      <Label className="font-medium">Apply Discount</Label>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">Offer creators a special discount code</p>
-                    <Switch
-                      checked={campaignData.discountApplied}
-                      onCheckedChange={(checked) => updateCampaignData({ discountApplied: checked })}
-                    />
-                  </Card>
+                <div className="flex items-center space-x-2 mb-4">
+                  <span className="text-gray-700">Comments</span>
+                  <div className="flex space-x-4">
+                    <label className="flex items-center space-x-2">
+                      <input type="checkbox" className="rounded" />
+                      <span className="text-sm">Pinned comments</span>
+                    </label>
+                  </div>
                 </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="productName">Product Name</Label>
-                    <Input
-                      id="productName"
-                      value={campaignData.productName}
-                      onChange={(e) => updateCampaignData({ productName: e.target.value })}
-                      placeholder="Enter your product name"
-                      className="mt-1"
-                    />
+              </CardContent>
+            </Card>
+
+            {/* Creator Details */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900">CREATOR DETAILS</h3>
+              
+              {/* Creator Category Selection */}
+              <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <CardContent className="p-8">
+                  <div className="flex items-center space-x-2 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">Select creator category</h2>
                   </div>
                   
-                  <div>
-                    <Label htmlFor="productLink">Product Link</Label>
-                    <div className="relative mt-1">
-                      <Link className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                      <Input
-                        id="productLink"
-                        value={campaignData.productLink}
-                        onChange={(e) => updateCampaignData({ productLink: e.target.value })}
-                        placeholder="https://your-product-link.com"
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="retailValue">Retail Value (₹)</Label>
-                    <Input
-                      id="retailValue"
-                      type="number"
-                      value={campaignData.retailValue}
-                      onChange={(e) => updateCampaignData({ retailValue: parseInt(e.target.value) || 0 })}
-                      placeholder="0"
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>Product Category</Label>
-                    <div className="grid grid-cols-4 gap-2 mt-2">
-                      {productCategories.map((category) => (
-                        <button
-                          key={category}
-                          onClick={() => updateCampaignData({ productCategory: category })}
-                          className={`p-2 rounded text-xs font-medium transition-all ${
-                            campaignData.productCategory === category
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  <p className="text-gray-600 mb-6">
+                    Choose the type of creator you want to collaborate with. You can get an estimate to modify it when asking creators.
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    {categoryOptions.map((category) => {
+                      const isSelected = campaignData.categories.includes(category.id)
+                      
+                      return (
+                        <div
+                          key={category.id}
+                          onClick={() => updateCampaignData({ 
+                            categories: toggleArrayItem(campaignData.categories, category.id) 
+                          })}
+                          className={`relative cursor-pointer rounded-lg overflow-hidden border-2 ${
+                            isSelected ? 'border-blue-500' : 'border-gray-200'
                           }`}
                         >
-                          {category}
-                        </button>
+                          <img
+                            src={category.image}
+                            alt={category.name}
+                            className="w-full h-32 object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-30 flex items-end">
+                            <div className="p-3 text-white">
+                              <h4 className="font-medium">{category.name}</h4>
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <div className="absolute top-2 right-2">
+                              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                <CheckCircle className="w-4 h-4 text-white" />
+                              </div>
+                            </div>
+                          )}
+                          <div className="absolute bottom-2 left-2">
+                            <Button
+                              size="sm"
+                              variant={isSelected ? "default" : "secondary"}
+                              className="text-xs px-2 py-1"
+                            >
+                              Select
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Creator Quality Selection */}
+              <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <CardContent className="p-8">
+                  <div className="flex items-center space-x-2 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">Select creator quality</h2>
+                    <Info className="w-4 h-4 text-gray-400" />
+                  </div>
+                  
+                  <p className="text-gray-600 mb-6">
+                    Select creator quality you prefer. This affects number of creators to hire on hand for your budget.
+                  </p>
+
+                  <div className="flex items-center space-x-2 mb-6">
+                    <span className="text-blue-600 font-medium">Sample content</span>
+                    <button className="text-blue-600">▶</button>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    {qualityTiers.map((tier) => {
+                      const isSelected = campaignData.quality === tier.id
+                      
+                      return (
+                        <div
+                          key={tier.id}
+                          onClick={() => updateCampaignData({ quality: tier.id })}
+                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                          }`}
+                        >
+                          <div className="flex mb-2">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${
+                                  i < tier.stars ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <h3 className="font-medium text-gray-900 mb-1">{tier.name}</h3>
+                          <p className="text-sm text-gray-600 mb-2">{tier.description}</p>
+                          <p className="text-sm font-medium text-blue-600">{tier.cost}</p>
+                          {tier.selected && (
+                            <div className="mt-2">
+                              <CheckCircle className="w-4 h-4 text-blue-500" />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Recently Selected Creators */}
+                  <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                    <h4 className="font-medium text-blue-900 mb-3">Recently selected Micro online creators</h4>
+                    <div className="grid grid-cols-6 gap-4">
+                      {recentCreators.map((creator, index) => (
+                        <div key={index} className="text-center">
+                          <img
+                            src={creator.image}
+                            alt={creator.name}
+                            className="w-12 h-12 rounded-full mx-auto mb-2"
+                          />
+                          <p className="text-xs font-medium text-gray-900">{creator.name}</p>
+                          <p className="text-xs text-gray-600">{creator.followers}</p>
+                        </div>
                       ))}
                     </div>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Step 5: Review & Submit */}
-            <div className="space-y-8">
-              <div className="text-center space-y-2">
-                <h2 className="text-3xl font-light text-gray-900">Review & place order</h2>
-                <p className="text-gray-600">Review your campaign details before submitting</p>
-              </div>
+            {/* Shipping Details */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900">SHIPPING DETAILS</h3>
               
-              <div className="max-w-2xl mx-auto">
-                <Card className="p-6 space-y-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Budget</h4>
-                      <p className="text-2xl font-light text-blue-600">₹{campaignData.budget.toLocaleString()}</p>
-                      {campaignData.flexibleBudget && (
-                        <p className="text-sm text-gray-500">Flexible budget enabled</p>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Content Types</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {campaignData.contentTypes.map((type) => (
-                          <Badge key={type} variant="secondary" className="text-xs">
-                            {type}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Categories</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {campaignData.categories.map((category) => (
-                          <Badge key={category} variant="outline" className="text-xs">
-                            {category}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Quality</h4>
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-4 h-4 ${
-                              star <= campaignData.quality
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+              <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <CardContent className="p-8">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                    Does the campaign involve sending a shipment to creator?
+                  </h2>
                   
-                  {campaignData.productName && (
-                    <div className="border-t pt-4">
-                      <h4 className="font-medium text-gray-900 mb-2">Product Details</h4>
-                      <div className="space-y-1 text-sm">
-                        <p><span className="text-gray-600">Name:</span> {campaignData.productName}</p>
-                        <p><span className="text-gray-600">Value:</span> ₹{campaignData.retailValue.toLocaleString()}</p>
-                        <p><span className="text-gray-600">Category:</span> {campaignData.productCategory}</p>
-                        <p><span className="text-gray-600">Shipping:</span> {campaignData.shippingRequired ? 'Required' : 'Not required'}</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="pt-4">
-                    <Button
-                      onClick={() => alert('Campaign submitted successfully!')}
-                      disabled={!isFormValid()}
-                      className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900"
+                  <p className="text-gray-600 mb-6">
+                    Choose this option if you have a product that needs to be shipped to the creator so that they can create content.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div
+                      onClick={() => updateCampaignData({ shippingRequired: true })}
+                      className={`p-6 rounded-lg border-2 cursor-pointer ${
+                        campaignData.shippingRequired ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      }`}
                     >
-                      Place Order
-                    </Button>
+                      <div className="flex items-center space-x-3 mb-3">
+                        <Package className="w-6 h-6 text-blue-600" />
+                        <h3 className="font-medium">Yes (shipping required)</h3>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Physical products need to be shipped to creators we will handle the logistics and documentation
+                      </p>
+                      <div className="mt-3 text-xs text-yellow-600">
+                        📦 Campaign deliveries same day
+                      </div>
+                    </div>
+
+                    <div
+                      onClick={() => updateCampaignData({ shippingRequired: false })}
+                      className={`p-6 rounded-lg border-2 cursor-pointer ${
+                        !campaignData.shippingRequired ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3 mb-3">
+                        <span className="w-6 h-6 text-blue-600">⚡</span>
+                        <h3 className="font-medium">No (shipping not required)</h3>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Anything that is not purchasing digital content etc
+                      </p>
+                      <div className="mt-3 text-xs text-yellow-600">
+                        ⚡ Campaign deliveries same day
+                      </div>
+                    </div>
                   </div>
-                </Card>
-              </div>
+
+                  {/* Product Details Form */}
+                  <div className="space-y-4 mb-6">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Enter product name
+                      </Label>
+                      <Input
+                        placeholder="e.g. Nike Shoes"
+                        value={campaignData.productName}
+                        onChange={(e) => updateCampaignData({ productName: e.target.value })}
+                        className="w-full"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Enter product link
+                      </Label>
+                      <Input
+                        placeholder="https://"
+                        value={campaignData.productLink}
+                        onChange={(e) => updateCampaignData({ productLink: e.target.value })}
+                        className="w-full"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Label className="text-sm font-medium text-gray-700">
+                          Enter retail value of the product that the creator will receive
+                        </Label>
+                        <Info className="w-4 h-4 text-gray-400" />
+                      </div>
+                      <p className="text-xs text-gray-500 mb-2">
+                        We'll be telling this value to the creator when you submit your order. Use this as your products estimated worth.
+                      </p>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-gray-700">₹</span>
+                        <Input
+                          type="number"
+                          placeholder="Enter MRP of the product that you want to promote"
+                          value={campaignData.retailValue || ''}
+                          onChange={(e) => updateCampaignData({ retailValue: parseInt(e.target.value) || 0 })}
+                          className="flex-1"
+                        />
+                        <Button className="bg-blue-600 hover:bg-blue-700 px-6">
+                          Get item valuation online
+                        </Button>
+                      </div>
+                      <div className="flex items-center space-x-2 mt-2">
+                        <Checkbox />
+                        <Label className="text-xs text-gray-600">
+                          Send this as "" gift to creators without further discount. Brands can free & income application. 
+                          Every people quality creators for final campaigns.
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Product Category */}
+                  <div className="mb-6">
+                    <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                      <h4 className="font-medium text-blue-900 mb-2">Trending sponsored videos</h4>
+                      <p className="text-sm text-blue-800">
+                        Selecting a content vertical with our effect campaign pricing, to give you the correct high-end, you will get an 
+                        option to choose a model 2 offer suitable content framework promotional posts placement.
+                      </p>
+                    </div>
+                    
+                    <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                      Select your product category
+                    </Label>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Select your product category
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      {productCategories.map((category) => (
+                        <Button
+                          key={category}
+                          onClick={() => updateCampaignData({ productCategory: category })}
+                          variant={campaignData.productCategory === category ? "default" : "outline"}
+                          size="sm"
+                          className="text-xs"
+                        >
+                          {category}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
+            {/* What to Expect Section */}
+            <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <CardContent className="p-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                  What to expect after placing an order
+                </h2>
+                
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mt-1">
+                      <span className="text-white text-xs">1</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Campaign creation</h4>
+                      <p className="text-sm text-gray-600">
+                        One of our content experts will validate your campaign goals and contact approved vs
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mt-1">
+                      <span className="text-white text-xs">2</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Creator content requirements</h4>
+                      <p className="text-sm text-gray-600">
+                        Market within 24 hrs. Pre-Price
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mt-1">
+                      <span className="text-white text-xs">3</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Learn about the key components of content requirements</h4>
+                      <p className="text-sm text-gray-600">
+                        Quality content can have world-class content always about you to select their clients that branded 
+                        to ensure content is completed as per their budget expectations.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-6">
+                  <h4 className="font-medium text-gray-900 mb-4">About Brand & product</h4>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm">Product details</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm">Content sharing limits</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm">Photo, campaign proofs</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm">Target audience of campaign</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Ordering Guidelines */}
+            <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <CardContent className="p-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                  Ordering guidelines
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  Our team of placing sales, brand submissions, product shipping, content 
+                  delivery etc. View details
+                </p>
+                
+                <div className="flex items-center space-x-2 mb-6">
+                  <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Package className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">Get 100% refund when</h4>
+                    <p className="text-sm text-gray-600">
+                      No refunds owe free 24 creator options.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 mb-6">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <span className="text-sm">Any delay by creator on content creation</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <span className="text-sm">Any delay in campaign delivery timeline</span>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-2">
+                    <Info className="w-4 h-4 text-yellow-600 mt-0.5" />
+                    <p className="text-sm text-yellow-800">
+                      <strong>Heads up!</strong> If you placed an order for ₹7,500 for a total worth 50 units 
+                      by 7am today, for faster checkout, almost shipping a control review by each creators.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Right Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-32">
-              <Card className="p-6">
-                <h3 className="font-medium text-gray-900 mb-4">Campaign Summary</h3>
-                
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Budget:</span>
-                    <span className="font-medium">₹{campaignData.budget.toLocaleString()}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Content types:</span>
-                    <span className="font-medium">{campaignData.contentTypes.length}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Categories:</span>
-                    <span className="font-medium">{campaignData.categories.length}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Quality:</span>
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-3 h-3 ${
-                            star <= campaignData.quality
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
+          {/* Right Summary Card */}
+          <div className="col-span-1">
+            <div className="sticky top-8">
+              <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                    Select creator package and place order
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-6">
+                    The pricing is dynamic and adjust based on the inputs selected.
+                  </p>
+
+                  <div className="space-y-4 mb-6">
+                    <div className="text-sm">
+                      <span className="text-gray-600">Your selected inputs:</span>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <span>₹{campaignData.budget.toLocaleString()} budget</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <span>1x reel content</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <span>Fashion category</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <span>Best creator quality</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <span>Shipment involved</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="mt-6 pt-4 border-t border-gray-100">
-                  <div className="text-xs text-gray-500 mb-3">
-                    💡 Need help? Our team is here to assist you.
+
+                  <div className="border-t pt-6 mb-6">
+                    <div className="text-center mb-4">
+                      <div className="text-3xl font-bold text-blue-600 mb-1">25</div>
+                      <div className="text-sm text-gray-600">Campaign creators-content balance</div>
+                      <div className="text-xs text-gray-500">Options balance</div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-center text-sm">
+                      <div>
+                        <div className="text-xl font-bold text-gray-900">13</div>
+                        <div className="text-gray-600">Micro creators</div>
+                        <div className="text-xs text-gray-500">Best mix followers</div>
+                        <div className="text-blue-600 font-medium">₹7,500/creator</div>
+                      </div>
+                      <div>
+                        <div className="text-xl font-bold text-gray-900">7</div>
+                        <div className="text-gray-600">Macro creators</div>
+                        <div className="text-xs text-gray-500">High-level followers</div>
+                        <div className="text-blue-600 font-medium">₹4,200/creator</div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+
+                  <div className="space-y-3 mb-6">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                      Select
+                    </Button>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-green-800">
+                          Place the campaign and submit get 28 choice from Amplify's plan
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-center mb-6">
+                    <div className="text-sm text-gray-600 mb-2">Campaign total with content value / 7% Gst invoice tax</div>
+                    <div className="text-2xl font-bold text-blue-600">Place order @ ₹97,000</div>
+                  </div>
+
+                  <div className="space-y-2 mb-6">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                      View price breakdown
+                    </Button>
+                    <Button variant="outline" className="w-full">
+                      Download proposal
+                    </Button>
+                  </div>
+                </CardContent>
               </Card>
             </div>
           </div>
