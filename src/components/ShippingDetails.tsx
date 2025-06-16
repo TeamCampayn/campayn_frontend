@@ -1,163 +1,123 @@
 
-import { Package, Info } from "lucide-react";
+import { Package, MapPin, Info } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface ShippingDetailsProps {
-  campaignData: any;
-  updateCampaignData: (updates: any) => void;
+  data: any;
+  updateData: (data: any) => void;
+  onNext: () => void;
+  onPrev: () => void;
 }
 
-const productCategories = [
-  'Beauty', 'Lifestyle', 'Finance', 'Entertainment', 'Parenting', 'Health', 'Travel', 'Food', 'Tech'
-];
-
-export const ShippingDetails = ({ campaignData, updateCampaignData }: ShippingDetailsProps) => {
+export const ShippingDetails = ({ data, updateData, onNext, onPrev }: ShippingDetailsProps) => {
   return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-900">SHIPPING DETAILS</h3>
-      
-      <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <CardContent className="p-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            Does the campaign involve sending a shipment to creator?
-          </h2>
-          
-          <p className="text-gray-600 mb-6">
-            Choose this option if you have a product that needs to be shipped to the creator so that they can create content.
-          </p>
+    <Card className="bg-white/60 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20">
+      <CardContent className="p-10">
+        <div className="flex items-center space-x-3 mb-8">
+          <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center">
+            <Package className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Product & Shipping Details</h2>
+            <p className="text-gray-600">Tell us about your product for creators</p>
+          </div>
+        </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div
-              onClick={() => updateCampaignData({ shippingRequired: true })}
-              className={`p-6 rounded-lg border-2 cursor-pointer ${
-                campaignData.shippingRequired ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-              }`}
-            >
-              <div className="flex items-center space-x-3 mb-3">
-                <Package className="w-6 h-6 text-blue-600" />
-                <h3 className="font-medium">Yes (shipping required)</h3>
-              </div>
-              <p className="text-sm text-gray-600">
-                Physical products need to be shipped to creators we will handle the logistics and documentation
-              </p>
-              <div className="mt-3 text-xs text-yellow-600">
-                📦 Campaign deliveries same day
+        <div className="space-y-8">
+          <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200">
+            <div className="flex items-center space-x-3">
+              <MapPin className="w-5 h-5 text-blue-600" />
+              <div>
+                <Label className="text-lg font-semibold text-gray-900">Shipping Required</Label>
+                <p className="text-sm text-gray-600">Do you need to ship products to creators?</p>
               </div>
             </div>
+            <Switch
+              checked={data.shippingRequired || false}
+              onCheckedChange={(checked) => updateData({ shippingRequired: checked })}
+            />
+          </div>
 
-            <div
-              onClick={() => updateCampaignData({ shippingRequired: false })}
-              className={`p-6 rounded-lg border-2 cursor-pointer ${
-                !campaignData.shippingRequired ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-              }`}
-            >
-              <div className="flex items-center space-x-3 mb-3">
-                <span className="w-6 h-6 text-blue-600">⚡</span>
-                <h3 className="font-medium">No (shipping not required)</h3>
+          {data.shippingRequired && (
+            <div className="space-y-6 p-6 bg-gradient-to-r from-gray-50 to-slate-50 rounded-2xl border border-gray-200">
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <Label className="text-sm font-semibold text-gray-700 mb-2 block">Product Name</Label>
+                  <Input
+                    value={data.productName || ''}
+                    onChange={(e) => updateData({ productName: e.target.value })}
+                    placeholder="Enter product name"
+                    className="rounded-xl border-gray-300"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-700 mb-2 block">Product Link</Label>
+                  <Input
+                    value={data.productLink || ''}
+                    onChange={(e) => updateData({ productLink: e.target.value })}
+                    placeholder="https://..."
+                    className="rounded-xl border-gray-300"
+                  />
+                </div>
               </div>
-              <p className="text-sm text-gray-600">
-                Anything that is not purchasing digital content etc
-              </p>
-              <div className="mt-3 text-xs text-yellow-600">
-                ⚡ Campaign deliveries same day
+              
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <Label className="text-sm font-semibold text-gray-700 mb-2 block">Retail Value (₹)</Label>
+                  <Input
+                    type="number"
+                    value={data.retailValue || ''}
+                    onChange={(e) => updateData({ retailValue: Number(e.target.value) })}
+                    placeholder="0"
+                    className="rounded-xl border-gray-300"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-700 mb-2 block">Product Category</Label>
+                  <Input
+                    value={data.productCategory || ''}
+                    onChange={(e) => updateData({ productCategory: e.target.value })}
+                    placeholder="e.g., Fashion, Beauty, Tech"
+                    className="rounded-xl border-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-6">
+            <div className="flex items-start space-x-3">
+              <Info className="w-5 h-5 text-amber-600 mt-0.5" />
+              <div className="text-sm">
+                <p className="text-amber-900 font-semibold mb-2">
+                  📦 Shipping Information
+                </p>
+                <p className="text-amber-800">
+                  We'll coordinate with creators for product delivery. Standard shipping takes 3-5 business days.
+                </p>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="space-y-4 mb-6">
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Enter product name
-              </Label>
-              <Input
-                placeholder="e.g. Nike Shoes"
-                value={campaignData.productName}
-                onChange={(e) => updateCampaignData({ productName: e.target.value })}
-                className="w-full"
-              />
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Enter product link
-              </Label>
-              <Input
-                placeholder="https://"
-                value={campaignData.productLink}
-                onChange={(e) => updateCampaignData({ productLink: e.target.value })}
-                className="w-full"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center space-x-2 mb-2">
-                <Label className="text-sm font-medium text-gray-700">
-                  Enter retail value of the product that the creator will receive
-                </Label>
-                <Info className="w-4 h-4 text-gray-400" />
-              </div>
-              <p className="text-xs text-gray-500 mb-2">
-                We'll be telling this value to the creator when you submit your order. Use this as your products estimated worth.
-              </p>
-              <div className="flex items-center space-x-2">
-                <span className="text-gray-700">₹</span>
-                <Input
-                  type="number"
-                  placeholder="Enter MRP of the product that you want to promote"
-                  value={campaignData.retailValue || ''}
-                  onChange={(e) => updateCampaignData({ retailValue: parseInt(e.target.value) || 0 })}
-                  className="flex-1"
-                />
-                <Button className="bg-blue-600 hover:bg-blue-700 px-6">
-                  Get item valuation online
-                </Button>
-              </div>
-              <div className="flex items-center space-x-2 mt-2">
-                <Checkbox />
-                <Label className="text-xs text-gray-600">
-                  Send this as "" gift to creators without further discount. Brands can free & income application. 
-                  Every people quality creators for final campaigns.
-                </Label>
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <div className="bg-blue-50 p-4 rounded-lg mb-4">
-              <h4 className="font-medium text-blue-900 mb-2">Trending sponsored videos</h4>
-              <p className="text-sm text-blue-800">
-                Selecting a content vertical with our effect campaign pricing, to give you the correct high-end, you will get an 
-                option to choose a model 2 offer suitable content framework promotional posts placement.
-              </p>
-            </div>
-            
-            <Label className="text-sm font-medium text-gray-700 mb-3 block">
-              Select your product category
-            </Label>
-            <p className="text-xs text-gray-500 mb-3">
-              Select your product category
-            </p>
-            
-            <div className="flex flex-wrap gap-2">
-              {productCategories.map((category) => (
-                <Button
-                  key={category}
-                  onClick={() => updateCampaignData({ productCategory: category })}
-                  variant={campaignData.productCategory === category ? "default" : "outline"}
-                  size="sm"
-                  className="text-xs"
-                >
-                  {category}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        <div className="flex justify-between mt-10">
+          <button
+            onClick={onPrev}
+            className="px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-2xl hover:bg-gray-50 font-semibold transition-all duration-200"
+          >
+            ← Back
+          </button>
+          <button
+            onClick={onNext}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+          >
+            Continue →
+          </button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };

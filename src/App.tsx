@@ -23,9 +23,12 @@ interface CampaignData {
   retailValue: number;
   discountApplied: boolean;
   productCategory: string;
+  creatorCategories: string[];
+  creatorQuality: string;
 }
 
 function App() {
+  const [currentStep, setCurrentStep] = useState(1);
   const [campaignData, setCampaignData] = useState<CampaignData>({
     budget: 25000,
     flexibleBudget: false,
@@ -38,7 +41,9 @@ function App() {
     productLink: '',
     retailValue: 0,
     discountApplied: false,
-    productCategory: ''
+    productCategory: '',
+    creatorCategories: [],
+    creatorQuality: ''
   })
 
   const updateCampaignData = (updates: Partial<CampaignData>) => {
@@ -51,47 +56,79 @@ function App() {
       : [...array, item]
   }
 
+  const nextStep = () => {
+    if (currentStep < 5) {
+      setCurrentStep(currentStep + 1);
+    }
+  }
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <Header currentStep={currentStep} />
       <InfoBar />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-3 gap-12">
           <div className="col-span-2 space-y-8">
             <div className="mb-8">
-              <div className="flex items-center space-x-2 mb-2">
-                <h1 className="text-2xl font-semibold text-gray-900">Create your campaign</h1>
-                <div className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                  Step 1 updated
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">✨</span>
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                    Create your campaign
+                  </h1>
+                  <p className="text-gray-600 mt-1">Build something amazing with creators</p>
+                </div>
+                <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm px-4 py-2 rounded-full font-medium shadow-lg">
+                  Step {currentStep} of 4
                 </div>
               </div>
             </div>
 
-            <CampaignBudget 
-              campaignData={campaignData} 
-              updateCampaignData={updateCampaignData} 
-            />
+            {currentStep === 1 && (
+              <CampaignBudget 
+                data={campaignData} 
+                updateData={updateCampaignData}
+                onNext={nextStep}
+              />
+            )}
 
-            <ContentRequirements 
-              campaignData={campaignData} 
-              updateCampaignData={updateCampaignData}
-              toggleArrayItem={toggleArrayItem}
-            />
+            {currentStep === 2 && (
+              <ContentRequirements 
+                data={campaignData} 
+                updateData={updateCampaignData}
+                onNext={nextStep}
+                onPrev={prevStep}
+              />
+            )}
 
-            <CreatorSelection 
-              campaignData={campaignData} 
-              updateCampaignData={updateCampaignData}
-              toggleArrayItem={toggleArrayItem}
-            />
+            {currentStep === 3 && (
+              <CreatorSelection 
+                data={campaignData} 
+                updateData={updateCampaignData}
+                onNext={nextStep}
+                onPrev={prevStep}
+              />
+            )}
 
-            <ShippingDetails 
-              campaignData={campaignData} 
-              updateCampaignData={updateCampaignData} 
-            />
+            {currentStep === 4 && (
+              <ShippingDetails 
+                data={campaignData} 
+                updateData={updateCampaignData}
+                onNext={nextStep}
+                onPrev={prevStep}
+              />
+            )}
 
             <ExpectationSection />
-
             <OrderingGuidelines />
           </div>
 
