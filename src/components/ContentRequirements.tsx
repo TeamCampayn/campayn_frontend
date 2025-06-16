@@ -4,9 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface ContentRequirementsProps {
-  campaignData: any;
-  updateCampaignData: (updates: any) => void;
-  toggleArrayItem: (array: string[], item: string) => string[];
+  data: any;
+  updateData: (data: any) => void;
+  onNext: () => void;
+  onPrev: () => void;
 }
 
 const contentTypeOptions = [
@@ -15,7 +16,16 @@ const contentTypeOptions = [
   { id: 'post', name: 'Static Post', duration: '', icon: Image }
 ];
 
-export const ContentRequirements = ({ campaignData, updateCampaignData, toggleArrayItem }: ContentRequirementsProps) => {
+export const ContentRequirements = ({ data, updateData, onNext, onPrev }: ContentRequirementsProps) => {
+  const toggleArrayItem = (array: string[] = [], item: string): string[] => {
+    const exists = array.includes(item);
+    if (exists) {
+      return array.filter(i => i !== item);
+    } else {
+      return [...array, item];
+    }
+  };
+
   return (
     <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
       <CardContent className="p-8">
@@ -31,13 +41,13 @@ export const ContentRequirements = ({ campaignData, updateCampaignData, toggleAr
         <div className="space-y-4 mb-6">
           {contentTypeOptions.map((option) => {
             const Icon = option.icon;
-            const isSelected = campaignData.contentTypes.includes(option.id);
+            const isSelected = (data.contentTypes || []).includes(option.id);
             
             return (
               <div
                 key={option.id}
-                onClick={() => updateCampaignData({ 
-                  contentTypes: toggleArrayItem(campaignData.contentTypes, option.id) 
+                onClick={() => updateData({ 
+                  contentTypes: toggleArrayItem(data.contentTypes, option.id) 
                 })}
                 className={`flex items-center space-x-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
@@ -62,14 +72,19 @@ export const ContentRequirements = ({ campaignData, updateCampaignData, toggleAr
           })}
         </div>
 
-        <div className="flex items-center space-x-2 mb-4">
-          <span className="text-gray-700">Comments</span>
-          <div className="flex space-x-4">
-            <label className="flex items-center space-x-2">
-              <input type="checkbox" className="rounded" />
-              <span className="text-sm">Pinned comments</span>
-            </label>
-          </div>
+        <div className="flex justify-between">
+          <button
+            onClick={onPrev}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+          >
+            Back
+          </button>
+          <button
+            onClick={onNext}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+          >
+            Continue
+          </button>
         </div>
       </CardContent>
     </Card>

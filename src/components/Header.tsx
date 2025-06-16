@@ -1,7 +1,9 @@
 
-import { Button } from "@/components/ui/button";
+interface HeaderProps {
+  currentStep: number;
+}
 
-export const Header = () => {
+export const Header = ({ currentStep }: HeaderProps) => {
   return (
     <div className="bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-6 py-3">
@@ -15,13 +17,13 @@ export const Header = () => {
           
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+              <div className={`w-2 h-2 rounded-full ${currentStep >= 1 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+              <div className={`w-2 h-2 rounded-full ${currentStep >= 2 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+              <div className={`w-2 h-2 rounded-full ${currentStep >= 3 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
               Login
-            </Button>
+            </button>
           </div>
         </div>
       </div>

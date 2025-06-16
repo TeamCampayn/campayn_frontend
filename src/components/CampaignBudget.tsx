@@ -7,11 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface CampaignBudgetProps {
-  campaignData: any;
-  updateCampaignData: (updates: any) => void;
+  data: any;
+  updateData: (data: any) => void;
+  onNext: () => void;
 }
 
-export const CampaignBudget = ({ campaignData, updateCampaignData }: CampaignBudgetProps) => {
+export const CampaignBudget = ({ data, updateData, onNext }: CampaignBudgetProps) => {
   const budgetMarks = [5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
 
   return (
@@ -25,7 +26,7 @@ export const CampaignBudget = ({ campaignData, updateCampaignData }: CampaignBud
         <div className="mb-8">
           <div className="mb-4">
             <div className="text-3xl font-bold text-blue-600 mb-2">
-              ₹{campaignData.budget.toLocaleString()}
+              ₹{data.budget?.toLocaleString() || '0'}
             </div>
             <div className="flex space-x-4 text-sm">
               {budgetMarks.map((mark) => (
@@ -35,8 +36,8 @@ export const CampaignBudget = ({ campaignData, updateCampaignData }: CampaignBud
           </div>
           
           <Slider
-            value={[campaignData.budget]}
-            onValueChange={(value) => updateCampaignData({ budget: value[0] })}
+            value={[data.budget || 5000]}
+            onValueChange={(value) => updateData({ budget: value[0] })}
             max={1000000}
             min={5000}
             step={5000}
@@ -45,8 +46,8 @@ export const CampaignBudget = ({ campaignData, updateCampaignData }: CampaignBud
           
           <div className="flex items-center space-x-3 bg-yellow-50 p-4 rounded-lg">
             <Checkbox
-              checked={campaignData.flexibleBudget}
-              onCheckedChange={(checked) => updateCampaignData({ flexibleBudget: checked as boolean })}
+              checked={data.flexibleBudget || false}
+              onCheckedChange={(checked) => updateData({ flexibleBudget: checked as boolean })}
             />
             <Label className="text-sm text-gray-700">
               My budget is slightly flexible (this will allow you to get more creators in your campaign)
@@ -54,7 +55,7 @@ export const CampaignBudget = ({ campaignData, updateCampaignData }: CampaignBud
           </div>
         </div>
 
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
           <div className="flex items-start space-x-2">
             <Info className="w-4 h-4 text-yellow-600 mt-0.5" />
             <div className="text-sm">
@@ -66,6 +67,15 @@ export const CampaignBudget = ({ campaignData, updateCampaignData }: CampaignBud
               </p>
             </div>
           </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={onNext}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+          >
+            Continue
+          </button>
         </div>
       </CardContent>
     </Card>
