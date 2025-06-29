@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DollarSign, Target, Users, Package, TrendingUp } from 'lucide-react';
 
 export const OnboardingProcess = () => {
