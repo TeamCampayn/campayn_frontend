@@ -1,9 +1,43 @@
 
 import { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Home, Users, Info } from 'lucide-react';
+import { MenuBar } from '../ui/glow-menu';
+
+const menuItems = [
+  {
+    icon: Home,
+    label: "Brands",
+    href: "#brands",
+    gradient: "radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(37,99,235,0.06) 50%, rgba(29,78,216,0) 100%)",
+    iconColor: "text-blue-500",
+  },
+  {
+    icon: Users,
+    label: "Creators",
+    href: "#creators",
+    gradient: "radial-gradient(circle, rgba(249,115,22,0.15) 0%, rgba(234,88,12,0.06) 50%, rgba(194,65,12,0) 100%)",
+    iconColor: "text-orange-500",
+  },
+  {
+    icon: Info,
+    label: "About Us",
+    href: "#about",
+    gradient: "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.06) 50%, rgba(21,128,61,0) 100%)",
+    iconColor: "text-green-500",
+  },
+];
 
 export const LandingHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeItem, setActiveItem] = useState<string>("Brands");
+
+  const handleItemClick = (label: string) => {
+    setActiveItem(label);
+    const href = menuItems.find(item => item.label === label)?.href;
+    if (href) {
+      document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200/50">
@@ -21,14 +55,17 @@ export const LandingHeader = () => {
             </div>
           </div>
           
-          <nav className="hidden md:flex items-center space-x-8">
-            <a href="#brands" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Brands</a>
-            <a href="#creators" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Creators</a>
-            <a href="#about" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">About Us</a>
+          <div className="hidden md:flex items-center space-x-8">
+            <MenuBar
+              items={menuItems}
+              activeItem={activeItem}
+              onItemClick={handleItemClick}
+              className="bg-white/80 backdrop-blur-md border border-gray-200/50"
+            />
             <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
               Login
             </button>
-          </nav>
+          </div>
 
           <button 
             className="md:hidden"
@@ -41,9 +78,17 @@ export const LandingHeader = () => {
         {isMenuOpen && (
           <div className="md:hidden mt-4 py-4 border-t border-gray-200">
             <div className="flex flex-col space-y-4">
-              <a href="#brands" className="text-gray-700 hover:text-blue-600 font-medium">Brands</a>
-              <a href="#creators" className="text-gray-700 hover:text-blue-600 font-medium">Creators</a>
-              <a href="#about" className="text-gray-700 hover:text-blue-600 font-medium">About Us</a>
+              {menuItems.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => handleItemClick(item.label)}
+                  className={`text-gray-700 hover:text-blue-600 font-medium text-left ${
+                    activeItem === item.label ? 'text-blue-600' : ''
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
               <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium w-fit">
                 Login
               </button>

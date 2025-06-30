@@ -107,3 +107,8 @@
 .text-spektr-cyan-50 {
   color: #ecfeff;
 }
+
+/* Custom radial gradient utility for the glow menu */
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-stops));
+}
