@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -95,7 +94,7 @@ export const VerticalScrollCards: React.FC = () => {
   return (
     <div className="bg-gradient-to-br from-gray-50 to-white">
       {/* Fixed Heading */}
-      <div className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
+      <div className="max-w-4xl mx-auto px-6 pt-20 pb-6 text-center">
         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
           Your Brand Deserves Better Than an Agency. It Deserves Campayn
         </h2>
@@ -107,8 +106,7 @@ export const VerticalScrollCards: React.FC = () => {
       {/* Scrollable Cards Section */}
       <section 
         ref={sectionRef} 
-        className="relative w-full"
-        style={{ height: `${cards.length * 100}vh` }}
+        className="relative w-full h-screen"
       >
         <div className="relative w-full h-screen flex items-center justify-center">
           {cards.map((card, index) => {
@@ -122,8 +120,8 @@ export const VerticalScrollCards: React.FC = () => {
                   top: '12.5vh'
                 }}
               >
-                <div className={`w-full max-w-6xl mx-auto px-6 ${card.bgColor} rounded-3xl border border-gray-200 shadow-xl`}>
-                  <div className="grid lg:grid-cols-2 gap-12 items-center p-12">
+                <div className={`w-full max-w-6xl mx-auto px-6 ${card.bgColor} rounded-3xl border border-gray-200 shadow-xl h-[75vh] xl:h-[80vh] 2xl:h-[85vh]`}>
+                  <div className="grid lg:grid-cols-2 gap-12 items-center p-12 h-full">
                     {/* Content */}
                     <div className="relative">
                       <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
