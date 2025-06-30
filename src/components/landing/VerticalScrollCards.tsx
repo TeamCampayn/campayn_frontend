@@ -512,10 +512,10 @@ export const VerticalScrollCards: React.FC = () => {
                   top: '12.5vh'
                 }}
               >
-                <div className={`w-full max-w-6xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full`}>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center p-8 lg:p-12 h-full">
-                    {/* Content - Left side */}
-                    <div className="flex flex-col justify-center text-center lg:text-left">
+                <div className={`w-full max-w-7xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full`}>
+                  <div className="flex flex-row items-center h-full p-8 lg:p-12 gap-8 lg:gap-12">
+                    {/* Content - Left side - Fixed width */}
+                    <div className="flex-1 flex flex-col justify-center pr-4 lg:pr-8">
                       <h3 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
                         {card.title}
                       </h3>
@@ -524,8 +524,8 @@ export const VerticalScrollCards: React.FC = () => {
                       </p>
                     </div>
                     
-                    {/* Visual - Right side */}
-                    <div className="flex justify-center items-center h-full">
+                    {/* Visual - Right side - Fixed width */}
+                    <div className="flex-1 flex justify-center items-center h-full">
                       <div className="w-full h-full max-w-lg relative">
                         {renderVisual(card.visualType)}
                       </div>
