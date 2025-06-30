@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { MoveRight, PhoneCall } from "lucide-react";
@@ -8,6 +7,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { Particles } from "./particles";
+import { useTheme } from "next-themes";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
@@ -60,6 +60,7 @@ Button.displayName = "Button";
 
 function Hero() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [titleNumber, setTitleNumber] = useState(0);
   const [color, setColor] = useState("#ffffff");
   const titles = useMemo(
@@ -69,7 +70,7 @@ function Hero() {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (targetNumber === titles.length - 1) {
+      if (titleNumber === titles.length - 1) {
         setTitleNumber(0);
       } else {
         setTitleNumber(titleNumber + 1);
@@ -79,9 +80,8 @@ function Hero() {
   }, [titleNumber, titles]);
 
   useEffect(() => {
-    // Set particle color based on theme - you can adjust this logic
-    setColor("#ffffff");
-  }, []);
+    setColor(theme === "dark" ? "#ffffff" : "#000000");
+  }, [theme]);
 
   return (
     <div className="relative w-full overflow-hidden">
