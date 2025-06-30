@@ -8,40 +8,36 @@ gsap.registerPlugin(ScrollTrigger);
 
 const cards = [
   {
-    number: 1,
     title: "AI Matchmaking",
     description:
       "Find the perfect creators using intent-based smart suggestions powered by advanced algorithms.",
     icon: Brain,
     gradient: "from-blue-500 to-purple-600",
-    bgColor: "bg-gradient-to-br from-blue-50 to-purple-50"
+    bgColor: "bg-white"
   },
   {
-    number: 2,
     title: "Campaign Dashboard",
     description:
       "Launch, track and iterate campaigns from a unified view with real-time performance metrics.",
     icon: BarChart3,
     gradient: "from-green-500 to-teal-600",
-    bgColor: "bg-gradient-to-br from-green-50 to-teal-50"
+    bgColor: "bg-white"
   },
   {
-    number: 3,
     title: "Real-Time Insights",
     description:
       "Get live engagement, ROI, and spend metrics on every creator with detailed analytics dashboards.",
     icon: Zap,
     gradient: "from-orange-500 to-red-600",
-    bgColor: "bg-gradient-to-br from-orange-50 to-red-50"
+    bgColor: "bg-white"
   },
   {
-    number: 4,
     title: "Automated Payouts",
     description:
       "Integrated payments, receipts, and performance-based billing with seamless financial management.",
     icon: CreditCard,
     gradient: "from-indigo-500 to-pink-600",
-    bgColor: "bg-gradient-to-br from-indigo-50 to-pink-50"
+    bgColor: "bg-white"
   },
 ];
 
@@ -78,7 +74,7 @@ export const VerticalScrollCards: React.FC = () => {
 
     items.forEach((item, idx) => {
       // Scale down current item
-      timeline.to(item, { scale: 0.9, borderRadius: "20px" });
+      timeline.to(item, { scale: 0.95, y: -20 });
       
       // Slide up next item
       if (items[idx + 1]) {
@@ -97,45 +93,55 @@ export const VerticalScrollCards: React.FC = () => {
   }, []);
 
   return (
-    <section 
-      ref={sectionRef} 
-      className="relative w-full"
-      style={{ height: `${cards.length * 100}vh` }}
-    >
-      <div className="relative w-full h-screen">
-        {cards.map((card, index) => {
-          const Icon = card.icon;
-          return (
-            <div 
-              key={card.number} 
-              className={`scroll-item absolute inset-0 w-full h-full ${card.bgColor} flex items-center justify-center`}
-            >
-              <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center w-full">
-                {/* Content */}
-                <div className="relative">
-                  <div className="absolute -top-8 left-0 w-12 h-12 bg-black text-white rounded-full flex items-center justify-center text-xl font-semibold">
-                    {card.number}
+    <div className="bg-gradient-to-br from-gray-50 to-white">
+      {/* Fixed Heading */}
+      <div className="max-w-4xl mx-auto px-6 pt-20 pb-8 text-center">
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          Your Brand Deserves Better Than an Agency. It Deserves Campayn
+        </h2>
+        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          Everything you need to run successful creator campaigns, all in one platform.
+        </p>
+      </div>
+
+      {/* Scrollable Cards Section */}
+      <section 
+        ref={sectionRef} 
+        className="relative w-full"
+        style={{ height: `${cards.length * 100}vh` }}
+      >
+        <div className="relative w-full h-screen flex items-center justify-center">
+          {cards.map((card, index) => {
+            const Icon = card.icon;
+            return (
+              <div 
+                key={index} 
+                className={`scroll-item absolute w-full max-w-5xl mx-auto px-6`}
+              >
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-8 grid lg:grid-cols-2 gap-12 items-center">
+                  {/* Content */}
+                  <div className="relative">
+                    <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+                      {card.title}
+                    </h3>
+                    <p className="text-lg text-gray-600 leading-relaxed">
+                      {card.description}
+                    </p>
                   </div>
-                  <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                    {card.title}
-                  </h2>
-                  <p className="text-xl text-gray-600 leading-relaxed">
-                    {card.description}
-                  </p>
-                </div>
-                
-                {/* Icon */}
-                <div className="flex justify-center">
-                  <div className={`w-48 h-48 rounded-3xl bg-gradient-to-r ${card.gradient} flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-300`}>
-                    <Icon className="w-24 h-24 text-white" />
+                  
+                  {/* Icon */}
+                  <div className="flex justify-center">
+                    <div className={`w-32 h-32 rounded-2xl bg-gradient-to-r ${card.gradient} flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300`}>
+                      <Icon className="w-16 h-16 text-white" />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
+            );
+          })}
+        </div>
+      </section>
+    </div>
   );
 };
 
