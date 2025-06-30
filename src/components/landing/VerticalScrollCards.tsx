@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -486,73 +485,65 @@ export const VerticalScrollCards: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative">
-      {/* Fixed Background */}
-      <div className="fixed inset-0 z-0">
-        <EtheralShadow
-          color="rgba(17, 24, 39, 0.9)"
-          animation={{ scale: 50, speed: 70 }}
-          noise={{ opacity: 0.4, scale: 1.5 }}
-          sizing="fill"
-          className="w-full h-full bg-gradient-to-br from-gray-900 to-black"
-        />
+    <EtheralShadow
+      color="rgba(59, 130, 246, 0.8)"
+      animation={{ scale: 50, speed: 70 }}
+      noise={{ opacity: 0.3, scale: 1.5 }}
+      sizing="fill"
+      className="bg-gradient-to-br from-gray-50 to-white"
+    >
+      {/* Fixed Heading */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center relative z-10">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
+          Your Brand Deserves Better Than an Agency. It Deserves Campayn
+        </h2>
+        <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          Everything you need to run successful creator campaigns, all in one platform.
+        </p>
       </div>
 
-      {/* Content Layer */}
-      <div className="relative z-10">
-        {/* Fixed Heading */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
-            Your Brand Deserves Better Than an Agency. It Deserves Campayn
-          </h2>
-          <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
-            Everything you need to run successful creator campaigns, all in one platform.
-          </p>
-        </div>
-
-        {/* Scrollable Cards Section */}
-        <section 
-          ref={sectionRef} 
-          className="relative w-full h-screen"
-        >
-          <div className="relative w-full h-screen flex items-center justify-center">
-            {cards.map((card, index) => {
-              return (
-                <div 
-                  key={index} 
-                  className={`scroll-item absolute w-full flex items-center justify-center px-4 sm:px-6`}
-                  style={{ 
-                    height: '75vh',
-                    top: '12.5vh'
-                  }}
-                >
-                  <div className={`w-full max-w-7xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full backdrop-blur-sm bg-opacity-90`}>
-                    <div className="flex flex-row items-center h-full p-8 lg:p-12 gap-8 lg:gap-12">
-                      {/* Content - Left side - Fixed width */}
-                      <div className="flex-1 flex flex-col justify-center pr-4 lg:pr-8">
-                        <h3 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                          {card.title}
-                        </h3>
-                        <p className="text-lg sm:text-xl text-gray-600 leading-relaxed">
-                          {card.description}
-                        </p>
-                      </div>
-                      
-                      {/* Visual - Right side - Fixed width */}
-                      <div className="flex-1 flex justify-center items-center h-full">
-                        <div className="w-full h-full max-w-lg relative">
-                          {renderVisual(card.visualType)}
-                        </div>
+      {/* Scrollable Cards Section */}
+      <section 
+        ref={sectionRef} 
+        className="relative w-full h-screen"
+      >
+        <div className="relative w-full h-screen flex items-center justify-center">
+          {cards.map((card, index) => {
+            return (
+              <div 
+                key={index} 
+                className={`scroll-item absolute w-full flex items-center justify-center px-4 sm:px-6`}
+                style={{ 
+                  height: '75vh',
+                  top: '12.5vh'
+                }}
+              >
+                <div className={`w-full max-w-7xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full backdrop-blur-sm bg-opacity-90`}>
+                  <div className="flex flex-row items-center h-full p-8 lg:p-12 gap-8 lg:gap-12">
+                    {/* Content - Left side - Fixed width */}
+                    <div className="flex-1 flex flex-col justify-center pr-4 lg:pr-8">
+                      <h3 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                        {card.title}
+                      </h3>
+                      <p className="text-lg sm:text-xl text-gray-600 leading-relaxed">
+                        {card.description}
+                      </p>
+                    </div>
+                    
+                    {/* Visual - Right side - Fixed width */}
+                    <div className="flex-1 flex justify-center items-center h-full">
+                      <div className="w-full h-full max-w-lg relative">
+                        {renderVisual(card.visualType)}
                       </div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </section>
-      </div>
-    </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </EtheralShadow>
   );
 };
 
