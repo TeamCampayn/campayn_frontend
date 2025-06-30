@@ -53,10 +53,12 @@ export const VerticalScrollCards: React.FC = () => {
     // Clean up any existing ScrollTriggers
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
     
-    // Set initial state - all items except first start below viewport
+    // Set initial state - all items except first start completely below viewport
     items.forEach((item, idx) => {
-      if (idx !== 0) {
-        gsap.set(item, { yPercent: 100 });
+      if (idx === 0) {
+        gsap.set(item, { yPercent: 0, zIndex: cards.length });
+      } else {
+        gsap.set(item, { yPercent: 100, zIndex: cards.length - idx });
       }
     });
 
@@ -65,22 +67,26 @@ export const VerticalScrollCards: React.FC = () => {
         trigger: section,
         pin: true,
         start: "top top",
-        end: `+=${items.length * 100}%`,
+        end: `+=${items.length * 100}vh`,
         scrub: 1,
         invalidateOnRefresh: true,
       },
-      defaults: { ease: "none" },
+      defaults: { ease: "power2.inOut" },
     });
 
     items.forEach((item, idx) => {
-      // Scale down current item
-      timeline.to(item, { scale: 0.95, y: -20 });
-      
-      // Slide up next item
-      if (items[idx + 1]) {
+      if (idx < items.length - 1) {
+        // Move current item up and scale it down slightly
+        timeline.to(item, { 
+          yPercent: -100, 
+          scale: 0.95,
+          duration: 1 
+        });
+        
+        // Slide next item up from below
         timeline.to(
           items[idx + 1],
-          { yPercent: 0 },
+          { yPercent: 0, duration: 1 },
           "<"
         );
       }
@@ -107,32 +113,31 @@ export const VerticalScrollCards: React.FC = () => {
       {/* Scrollable Cards Section */}
       <section 
         ref={sectionRef} 
-        className="relative w-full"
-        style={{ height: `${cards.length * 100}vh` }}
+        className="relative w-full h-screen overflow-hidden"
       >
-        <div className="relative w-full h-screen flex items-center justify-center">
+        <div className="relative w-full h-full flex items-center justify-center">
           {cards.map((card, index) => {
             const Icon = card.icon;
             return (
               <div 
                 key={index} 
-                className={`scroll-item absolute w-full max-w-5xl mx-auto px-6`}
+                className="scroll-item absolute inset-0 flex items-center justify-center px-6"
               >
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-8 grid lg:grid-cols-2 gap-12 items-center">
+                <div className="bg-white rounded-3xl border border-gray-200 shadow-2xl p-12 w-full max-w-6xl mx-auto min-h-[70vh] grid lg:grid-cols-2 gap-16 items-center">
                   {/* Content */}
                   <div className="relative">
-                    <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+                    <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-8">
                       {card.title}
                     </h3>
-                    <p className="text-lg text-gray-600 leading-relaxed">
+                    <p className="text-xl text-gray-600 leading-relaxed">
                       {card.description}
                     </p>
                   </div>
                   
                   {/* Icon */}
                   <div className="flex justify-center">
-                    <div className={`w-32 h-32 rounded-2xl bg-gradient-to-r ${card.gradient} flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300`}>
-                      <Icon className="w-16 h-16 text-white" />
+                    <div className={`w-40 h-40 rounded-3xl bg-gradient-to-r ${card.gradient} flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500`}>
+                      <Icon className="w-20 h-20 text-white" />
                     </div>
                   </div>
                 </div>
