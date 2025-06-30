@@ -1,6 +1,6 @@
 
-import { PinnedScrollCards } from './PinnedScrollCards';
+import { VerticalFeatureScroller } from './VerticalFeatureScroller';
 
 export const FeaturesSection = () => {
-  return <PinnedScrollCards />;
+  return <VerticalFeatureScroller />;
 };
