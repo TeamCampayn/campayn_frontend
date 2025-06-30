@@ -51,9 +51,13 @@ export const VerticalScrollCards: React.FC = () => {
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
-    const items = section.querySelectorAll<HTMLDivElement>(".item");
     
-    // Set initial state
+    const items = section.querySelectorAll<HTMLDivElement>(".scroll-item");
+    
+    // Clean up any existing ScrollTriggers
+    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    
+    // Set initial state - all items except first start below viewport
     items.forEach((item, idx) => {
       if (idx !== 0) {
         gsap.set(item, { yPercent: 100 });
@@ -73,7 +77,10 @@ export const VerticalScrollCards: React.FC = () => {
     });
 
     items.forEach((item, idx) => {
-      timeline.to(item, { scale: 0.9, borderRadius: "10px" });
+      // Scale down current item
+      timeline.to(item, { scale: 0.9, borderRadius: "20px" });
+      
+      // Slide up next item
       if (items[idx + 1]) {
         timeline.to(
           items[idx + 1],
@@ -90,27 +97,43 @@ export const VerticalScrollCards: React.FC = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="scroll-section vertical-section section">
-      <div className="wrapper">
-        <div className="list" style={{ flexDirection: "column", height: "100%" }}>
-          {cards.map(card => {
-            const Icon = card.icon;
-            return (
-              <div key={card.number} className={`item ${card.bgColor}`} style={{ position: "absolute", inset: 0, width: "100vw", height: "100%" }}>
-                <div className="item_content" style={{ background: "transparent", color: "#292929", width: "50%", padding: "3rem", display: "flex", flexFlow: "column", justifyContent: "center", alignItems: "flex-start", position: "relative" }}>
-                  <h2 className="item_number" style={{ fontSize: "1.5rem", height: "3rem", width: "3rem", borderRadius: "50%", background: "#000", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 400, position: "absolute", top: "6rem", left: "3rem", marginBottom: "0.5rem" }}>{card.number}</h2>
-                  <h2 style={{ fontSize: "2.5rem", fontWeight: "bold", marginBottom: "1rem", color: "#1f2937" }}>{card.title}</h2>
-                  <p className="item_p" style={{ fontSize: "1.125rem", lineHeight: "1.75", color: "#6b7280" }}>{card.description}</p>
+    <section 
+      ref={sectionRef} 
+      className="relative w-full"
+      style={{ height: `${cards.length * 100}vh` }}
+    >
+      <div className="relative w-full h-screen">
+        {cards.map((card, index) => {
+          const Icon = card.icon;
+          return (
+            <div 
+              key={card.number} 
+              className={`scroll-item absolute inset-0 w-full h-full ${card.bgColor} flex items-center justify-center`}
+            >
+              <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center w-full">
+                {/* Content */}
+                <div className="relative">
+                  <div className="absolute -top-8 left-0 w-12 h-12 bg-black text-white rounded-full flex items-center justify-center text-xl font-semibold">
+                    {card.number}
+                  </div>
+                  <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                    {card.title}
+                  </h2>
+                  <p className="text-xl text-gray-600 leading-relaxed">
+                    {card.description}
+                  </p>
                 </div>
-                <div className="item_media_container" style={{ width: "50%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: "3rem" }}>
+                
+                {/* Icon */}
+                <div className="flex justify-center">
                   <div className={`w-48 h-48 rounded-3xl bg-gradient-to-r ${card.gradient} flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-300`}>
                     <Icon className="w-24 h-24 text-white" />
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
