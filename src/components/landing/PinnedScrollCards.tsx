@@ -15,25 +15,33 @@ export const PinnedScrollCards = () => {
       icon: Brain,
       title: "AI Matchmaking",
       description: "Smart recommendations tailored to your brand DNA.",
-      color: "from-blue-500 to-cyan-500"
+      bgColor: "bg-blue-50",
+      borderColor: "border-blue-200",
+      iconColor: "from-blue-500 to-blue-600"
     },
     {
       icon: BarChart3,
       title: "Campaign Manager",
       description: "Plan, execute, and track in one unified dashboard.",
-      color: "from-purple-500 to-pink-500"
+      bgColor: "bg-purple-50",
+      borderColor: "border-purple-200",
+      iconColor: "from-purple-500 to-purple-600"
     },
     {
       icon: Zap,
       title: "Insights in Real Time",
       description: "Metrics that help you act, not just observe.",
-      color: "from-green-500 to-emerald-500"
+      bgColor: "bg-green-50",
+      borderColor: "border-green-200",
+      iconColor: "from-green-500 to-green-600"
     },
     {
       icon: CreditCard,
       title: "Auto Payments",
       description: "Say goodbye to manual payouts — automate everything.",
-      color: "from-orange-500 to-red-500"
+      bgColor: "bg-orange-50",
+      borderColor: "border-orange-200",
+      iconColor: "from-orange-500 to-orange-600"
     }
   ];
 
@@ -66,9 +74,15 @@ export const PinnedScrollCards = () => {
           const cardProgress = (progress * totalCards) - index;
           const clampedProgress = Math.max(0, Math.min(1, cardProgress));
           
-          // Each card slides in from bottom (yPercent: 100 to 0)
+          // Current card slides in from bottom
+          const currentY = 100 - (clampedProgress * 100);
+          
+          // Previous cards get pushed up slightly
+          const pushProgress = Math.max(0, cardProgress - 1);
+          const pushAmount = pushProgress * 20; // Push previous cards up by 20%
+          
           gsap.set(card, {
-            yPercent: 100 - (clampedProgress * 100)
+            yPercent: currentY - pushAmount
           });
         });
       }
@@ -83,29 +97,39 @@ export const PinnedScrollCards = () => {
   return (
     <section 
       ref={sectionRef}
-      className="relative bg-white"
+      className="relative bg-gradient-to-br from-gray-50 to-white"
       style={{ height: `${100 * (cards.length + 1)}vh` }}
     >
       <div 
         ref={containerRef}
         className="relative w-full h-screen overflow-hidden"
       >
+        {/* Section Heading */}
+        <div className="absolute top-20 left-0 right-0 z-50 text-center px-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            Powerful Features
+          </h2>
+          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+            Everything you need to run successful creator campaigns
+          </p>
+        </div>
+
         {cards.map((card, index) => {
           const Icon = card.icon;
           return (
             <div
               key={index}
-              className="scroll-card absolute inset-0 w-full h-screen flex items-center justify-center bg-white"
+              className="scroll-card absolute inset-0 w-full h-screen flex items-center justify-center"
               style={{ zIndex: index + 1 }}
             >
-              <div className="max-w-4xl mx-auto px-6 text-center">
-                <div className={`w-24 h-24 mx-auto rounded-3xl bg-gradient-to-r ${card.color} flex items-center justify-center mb-8 shadow-2xl`}>
-                  <Icon className="w-12 h-12 text-white" />
+              <div className={`max-w-md mx-auto p-8 rounded-2xl shadow-lg border-2 ${card.bgColor} ${card.borderColor} backdrop-blur-sm`}>
+                <div className={`w-16 h-16 mx-auto rounded-xl bg-gradient-to-r ${card.iconColor} flex items-center justify-center mb-6 shadow-md`}>
+                  <Icon className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 text-center">
                   {card.title}
-                </h2>
-                <p className="text-xl md:text-2xl text-gray-600 leading-relaxed max-w-2xl mx-auto">
+                </h3>
+                <p className="text-lg text-gray-600 leading-relaxed text-center">
                   {card.description}
                 </p>
               </div>
