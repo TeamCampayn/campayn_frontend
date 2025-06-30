@@ -13,7 +13,7 @@ const cards = [
       "Find the perfect creators using intent-based smart suggestions powered by advanced algorithms.",
     icon: Brain,
     gradient: "from-blue-500 to-purple-600",
-    bgColor: "bg-white"
+    bgColor: "bg-gradient-to-br from-blue-50 to-purple-50"
   },
   {
     title: "Campaign Dashboard",
@@ -21,7 +21,7 @@ const cards = [
       "Launch, track and iterate campaigns from a unified view with real-time performance metrics.",
     icon: BarChart3,
     gradient: "from-green-500 to-teal-600",
-    bgColor: "bg-white"
+    bgColor: "bg-gradient-to-br from-green-50 to-teal-50"
   },
   {
     title: "Real-Time Insights",
@@ -29,7 +29,7 @@ const cards = [
       "Get live engagement, ROI, and spend metrics on every creator with detailed analytics dashboards.",
     icon: Zap,
     gradient: "from-orange-500 to-red-600",
-    bgColor: "bg-white"
+    bgColor: "bg-gradient-to-br from-orange-50 to-red-50"
   },
   {
     title: "Automated Payouts",
@@ -37,7 +37,7 @@ const cards = [
       "Integrated payments, receipts, and performance-based billing with seamless financial management.",
     icon: CreditCard,
     gradient: "from-indigo-500 to-pink-600",
-    bgColor: "bg-white"
+    bgColor: "bg-gradient-to-br from-indigo-50 to-pink-50"
   },
 ];
 
@@ -56,7 +56,7 @@ export const VerticalScrollCards: React.FC = () => {
     // Set initial state - all items except first start below viewport
     items.forEach((item, idx) => {
       if (idx !== 0) {
-        gsap.set(item, { yPercent: 100 });
+        gsap.set(item, { y: "100vh" });
       }
     });
 
@@ -73,14 +73,14 @@ export const VerticalScrollCards: React.FC = () => {
     });
 
     items.forEach((item, idx) => {
-      // Scale down current item
-      timeline.to(item, { scale: 0.95, y: -20 });
+      // Scale down and move up current item slightly
+      timeline.to(item, { scale: 0.95, y: -30 });
       
-      // Slide up next item
+      // Slide up next item from bottom
       if (items[idx + 1]) {
         timeline.to(
           items[idx + 1],
-          { yPercent: 0 },
+          { y: 0 },
           "<"
         );
       }
@@ -95,7 +95,7 @@ export const VerticalScrollCards: React.FC = () => {
   return (
     <div className="bg-gradient-to-br from-gray-50 to-white">
       {/* Fixed Heading */}
-      <div className="max-w-4xl mx-auto px-6 pt-20 pb-8 text-center">
+      <div className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
           Your Brand Deserves Better Than an Agency. It Deserves Campayn
         </h2>
@@ -116,23 +116,29 @@ export const VerticalScrollCards: React.FC = () => {
             return (
               <div 
                 key={index} 
-                className={`scroll-item absolute w-full max-w-5xl mx-auto px-6`}
+                className={`scroll-item absolute w-full flex items-center justify-center`}
+                style={{ 
+                  height: '75vh',
+                  top: '12.5vh'
+                }}
               >
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-8 grid lg:grid-cols-2 gap-12 items-center">
-                  {/* Content */}
-                  <div className="relative">
-                    <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                      {card.title}
-                    </h3>
-                    <p className="text-lg text-gray-600 leading-relaxed">
-                      {card.description}
-                    </p>
-                  </div>
-                  
-                  {/* Icon */}
-                  <div className="flex justify-center">
-                    <div className={`w-32 h-32 rounded-2xl bg-gradient-to-r ${card.gradient} flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300`}>
-                      <Icon className="w-16 h-16 text-white" />
+                <div className={`w-full max-w-6xl mx-auto px-6 ${card.bgColor} rounded-3xl border border-gray-200 shadow-xl`}>
+                  <div className="grid lg:grid-cols-2 gap-12 items-center p-12">
+                    {/* Content */}
+                    <div className="relative">
+                      <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                        {card.title}
+                      </h3>
+                      <p className="text-xl text-gray-600 leading-relaxed">
+                        {card.description}
+                      </p>
+                    </div>
+                    
+                    {/* Icon */}
+                    <div className="flex justify-center">
+                      <div className={`w-48 h-48 rounded-3xl bg-gradient-to-r ${card.gradient} flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-300`}>
+                        <Icon className="w-24 h-24 text-white" />
+                      </div>
                     </div>
                   </div>
                 </div>
