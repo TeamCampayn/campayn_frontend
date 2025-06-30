@@ -1,8 +1,8 @@
-
 import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Store, MapPin, TrendingUp, DollarSign, Shield, Users, Brain, Target, Network, Zap } from 'lucide-react';
+import { EtheralShadow } from '../ui/etheral-shadow';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -485,9 +485,15 @@ export const VerticalScrollCards: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-white">
+    <EtheralShadow
+      color="rgba(59, 130, 246, 0.8)"
+      animation={{ scale: 50, speed: 70 }}
+      noise={{ opacity: 0.3, scale: 1.5 }}
+      sizing="fill"
+      className="bg-gradient-to-br from-gray-50 to-white"
+    >
       {/* Fixed Heading */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center relative z-10">
         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
           Your Brand Deserves Better Than an Agency. It Deserves Campayn
         </h2>
@@ -512,7 +518,7 @@ export const VerticalScrollCards: React.FC = () => {
                   top: '12.5vh'
                 }}
               >
-                <div className={`w-full max-w-7xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full`}>
+                <div className={`w-full max-w-7xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full backdrop-blur-sm bg-opacity-90`}>
                   <div className="flex flex-row items-center h-full p-8 lg:p-12 gap-8 lg:gap-12">
                     {/* Content - Left side - Fixed width */}
                     <div className="flex-1 flex flex-col justify-center pr-4 lg:pr-8">
@@ -537,7 +543,7 @@ export const VerticalScrollCards: React.FC = () => {
           })}
         </div>
       </section>
-    </div>
+    </EtheralShadow>
   );
 };
 
