@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -94,11 +95,11 @@ export const VerticalScrollCards: React.FC = () => {
   return (
     <div className="bg-gradient-to-br from-gray-50 to-white">
       {/* Fixed Heading */}
-      <div className="max-w-4xl mx-auto px-6 pt-20 pb-6 text-center">
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
           Your Brand Deserves Better Than an Agency. It Deserves Campayn
         </h2>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+        <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
           Everything you need to run successful creator campaigns, all in one platform.
         </p>
       </div>
@@ -114,28 +115,28 @@ export const VerticalScrollCards: React.FC = () => {
             return (
               <div 
                 key={index} 
-                className={`scroll-item absolute w-full flex items-center justify-center`}
+                className={`scroll-item absolute w-full flex items-center justify-center px-4 sm:px-6`}
                 style={{ 
                   height: '75vh',
                   top: '12.5vh'
                 }}
               >
-                <div className={`w-full max-w-6xl mx-auto px-6 ${card.bgColor} rounded-3xl border border-gray-200 shadow-xl h-[75vh] xl:h-[80vh] 2xl:h-[85vh]`}>
-                  <div className="grid lg:grid-cols-2 gap-12 items-center p-12 h-full">
+                <div className={`w-full max-w-sm sm:max-w-2xl md:max-w-4xl lg:max-w-6xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full`}>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center p-6 sm:p-8 lg:p-12 h-full">
                     {/* Content */}
-                    <div className="relative">
-                      <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                    <div className="relative text-center lg:text-left order-2 lg:order-1">
+                      <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
                         {card.title}
                       </h3>
-                      <p className="text-xl text-gray-600 leading-relaxed">
+                      <p className="text-base sm:text-lg md:text-xl text-gray-600 leading-relaxed">
                         {card.description}
                       </p>
                     </div>
                     
                     {/* Icon */}
-                    <div className="flex justify-center">
-                      <div className={`w-48 h-48 rounded-3xl bg-gradient-to-r ${card.gradient} flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-300`}>
-                        <Icon className="w-24 h-24 text-white" />
+                    <div className="flex justify-center order-1 lg:order-2">
+                      <div className={`w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-2xl sm:rounded-3xl bg-gradient-to-r ${card.gradient} flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-300`}>
+                        <Icon className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 text-white" />
                       </div>
                     </div>
                   </div>
