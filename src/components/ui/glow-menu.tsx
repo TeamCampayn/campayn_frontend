@@ -14,7 +14,7 @@ interface MenuItem {
   iconColor: string
 }
 
-interface MenuBarProps extends React.HTMLAttributes<HTMLDivElement> {
+interface MenuBarProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onDrag' | 'onDragStart' | 'onDragEnd'> {
   items: MenuItem[]
   activeItem?: string
   onItemClick?: (label: string) => void
