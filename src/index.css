@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -100,4 +101,9 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom color for the hero section */
+.text-spektr-cyan-50 {
+  color: #ecfeff;
 }
