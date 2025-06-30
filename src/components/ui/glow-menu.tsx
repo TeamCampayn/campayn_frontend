@@ -14,7 +14,8 @@ interface MenuItem {
   iconColor: string
 }
 
-interface MenuBarProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onDrag' | 'onDragStart' | 'onDragEnd'> {
+interface MenuBarProps {
+  className?: string
   items: MenuItem[]
   activeItem?: string
   onItemClick?: (label: string) => void
@@ -61,7 +62,7 @@ const sharedTransition = {
 }
 
 export const MenuBar = React.forwardRef<HTMLDivElement, MenuBarProps>(
-  ({ className, items, activeItem, onItemClick, ...props }, ref) => {
+  ({ className, items, activeItem, onItemClick }, ref) => {
     return (
       <motion.nav
         ref={ref}
@@ -71,7 +72,6 @@ export const MenuBar = React.forwardRef<HTMLDivElement, MenuBarProps>(
         )}
         initial="initial"
         whileHover="hover"
-        {...props}
       >
         <motion.div
           className="absolute -inset-2 bg-gradient-radial from-transparent via-blue-400/20 via-30% via-purple-400/20 via-60% via-red-400/20 via-90% to-transparent rounded-3xl z-0 pointer-events-none"
