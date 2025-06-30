@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, X, Home, Users, Info } from 'lucide-react';
 import { MenuBar } from '../ui/glow-menu';
 
@@ -30,6 +30,27 @@ const menuItems = [
 export const LandingHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeItem, setActiveItem] = useState<string>("Brands");
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const controlNavbar = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down & past 100px
+        setIsVisible(false);
+      } else {
+        // Scrolling up
+        setIsVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', controlNavbar);
+    return () => window.removeEventListener('scroll', controlNavbar);
+  }, [lastScrollY]);
 
   const handleItemClick = (label: string) => {
     setActiveItem(label);
@@ -40,11 +61,13 @@ export const LandingHeader = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200/50">
-      <div className="max-w-7xl mx-auto px-6 py-4">
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ease-in-out ${
+      isVisible ? 'translate-y-0' : '-translate-y-full'
+    }`}>
+      <div className="max-w-7xl mx-auto px-6 py-2">
         <div className="flex items-center justify-between">
           {/* Unified navbar with logo, menu items, and buttons */}
-          <div className="hidden md:flex items-center justify-between w-full bg-white/80 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-lg px-6 py-3">
+          <div className="hidden md:flex items-center justify-between w-full bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-lg px-6 py-3">
             {/* Logo */}
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -78,7 +101,7 @@ export const LandingHeader = () => {
           </div>
 
           {/* Mobile logo (shown when menu is collapsed) */}
-          <div className="md:hidden flex items-center space-x-3">
+          <div className="md:hidden flex items-center space-x-3 bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-lg px-4 py-2">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-lg">C</span>
             </div>
@@ -92,7 +115,7 @@ export const LandingHeader = () => {
 
           {/* Mobile menu button */}
           <button 
-            className="md:hidden"
+            className="md:hidden bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-lg p-2 shadow-lg"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -101,12 +124,15 @@ export const LandingHeader = () => {
 
         {/* Mobile menu */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 py-4 border-t border-gray-200">
+          <div className="md:hidden mt-2 bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-lg p-4">
             <div className="flex flex-col space-y-4">
               {menuItems.map((item) => (
                 <button
                   key={item.label}
-                  onClick={() => handleItemClick(item.label)}
+                  onClick={() => {
+                    handleItemClick(item.label);
+                    setIsMenuOpen(false);
+                  }}
                   className={`text-gray-700 hover:text-blue-600 font-medium text-left ${
                     activeItem === item.label ? 'text-blue-600' : ''
                   }`}
@@ -114,7 +140,7 @@ export const LandingHeader = () => {
                   {item.label}
                 </button>
               ))}
-              <div className="flex flex-col space-y-2 pt-4">
+              <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
                 <button className="bg-white/80 backdrop-blur-md border border-gray-200/50 text-gray-700 px-6 py-2 rounded-lg font-medium w-fit">
                   Login
                 </button>

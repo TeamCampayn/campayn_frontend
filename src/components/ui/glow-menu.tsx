@@ -109,7 +109,7 @@ export const MenuBar = React.forwardRef<HTMLDivElement, MenuBarProps>(
                         "flex items-center gap-2 px-4 py-2 relative z-10 bg-transparent transition-colors rounded-xl",
                         isActive
                           ? "text-foreground"
-                          : "text-muted-foreground group-hover:text-foreground",
+                          : "text-muted-foreground",
                       )}
                       variants={itemVariants}
                       transition={sharedTransition}
@@ -122,7 +122,6 @@ export const MenuBar = React.forwardRef<HTMLDivElement, MenuBarProps>(
                         className={cn(
                           "transition-colors duration-300",
                           isActive ? item.iconColor : "text-foreground",
-                          `group-hover:${item.iconColor}`,
                         )}
                       >
                         <Icon className="h-5 w-5" />
@@ -134,7 +133,7 @@ export const MenuBar = React.forwardRef<HTMLDivElement, MenuBarProps>(
                         "flex items-center gap-2 px-4 py-2 absolute inset-0 z-10 bg-transparent transition-colors rounded-xl",
                         isActive
                           ? "text-foreground"
-                          : "text-muted-foreground group-hover:text-foreground",
+                          : "text-muted-foreground",
                       )}
                       variants={backVariants}
                       transition={sharedTransition}
@@ -148,7 +147,6 @@ export const MenuBar = React.forwardRef<HTMLDivElement, MenuBarProps>(
                         className={cn(
                           "transition-colors duration-300",
                           isActive ? item.iconColor : "text-foreground",
-                          `group-hover:${item.iconColor}`,
                         )}
                       >
                         <Icon className="h-5 w-5" />
