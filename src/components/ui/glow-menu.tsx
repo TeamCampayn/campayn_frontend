@@ -14,8 +14,7 @@ interface MenuItem {
   iconColor: string
 }
 
-interface MenuBarProps {
-  className?: string
+interface MenuBarProps extends React.HTMLAttributes<HTMLDivElement> {
   items: MenuItem[]
   activeItem?: string
   onItemClick?: (label: string) => void
@@ -37,8 +36,8 @@ const glowVariants = {
     opacity: 1,
     scale: 2,
     transition: {
-      opacity: { duration: 0.5, ease: [0.4, 0, 0.2, 1] as any },
-      scale: { duration: 0.5, type: "spring" as const, stiffness: 300, damping: 25 },
+      opacity: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
+      scale: { duration: 0.5, type: "spring", stiffness: 300, damping: 25 },
     },
   },
 }
@@ -49,20 +48,20 @@ const navGlowVariants = {
     opacity: 1,
     transition: {
       duration: 0.5,
-      ease: [0.4, 0, 0.2, 1] as any,
+      ease: [0.4, 0, 0.2, 1],
     },
   },
 }
 
 const sharedTransition = {
-  type: "spring" as const,
+  type: "spring",
   stiffness: 100,
   damping: 20,
   duration: 0.5,
 }
 
 export const MenuBar = React.forwardRef<HTMLDivElement, MenuBarProps>(
-  ({ className, items, activeItem, onItemClick }, ref) => {
+  ({ className, items, activeItem, onItemClick, ...props }, ref) => {
     return (
       <motion.nav
         ref={ref}
@@ -72,6 +71,7 @@ export const MenuBar = React.forwardRef<HTMLDivElement, MenuBarProps>(
         )}
         initial="initial"
         whileHover="hover"
+        {...props}
       >
         <motion.div
           className="absolute -inset-2 bg-gradient-radial from-transparent via-blue-400/20 via-30% via-purple-400/20 via-60% via-red-400/20 via-90% to-transparent rounded-3xl z-0 pointer-events-none"

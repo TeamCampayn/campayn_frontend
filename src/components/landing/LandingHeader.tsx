@@ -43,10 +43,10 @@ export const LandingHeader = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200/50">
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Unified navbar with logo and menu items */}
-          <div className="hidden md:flex items-center bg-white/80 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-lg p-2">
-            {/* Logo inside the unified box */}
-            <div className="flex items-center space-x-3 px-4">
+          {/* Unified navbar with logo, menu items, and buttons */}
+          <div className="hidden md:flex items-center justify-between w-full bg-white/80 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-lg px-6 py-3">
+            {/* Logo */}
+            <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-lg">C</span>
               </div>
@@ -63,8 +63,18 @@ export const LandingHeader = () => {
               items={menuItems}
               activeItem={activeItem}
               onItemClick={handleItemClick}
-              className="bg-transparent border-0 shadow-none p-0 ml-4"
+              className="bg-transparent border-0 shadow-none p-0"
             />
+            
+            {/* Login and Get Started buttons */}
+            <div className="flex items-center space-x-4">
+              <button className="bg-white/80 backdrop-blur-md border border-gray-200/50 text-gray-700 hover:text-blue-600 px-6 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+                Login
+              </button>
+              <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+                Get Started
+              </button>
+            </div>
           </div>
 
           {/* Mobile logo (shown when menu is collapsed) */}
@@ -78,16 +88,6 @@ export const LandingHeader = () => {
               </span>
               <div className="text-xs text-gray-500 font-medium">Influencer Platform</div>
             </div>
-          </div>
-          
-          {/* Right side buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            <button className="bg-white/80 backdrop-blur-md border border-gray-200/50 text-gray-700 hover:text-blue-600 px-6 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200">
-              Login
-            </button>
-            <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-              Get Started
-            </button>
           </div>
 
           {/* Mobile menu button */}
