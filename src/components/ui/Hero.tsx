@@ -369,7 +369,7 @@ function Hero() {
         refresh
       />
       <div className="container mx-auto relative z-10">
-        <div className="flex gap-8 py-20 lg:py-40 items-center justify-center flex-col">
+        <div className="flex gap-8 py-32 lg:py-48 items-center justify-center flex-col min-h-screen">
           <div className="flex gap-4 flex-col">
             <h1 className="text-5xl md:text-7xl max-w-2xl tracking-tighter text-center font-regular">
               <span className="text-foreground">Run campaigns that feel</span>
