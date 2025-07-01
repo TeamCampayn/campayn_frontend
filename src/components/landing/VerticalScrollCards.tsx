@@ -146,7 +146,7 @@ export const VerticalScrollCards: React.FC = () => {
         </section>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 0.8; }
           50% { opacity: 1; }
