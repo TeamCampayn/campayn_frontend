@@ -11,7 +11,6 @@ import {
   TrustSystemVisual,
   BharatSplitVisual
 } from './visuals';
-import { Component as EtheralShadow } from '../ui/etheral-shadow';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -86,23 +85,13 @@ export const VerticalScrollCards: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative">
-      {/* Fixed Etheral Shadow Background */}
-      <div className="fixed inset-0 z-0">
-        <EtheralShadow
-          color="rgba(20, 20, 20, 1)"
-          animation={{ scale: 100, speed: 60 }}
-          noise={{ opacity: 0.8, scale: 1.5 }}
-          sizing="fill"
-        />
-      </div>
-
+    <div className="bg-gradient-to-br from-gray-50 to-white">
       {/* Fixed Heading */}
-      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
           Your Brand Deserves Better Than an Agency. It Deserves Campayn
         </h2>
-        <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
           Everything you need to run successful creator campaigns, all in one platform.
         </p>
       </div>
@@ -110,7 +99,7 @@ export const VerticalScrollCards: React.FC = () => {
       {/* Scrollable Cards Section */}
       <section 
         ref={sectionRef} 
-        className="relative w-full h-screen z-10"
+        className="relative w-full h-screen"
       >
         <div className="relative w-full h-screen flex items-center justify-center">
           {featuresData.map((card, index) => {
