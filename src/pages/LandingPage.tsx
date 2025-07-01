@@ -4,7 +4,6 @@ import { OnboardingProcess } from '../components/landing/OnboardingProcess';
 import { FeaturesSection } from '../components/landing/FeaturesSection';
 import { ContactSection } from '../components/landing/ContactSection';
 import { LandingHeader } from '../components/landing/LandingHeader';
-import { VerticalScrollCards } from '../components/landing/VerticalScrollCards';
 
 const LandingPage = () => {
   return (
@@ -12,7 +11,6 @@ const LandingPage = () => {
       <LandingHeader />
       <HeroSection />
       <OnboardingProcess />
-      <VerticalScrollCards />
       <FeaturesSection />
       <ContactSection />
     </div>
