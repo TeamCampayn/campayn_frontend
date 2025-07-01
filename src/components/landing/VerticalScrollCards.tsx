@@ -11,6 +11,7 @@ import {
   TrustSystemVisual,
   BharatSplitVisual
 } from './visuals';
+import { Component as EtheralShadow } from '../ui/etheral-shadow';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -85,9 +86,9 @@ export const VerticalScrollCards: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-white">
+    <div className="relative">
       {/* Fixed Heading */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center bg-gradient-to-br from-gray-50 to-white relative z-10">
         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
           Your Brand Deserves Better Than an Agency. It Deserves Campayn
         </h2>
@@ -96,12 +97,21 @@ export const VerticalScrollCards: React.FC = () => {
         </p>
       </div>
 
-      {/* Scrollable Cards Section */}
+      {/* Scrollable Cards Section with Background */}
       <section 
         ref={sectionRef} 
-        className="relative w-full h-screen"
+        className="relative w-full h-screen overflow-hidden"
       >
-        <div className="relative w-full h-screen flex items-center justify-center">
+        {/* Ethereal Shadow Background */}
+        <EtheralShadow
+          color="rgba(30, 30, 50, 0.8)"
+          animation={{ scale: 80, speed: 60 }}
+          noise={{ opacity: 0.4, scale: 1.5 }}
+          sizing="fill"
+          className="absolute inset-0 z-0"
+        />
+        
+        <div className="relative w-full h-screen flex items-center justify-center z-10">
           {featuresData.map((card, index) => {
             return (
               <div 
@@ -112,14 +122,14 @@ export const VerticalScrollCards: React.FC = () => {
                   top: '12.5vh'
                 }}
               >
-                <div className={`w-full max-w-6xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full overflow-hidden`}>
+                <div className={`w-full max-w-6xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200/20 shadow-2xl h-full overflow-hidden backdrop-blur-sm bg-opacity-95`}>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 xl:gap-8 items-center p-4 sm:p-6 lg:p-8 xl:p-12 h-full">
                     {/* Content - Left side on large screens, full width on small */}
                     <div className="flex flex-col justify-center text-center lg:text-left order-1">
                       <h3 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold text-gray-900 mb-3 sm:mb-4 lg:mb-6 leading-tight">
                         {card.title}
                       </h3>
-                      <p className="text-sm sm:text-base lg:text-lg xl:text-xl text-gray-600 leading-relaxed">
+                      <p className="text-sm sm:text-base lg:text-lg xl:text-xl text-gray-700 leading-relaxed">
                         {card.description}
                       </p>
                     </div>
