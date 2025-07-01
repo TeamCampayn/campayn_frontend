@@ -2,7 +2,11 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { createNoise3D } from "simplex-noise";
-import { cn } from "../../lib/utils";
+
+// Helper function for `cn` - moved here to resolve conflict
+function cn(...inputs: (string | undefined | null | boolean)[]) {
+  return inputs.filter(Boolean).join(" ");
+}
 
 export const WavyBackground = ({
   children,
@@ -76,7 +80,6 @@ export const WavyBackground = ({
     "#e879f9",
     "#22d3ee",
   ];
-  
   const drawWave = (n: number) => {
     if (!ctx) return;
     nt += getSpeed();
@@ -140,10 +143,3 @@ export const WavyBackground = ({
     </div>
   );
 };
-
-export default function WavyBackgroundDemo() {
-  return (
-    <WavyBackground className="max-w-4xl mx-auto pb-40">
-    </WavyBackground>
-  );
-}
