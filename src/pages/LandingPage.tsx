@@ -1,9 +1,11 @@
 
-import { HeroSection } from '../components/landing/HeroSection';
-import { OnboardingProcess } from '../components/landing/OnboardingProcess';
-import { FeaturesSection } from '../components/landing/FeaturesSection';
-import { ContactSection } from '../components/landing/ContactSection';
-import { LandingHeader } from '../components/landing/LandingHeader';
+import {
+  HeroSection,
+  OnboardingProcess,
+  FeaturesSection,
+  ContactSection,
+  LandingHeader
+} from '../components/landing';
 
 const LandingPage = () => {
   return (

@@ -1,49 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Target, Users, Package, TrendingUp } from 'lucide-react';
+import { onboardingSteps } from './data/onboardingData';
 
 export const OnboardingProcess = () => {
   const [activeStep, setActiveStep] = useState(0);
 
-  const steps = [
-    {
-      icon: DollarSign,
-      title: "Set Your Budget",
-      description: "Choose your campaign investment with flexible options starting from ₹5,000",
-      visual: "Budget slider with real-time calculations"
-    },
-    {
-      icon: Target,
-      title: "Define Content Goals", 
-      description: "Select content types, quality requirements, and campaign objectives",
-      visual: "Interactive content type selection"
-    },
-    {
-      icon: Users,
-      title: "Choose Your Creators",
-      description: "AI-powered matching with creators that align with your brand values",
-      visual: "Creator recommendation algorithm"
-    },
-    {
-      icon: Package,
-      title: "Product Details",
-      description: "Add your product information and shipping requirements",
-      visual: "Product form with smart validation"
-    },
-    {
-      icon: TrendingUp,
-      title: "Launch & Track",
-      description: "Monitor campaign performance with real-time analytics",
-      visual: "Live dashboard preview"
-    }
-  ];
-
   useEffect(() => {
     const interval = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % steps.length);
+      setActiveStep((prev) => (prev + 1) % onboardingSteps.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, [steps.length]);
+  }, []);
 
   return (
     <section className="py-32 bg-gradient-to-b from-white to-gray-50">
@@ -63,7 +30,7 @@ export const OnboardingProcess = () => {
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Steps Navigation */}
           <div className="space-y-8">
-            {steps.map((step, index) => {
+            {onboardingSteps.map((step, index) => {
               const Icon = step.icon;
               return (
                 <div
@@ -106,14 +73,14 @@ export const OnboardingProcess = () => {
                   <div className={`w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center transition-all duration-500 ${
                     activeStep === 0 ? 'scale-110' : 'scale-100'
                   }`}>
-                    {React.createElement(steps[activeStep].icon, { className: "w-10 h-10 text-white" })}
+                    {React.createElement(onboardingSteps[activeStep].icon, { className: "w-10 h-10 text-white" })}
                   </div>
-                  <h4 className="text-2xl font-bold text-gray-900 mb-2">{steps[activeStep].title}</h4>
-                  <p className="text-gray-600 mb-4">{steps[activeStep].visual}</p>
+                  <h4 className="text-2xl font-bold text-gray-900 mb-2">{onboardingSteps[activeStep].title}</h4>
+                  <p className="text-gray-600 mb-4">{onboardingSteps[activeStep].visual}</p>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
                       className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-1000"
-                      style={{ width: `${((activeStep + 1) / steps.length) * 100}%` }}
+                      style={{ width: `${((activeStep + 1) / onboardingSteps.length) * 100}%` }}
                     ></div>
                   </div>
                 </div>
