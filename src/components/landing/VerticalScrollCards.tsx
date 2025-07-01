@@ -512,20 +512,20 @@ export const VerticalScrollCards: React.FC = () => {
                   top: '12.5vh'
                 }}
               >
-                <div className={`w-full max-w-6xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full`}>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center p-8 lg:p-12 h-full">
-                    {/* Content - Left side */}
-                    <div className="flex flex-col justify-center text-center lg:text-left">
-                      <h3 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                <div className={`w-full max-w-6xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full overflow-hidden`}>
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-8 items-center p-4 sm:p-6 lg:p-8 xl:p-12 h-full">
+                    {/* Content - Left side on large screens, full width on small */}
+                    <div className="flex flex-col justify-center text-center xl:text-left order-1 xl:order-1">
+                      <h3 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
                         {card.title}
                       </h3>
-                      <p className="text-lg sm:text-xl text-gray-600 leading-relaxed">
+                      <p className="text-base sm:text-lg lg:text-xl text-gray-600 leading-relaxed">
                         {card.description}
                       </p>
                     </div>
                     
-                    {/* Visual - Right side */}
-                    <div className="flex justify-center items-center h-full">
+                    {/* Visual - Right side on large screens, hidden on small screens */}
+                    <div className="hidden xl:flex justify-center items-center h-full order-2">
                       <div className="w-full h-full max-w-lg relative">
                         {renderVisual(card.visualType)}
                       </div>
