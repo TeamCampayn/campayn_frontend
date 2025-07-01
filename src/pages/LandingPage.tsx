@@ -4,25 +4,17 @@ import {
   OnboardingProcess,
   FeaturesSection,
   ContactSection,
-  LandingHeader,
-  VerticalScrollCards
+  LandingHeader
 } from '../components/landing';
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen">
-      <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <LandingHeader />
-        <HeroSection />
-        <OnboardingProcess />
-      </div>
-      
-      <VerticalScrollCards />
-      
-      <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <FeaturesSection />
-        <ContactSection />
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <LandingHeader />
+      <HeroSection />
+      <OnboardingProcess />
+      <FeaturesSection />
+      <ContactSection />
     </div>
   );
 };
