@@ -87,12 +87,12 @@ export const VerticalScrollCards: React.FC = () => {
 
   return (
     <div className="relative">
-      {/* Etheral Shadow Background - only for this section */}
-      <div className="absolute inset-0 z-0">
+      {/* Fixed Etheral Shadow Background */}
+      <div className="fixed inset-0 z-0">
         <EtheralShadow
-          color="rgba(40, 40, 40, 1)"
-          animation={{ scale: 100, speed: 90 }}
-          noise={{ opacity: 1, scale: 1.2 }}
+          color="rgba(20, 20, 20, 1)"
+          animation={{ scale: 100, speed: 60 }}
+          noise={{ opacity: 0.8, scale: 1.5 }}
           sizing="fill"
         />
       </div>
