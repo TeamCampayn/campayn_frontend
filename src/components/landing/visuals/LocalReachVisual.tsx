@@ -63,7 +63,7 @@ export const LocalReachVisual: React.FC<LocalReachVisualProps> = ({ isActive = f
               <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg mx-auto mb-1 flex items-center justify-center shadow-lg">
                 <Store className="w-5 h-5 text-white" />
               </div>
-              <div className="text-xs font-bold text-green-800">Local Store</div>
+              <div className="text-xs font-bold text-green-800">Store</div>
               <div className="text-xs text-gray-500">Needs reach</div>
             </div>
             
