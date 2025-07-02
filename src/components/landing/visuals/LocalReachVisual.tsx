@@ -21,8 +21,59 @@ export const LocalReachVisual: React.FC<LocalReachVisualProps> = ({ isActive = f
   }, [isActive]);
 
   return (
-    <div ref={containerRef} className="relative w-full h-full flex items-center justify-center p-4">
-      <div className="relative w-full max-w-sm h-full flex items-center justify-center">
+    <div ref={containerRef} className="relative w-full h-full flex items-center justify-center p-2">
+      {/* Mobile Layout */}
+      <div className="lg:hidden w-full max-w-xs space-y-4">
+        {/* India Map */}
+        <div className="bg-white rounded-lg shadow-lg p-3 border-2 border-gray-200">
+          <div className="relative w-full h-32 bg-gradient-to-b from-green-100 to-emerald-200 rounded-lg border-2 border-green-300 overflow-hidden">
+            <div className="absolute inset-2 bg-gradient-to-br from-green-400 to-emerald-500 opacity-40 rounded-lg" style={{
+              clipPath: 'polygon(30% 20%, 70% 15%, 85% 35%, 80% 60%, 70% 85%, 30% 80%, 15% 50%)'
+            }}></div>
+            
+            {/* Cities */}
+            <div className="absolute top-2 left-3 w-2 h-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-full animate-pulse"></div>
+            <div className="absolute top-4 right-3 w-2 h-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full animate-pulse"></div>
+            <div className="absolute bottom-4 left-3 w-2 h-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full animate-pulse"></div>
+            <div className="absolute bottom-2 right-3 w-2 h-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full animate-pulse"></div>
+            
+            <div className="absolute bottom-1 left-1 right-1 bg-white/80 backdrop-blur-sm rounded p-1 text-center">
+              <div className="text-xs font-bold text-green-800">155K+ Creators • 500+ Cities</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Business & Creators */}
+        <div className="bg-white rounded-lg shadow-lg p-3 border-2 border-gray-200">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg mx-auto mb-2 flex items-center justify-center shadow-lg">
+                <Store className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-xs font-bold text-green-800">Local Store</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-red-500 rounded-lg mx-auto mb-2 flex items-center justify-center shadow-lg">
+                <Smartphone className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-xs font-bold text-gray-800">Raj</div>
+              <div className="text-xs text-orange-600">Tech</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-gradient-to-r from-pink-400 to-purple-500 rounded-lg mx-auto mb-2 flex items-center justify-center shadow-lg">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-xs font-bold text-gray-800">Priya</div>
+              <div className="text-xs text-pink-600">Lifestyle</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden lg:block relative w-full max-w-sm h-full flex items-center justify-center">
         {/* India Map - Centered and contained */}
         <div className="relative w-48 h-56 mx-auto">
           <div className="w-full h-full bg-gradient-to-b from-green-100 to-emerald-200 rounded-2xl border-4 border-green-300 relative overflow-hidden shadow-2xl">

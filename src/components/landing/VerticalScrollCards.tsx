@@ -123,15 +123,15 @@ export const VerticalScrollCards: React.FC = () => {
                 key={index} 
                 className={`scroll-item absolute w-full flex items-center justify-center px-4 sm:px-6`}
                 style={{ 
-                  height: '75vh',
-                  top: '12.5vh'
+                  height: '80vh',
+                  top: '10vh'
                 }}
               >
                 <div className={`w-full max-w-7xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full overflow-hidden`}>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 items-center p-4 sm:p-6 lg:p-8 h-full">
-                    {/* Content - Left side on large screens, full width on small */}
+                    {/* Content - Left side on large screens, bottom on small */}
                     <div className="flex flex-col justify-center text-center lg:text-left order-2 lg:order-1 space-y-3 lg:space-y-4">
-                      <h3 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 leading-tight">
+                      <h3 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 leading-tight">
                         {card.title}
                       </h3>
                       <p className="text-sm sm:text-base lg:text-lg text-gray-600 leading-relaxed">
@@ -152,9 +152,9 @@ export const VerticalScrollCards: React.FC = () => {
                     </div>
                     
                     {/* Visual - Above content on mobile, right side on desktop */}
-                    <div className="flex justify-center items-center order-1 lg:order-2 h-full max-h-[300px] lg:max-h-full">
-                      <div className="w-full h-full flex items-center justify-center p-2">
-                        <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[400px] xl:max-w-[450px] h-full max-h-[280px] sm:max-h-[320px] lg:max-h-[400px]">
+                    <div className="flex justify-center items-center order-1 lg:order-2 h-full">
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="w-full h-full">
                           {renderVisual(card.visualType, false)}
                         </div>
                       </div>

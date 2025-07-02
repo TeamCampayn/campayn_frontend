@@ -22,8 +22,50 @@ export const AIMatchingVisual: React.FC<AIMatchingVisualProps> = ({ isActive = f
   }, [isActive]);
 
   return (
-    <div ref={containerRef} className="relative w-full h-full flex items-center justify-center p-4">
-      <div className="relative w-full max-w-sm h-full flex items-center justify-center">
+    <div ref={containerRef} className="relative w-full h-full flex items-center justify-center p-2">
+      {/* Mobile/Small Screen Layout */}
+      <div className="lg:hidden w-full max-w-xs">
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {/* Central AI Brain - Top Left */}
+          <div className="flex justify-center">
+            <div className="relative">
+              <div className="absolute inset-0 w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur-lg opacity-50 animate-pulse"></div>
+              <div className="relative w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl animate-pulse border-2 border-white">
+                <Brain className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+          
+          {/* Match Score - Top Right */}
+          <div className="flex justify-center">
+            <div className="bg-gradient-to-r from-green-100 to-green-200 px-3 py-2 rounded-lg text-sm text-green-900 font-bold shadow-lg border border-green-300 flex items-center space-x-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
+              <span>98% Match</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          {/* Brand Requirements - Bottom Left */}
+          <div className="flex justify-center">
+            <div className="bg-gradient-to-r from-blue-100 to-blue-200 px-3 py-2 rounded-lg text-sm font-bold text-blue-900 shadow-lg border border-blue-300 flex items-center space-x-1">
+              <Target className="w-4 h-4" />
+              <span>Fashion</span>
+            </div>
+          </div>
+          
+          {/* Performance Data - Bottom Right */}
+          <div className="flex justify-center">
+            <div className="bg-gradient-to-r from-purple-100 to-purple-200 px-3 py-2 rounded-lg text-sm text-purple-900 font-bold shadow-lg border border-purple-300 flex items-center space-x-1">
+              <TrendingUp className="w-4 h-4" />
+              <span>High ROI</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden lg:block relative w-full max-w-sm h-full">
         {/* Central AI Brain */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
           <div className="relative">
@@ -40,7 +82,7 @@ export const AIMatchingVisual: React.FC<AIMatchingVisualProps> = ({ isActive = f
           </div>
         </div>
         
-        {/* Orbiting Elements - Optimized for mobile */}
+        {/* Orbiting Elements */}
         <div className="relative w-full h-full max-w-xs max-h-xs">
           {/* Brand Requirements - Top */}
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 animate-on-active z-10">

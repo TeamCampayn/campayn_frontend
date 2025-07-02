@@ -18,8 +18,88 @@ export const BudgetSliderVisual: React.FC<BudgetSliderVisualProps> = ({ isActive
   }, [isActive]);
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-4">
-      <div className="w-full max-w-xs">
+    <div className="w-full h-full flex items-center justify-center p-2">
+      {/* Mobile Layout */}
+      <div className="lg:hidden w-full max-w-xs space-y-4">
+        {/* Budget Header */}
+        <div className="bg-white rounded-lg shadow-lg p-3 border-2 border-gray-200">
+          <div className="text-center p-3 bg-gradient-to-r from-indigo-50 to-pink-50 rounded-lg border border-indigo-200">
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <DollarSign className="w-4 h-4 text-indigo-600 animate-pulse" />
+              <div className="text-sm font-bold text-gray-800">Campaign Budget</div>
+            </div>
+            <div className={`text-xl font-bold bg-gradient-to-r from-indigo-600 to-pink-600 bg-clip-text text-transparent transition-all duration-1000 ${
+              animateProgress ? 'animate-pulse' : ''
+            }`}>
+              ₹500 - ₹50K+
+            </div>
+          </div>
+        </div>
+
+        {/* Comparison */}
+        <div className="bg-white rounded-lg shadow-lg p-3 border-2 border-gray-200 space-y-3">
+          <div className="bg-red-50 rounded-lg p-3 border-2 border-red-200">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-semibold text-red-800">Agencies</span>
+              <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-bold">₹50K Min</span>
+            </div>
+            <div className="w-full bg-red-200 rounded-full h-3 overflow-hidden">
+              <div 
+                className={`bg-gradient-to-r from-red-500 to-red-600 h-3 rounded-full transition-all duration-1000 shadow-inner ${
+                  animateProgress ? 'w-1/6' : 'w-0'
+                }`}
+              ></div>
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-r from-indigo-50 to-pink-50 rounded-lg p-3 border-4 border-indigo-200 shadow-lg">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-bold text-indigo-800">Campayn</span>
+              <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-bold animate-pulse">₹500 Start</span>
+            </div>
+            <div className="w-full bg-indigo-200 rounded-full h-3 overflow-hidden">
+              <div 
+                className={`bg-gradient-to-r from-indigo-500 to-pink-600 h-3 rounded-full transition-all duration-1500 delay-300 shadow-inner ${
+                  animateProgress ? 'w-full' : 'w-0'
+                }`}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="bg-white rounded-lg shadow-lg p-3 border-2 border-gray-200 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200">
+              <div className={`text-lg font-bold text-blue-800 transition-all duration-500 ${
+                animateProgress ? 'animate-bounce' : ''
+              }`}>
+                {animateProgress ? '2.5K+' : '0'}
+              </div>
+              <div className="text-xs text-blue-600">Small Campaigns</div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-3 text-center border border-green-200">
+              <div className={`text-lg font-bold text-green-800 transition-all duration-500 ${
+                animateProgress ? 'animate-bounce' : ''
+              }`}>
+                {animateProgress ? '₹1,250' : '₹0'}
+              </div>
+              <div className="text-xs text-green-600">Avg. Size</div>
+            </div>
+          </div>
+          
+          <div className="text-center bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-3 border border-yellow-200">
+            <div className="text-sm text-gray-800 font-medium">
+              <span className={`transition-all duration-500 ${animateProgress ? 'animate-pulse' : ''}`}>
+                {animateProgress ? '15K+' : '0'} businesses served monthly
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden lg:block w-full max-w-xs">
         <div className="bg-white rounded-xl shadow-2xl p-4 border-2 border-gray-200 hover:border-indigo-300 transition-colors">
           {/* Budget Header */}
           <div className="text-center mb-4 p-3 bg-gradient-to-r from-indigo-50 to-pink-50 rounded-lg border border-indigo-200">
