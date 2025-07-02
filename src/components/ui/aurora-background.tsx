@@ -40,7 +40,8 @@ export const AuroraBackground = ({
             after:[background-size:200%,_100%] 
             after:animate-aurora after:[background-attachment:fixed] after:mix-blend-difference
             pointer-events-none
-            absolute -inset-[10px] opacity-50 will-change-transform`,
+            absolute -inset-[10px] opacity-50 will-change-transform
+            [--white:#ffffff] [--black:#000000] [--transparent:transparent] [--blue-500:#3b82f6] [--indigo-300:#a5b4fc] [--blue-300:#93c5fd] [--violet-200:#ddd6fe] [--blue-400:#60a5fa]`,
 
               showRadialGradient &&
                 `[mask-image:radial-gradient(ellipse_at_100%_0%,black_10%,var(--transparent)_70%)]`
@@ -49,26 +50,6 @@ export const AuroraBackground = ({
         </div>
         {children}
       </div>
-      <style jsx global>{`
-        @keyframes aurora {
-          from {
-            background-position: 50% 50%, 50% 50%;
-          }
-          to {
-            background-position: 350% 50%, 350% 50%;
-          }
-        }
-        :root {
-          --white: #ffffff;
-          --black: #000000;
-          --transparent: transparent;
-          --blue-500: #3b82f6;
-          --indigo-300: #a5b4fc;
-          --blue-300: #93c5fd;
-          --violet-200: #ddd6fe;
-          --blue-400: #60a5fa;
-        }
-      `}</style>
     </main>
   );
 };
