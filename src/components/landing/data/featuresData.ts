@@ -1,5 +1,5 @@
 
-import { Brain, MapPin, TrendingUp, DollarSign, Shield, Users } from 'lucide-react';
+import { Brain, MapPin, TrendingUp, DollarSign, Shield, Users, Building, Globe } from 'lucide-react';
 
 export const featuresData = [
   {
