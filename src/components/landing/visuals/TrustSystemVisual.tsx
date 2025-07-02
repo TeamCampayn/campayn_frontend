@@ -19,47 +19,47 @@ export const TrustSystemVisual: React.FC<TrustSystemVisualProps> = ({ isActive =
   }, [isActive]);
 
   return (
-    <div ref={containerRef} className="w-full h-full flex items-center justify-center p-2">
+    <div ref={containerRef} className="w-full h-full flex items-center justify-center p-1 overflow-hidden">
       {/* Mobile Layout */}
-      <div className="lg:hidden w-full max-w-xs space-y-4">
+      <div className="lg:hidden w-full max-w-xs space-y-2 overflow-hidden">
         {/* Creator Profile */}
-        <div className="bg-white rounded-lg shadow-lg p-3 border-2 border-gray-200">
-          <div className="flex items-center space-x-3 mb-3 p-2 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
+        <div className="bg-white rounded-lg shadow-lg p-2 border border-gray-200">
+          <div className="flex items-center space-x-2 mb-2 p-2 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
             <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-full flex items-center justify-center shadow-lg">
-                <Users className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-full flex items-center justify-center shadow-lg">
+                <Users className="w-4 h-4 text-white" />
               </div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center">
-                <Award className="w-1.5 h-1.5 text-white" />
+              <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center">
+                <Award className="w-1 h-1 text-white" />
               </div>
             </div>
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-1">
-                <span className="font-bold text-gray-800 text-sm">Arjun M</span>
-                <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-2 py-1 rounded-full text-xs font-bold shadow-sm animate-pulse">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center space-x-1 mb-1">
+                <span className="font-bold text-gray-800 text-xs truncate">Arjun M</span>
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-1.5 py-0.5 rounded-full text-xs font-bold shadow-sm animate-pulse">
                   Gold
                 </div>
               </div>
               <div className="text-xs text-gray-600 flex items-center space-x-1">
-                <span>Fashion</span>
-                <TrendingUp className="w-3 h-3 text-green-500" />
+                <span className="truncate">Fashion</span>
+                <TrendingUp className="w-2.5 h-2.5 text-green-500" />
               </div>
             </div>
           </div>
           
           {/* Trust Metrics */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-600 font-medium">Response Rate</span>
+              <span className="text-xs text-gray-600 font-medium truncate">Response Rate</span>
               <span className={`text-xs font-bold text-green-600 transition-all duration-500 ${
                 animateProgress ? 'animate-pulse' : ''
               }`}>
                 {animateProgress ? '98%' : '0%'}
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
               <div 
-                className={`bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full transition-all duration-1000 shadow-inner ${
+                className={`bg-gradient-to-r from-green-400 to-green-600 h-1.5 rounded-full transition-all duration-1000 shadow-inner ${
                   animateProgress ? 'w-[98%]' : 'w-0'
                 }`}
               ></div>
@@ -68,37 +68,37 @@ export const TrustSystemVisual: React.FC<TrustSystemVisualProps> = ({ isActive =
         </div>
 
         {/* Wallet and Tier System */}
-        <div className="bg-white rounded-lg shadow-lg p-3 border-2 border-gray-200 space-y-3">
+        <div className="bg-white rounded-lg shadow-lg p-2 border border-gray-200 space-y-2">
           {/* Secure Wallet */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border-2 border-green-200">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-green-800">Secure Wallet</span>
-              <Shield className="w-4 h-4 text-green-600 animate-pulse" />
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-2 border border-green-200">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-semibold text-green-800 truncate">Secure Wallet</span>
+              <Shield className="w-3 h-3 text-green-600 animate-pulse" />
             </div>
-            <div className={`text-lg font-bold text-green-700 transition-all duration-1000 ${
+            <div className={`text-sm font-bold text-green-700 transition-all duration-1000 truncate ${
               animateProgress ? 'animate-bounce' : ''
             }`}>
               {animateProgress ? '₹12,450' : '₹0'}
             </div>
-            <div className="text-xs text-green-600">Available</div>
+            <div className="text-xs text-green-600 truncate">Available</div>
           </div>
           
           {/* Tier Progress */}
-          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-3 border border-purple-200">
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-2 border border-purple-200">
             <div className="flex justify-between text-xs text-purple-700 mb-1 font-medium">
-              <span>To Platinum</span>
+              <span className="truncate">To Platinum</span>
               <span className={`transition-all duration-500 ${animateProgress ? 'animate-pulse' : ''}`}>
                 {animateProgress ? '850/1000' : '0/1000'}
               </span>
             </div>
-            <div className="w-full bg-purple-200 rounded-full h-2 overflow-hidden mb-1">
+            <div className="w-full bg-purple-200 rounded-full h-1.5 overflow-hidden mb-1">
               <div 
-                className={`bg-gradient-to-r from-purple-500 to-indigo-600 h-2 rounded-full transition-all duration-1500 delay-200 shadow-inner ${
+                className={`bg-gradient-to-r from-purple-500 to-indigo-600 h-1.5 rounded-full transition-all duration-1500 delay-200 shadow-inner ${
                   animateProgress ? 'w-[85%]' : 'w-0'
                 }`}
               ></div>
             </div>
-            <div className="text-xs text-purple-600 text-center">
+            <div className="text-xs text-purple-600 text-center truncate">
               🏆 150 XP to Platinum!
             </div>
           </div>
