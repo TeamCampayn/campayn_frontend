@@ -116,9 +116,9 @@ export const DashboardPreview = () => {
         }
       >
         <img
-          src="/lovable-uploads/d64ee44f-60bd-4e01-a884-a8795d766dd0.png"
+          src="/lovable-uploads/04edaae1-6768-43f4-95f9-f1361319cfcd.png"
           alt="Campayn Dashboard Screenshot"
-          className="mx-auto rounded-2xl object-cover h-full object-left-top"
+          className="w-full h-full object-contain rounded-2xl"
           draggable={false}
         />
       </ContainerScroll>
