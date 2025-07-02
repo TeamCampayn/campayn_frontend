@@ -103,15 +103,8 @@ export const VerticalScrollCards: React.FC = () => {
 
   return (
     <div className="relative w-full overflow-hidden">
-      {/* Optimized CSS-only animated background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        {/* Subtle animated gradients for visual interest without performance impact */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-transparent rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-purple-200 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-r from-indigo-200 to-transparent rounded-full blur-2xl animate-pulse" style={{ animationDelay: '4s' }}></div>
-        </div>
-      </div>
+      {/* Simple gradient background for smooth performance */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50"></div>
       
       {/* Fixed Heading */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center relative z-10">
