@@ -54,7 +54,7 @@ export const TrustSystemVisual: React.FC<TrustSystemVisualProps> = ({ isActive =
               <span className={`text-xs font-bold text-green-600 transition-all duration-500 ${
                 animateProgress ? 'animate-pulse' : ''
               }`}>
-                {animateProgress ? '98%' : '0%'}
+                {animateProgress ? '98%' : '45%'}
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
@@ -78,7 +78,7 @@ export const TrustSystemVisual: React.FC<TrustSystemVisualProps> = ({ isActive =
             <div className={`text-sm font-bold text-green-700 transition-all duration-1000 truncate ${
               animateProgress ? 'animate-bounce' : ''
             }`}>
-              {animateProgress ? '₹12,450' : '₹0'}
+              {animateProgress ? '₹12,450' : '₹2,150'}
             </div>
             <div className="text-xs text-green-600 truncate">Available</div>
           </div>
@@ -88,7 +88,7 @@ export const TrustSystemVisual: React.FC<TrustSystemVisualProps> = ({ isActive =
             <div className="flex justify-between text-xs text-purple-700 mb-1 font-medium">
               <span className="truncate">To Platinum</span>
               <span className={`transition-all duration-500 ${animateProgress ? 'animate-pulse' : ''}`}>
-                {animateProgress ? '850/1000' : '0/1000'}
+                {animateProgress ? '850/1000' : '420/1000'}
               </span>
             </div>
             <div className="w-full bg-purple-200 rounded-full h-1.5 overflow-hidden mb-1">
@@ -140,7 +140,7 @@ export const TrustSystemVisual: React.FC<TrustSystemVisualProps> = ({ isActive =
                 <span className={`text-xs font-bold text-green-600 transition-all duration-500 ${
                   animateProgress ? 'animate-pulse' : ''
                 }`}>
-                  {animateProgress ? '98%' : '0%'}
+                  {animateProgress ? '98%' : '45%'}
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -158,7 +158,7 @@ export const TrustSystemVisual: React.FC<TrustSystemVisualProps> = ({ isActive =
                 <span className={`text-xs font-bold text-green-600 transition-all duration-500 ${
                   animateProgress ? 'animate-pulse' : ''
                 }`}>
-                  {animateProgress ? '100%' : '0%'}
+                  {animateProgress ? '100%' : '78%'}
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -176,7 +176,7 @@ export const TrustSystemVisual: React.FC<TrustSystemVisualProps> = ({ isActive =
                 <span className={`text-xs font-bold text-blue-600 transition-all duration-500 ${
                   animateProgress ? 'animate-pulse' : ''
                 }`}>
-                  {animateProgress ? '4.8/5' : '0.0/5'}
+                  {animateProgress ? '4.8/5' : '3.2/5'}
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -198,7 +198,7 @@ export const TrustSystemVisual: React.FC<TrustSystemVisualProps> = ({ isActive =
             <div className={`text-lg font-bold text-green-700 mb-1 transition-all duration-1000 ${
               animateProgress ? 'animate-bounce' : ''
             }`}>
-              {animateProgress ? '₹12,450' : '₹0'}
+              {animateProgress ? '₹12,450' : '₹2,150'}
             </div>
             <div className="text-xs text-green-600 flex items-center space-x-1">
               <span>Available</span>
@@ -211,7 +211,7 @@ export const TrustSystemVisual: React.FC<TrustSystemVisualProps> = ({ isActive =
             <div className="flex justify-between text-xs text-purple-700 mb-1 font-medium">
               <span>To Platinum</span>
               <span className={`transition-all duration-500 ${animateProgress ? 'animate-pulse' : ''}`}>
-                {animateProgress ? '850/1000' : '0/1000'}
+                {animateProgress ? '850/1000' : '420/1000'}
               </span>
             </div>
             <div className="w-full bg-purple-200 rounded-full h-2 overflow-hidden mb-1">

@@ -77,7 +77,7 @@ export const BharatSplitVisual: React.FC<BharatSplitVisualProps> = ({ isActive =
               <div className={`text-sm font-bold text-orange-800 transition-all duration-1000 truncate ${
                 animateProgress ? 'animate-bounce' : ''
               }`}>
-                {animateProgress ? '500M+' : '0M'}
+                {animateProgress ? '500M+' : '100M'}
               </div>
               <div className="text-xs text-orange-700 font-medium truncate">Underserved</div>
             </div>
@@ -86,7 +86,7 @@ export const BharatSplitVisual: React.FC<BharatSplitVisualProps> = ({ isActive =
               <div className={`text-sm font-bold text-purple-800 transition-all duration-1000 truncate ${
                 animateProgress ? 'animate-bounce' : ''
               }`}>
-                {animateProgress ? '2,800+' : '0'}
+                {animateProgress ? '2,800+' : '1,200'}
               </div>
               <div className="text-xs text-purple-700 font-medium truncate">Cities</div>
             </div>
@@ -169,7 +169,7 @@ export const BharatSplitVisual: React.FC<BharatSplitVisualProps> = ({ isActive =
               <div className={`text-lg font-bold text-orange-800 transition-all duration-1000 ${
                 animateProgress ? 'animate-bounce' : ''
               }`}>
-                {animateProgress ? '500M+' : '0M'}
+                {animateProgress ? '500M+' : '100M'}
               </div>
               <div className="text-xs text-orange-700 font-medium">Underserved</div>
             </div>
@@ -178,7 +178,7 @@ export const BharatSplitVisual: React.FC<BharatSplitVisualProps> = ({ isActive =
               <div className={`text-lg font-bold text-purple-800 transition-all duration-1000 ${
                 animateProgress ? 'animate-bounce' : ''
               }`}>
-                {animateProgress ? '2,800+' : '0'}
+                {animateProgress ? '2,800+' : '1,200'}
               </div>
               <div className="text-xs text-purple-700 font-medium">Cities</div>
             </div>

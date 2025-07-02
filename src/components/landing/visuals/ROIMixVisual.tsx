@@ -71,7 +71,7 @@ export const ROIMixVisual: React.FC<ROIMixVisualProps> = ({ isActive = false }) 
               <div className={`text-sm font-bold text-blue-800 transition-all duration-500 truncate ${
                 animateProgress ? 'animate-pulse' : ''
               }`}>
-                {animateProgress ? '85%' : '0%'}
+                {animateProgress ? '85%' : '25%'}
               </div>
               <div className="text-xs text-blue-600 truncate">Engagement</div>
             </div>
@@ -79,7 +79,7 @@ export const ROIMixVisual: React.FC<ROIMixVisualProps> = ({ isActive = false }) 
               <div className={`text-sm font-bold text-purple-800 transition-all duration-500 truncate ${
                 animateProgress ? 'animate-pulse' : ''
               }`}>
-                {animateProgress ? '₹2.5' : '₹0'}
+                {animateProgress ? '₹2.5' : '₹5.2'}
               </div>
               <div className="text-xs text-purple-600 truncate">Cost/Click</div>
             </div>
@@ -165,7 +165,7 @@ export const ROIMixVisual: React.FC<ROIMixVisualProps> = ({ isActive = false }) 
                 <div className={`text-sm font-bold text-blue-800 transition-all duration-500 ${
                   animateProgress ? 'animate-pulse' : ''
                 }`}>
-                  {animateProgress ? '85%' : '0%'}
+                  {animateProgress ? '85%' : '25%'}
                 </div>
                 <div className="text-xs text-blue-600">Engagement</div>
               </div>
@@ -173,7 +173,7 @@ export const ROIMixVisual: React.FC<ROIMixVisualProps> = ({ isActive = false }) 
                 <div className={`text-sm font-bold text-purple-800 transition-all duration-500 ${
                   animateProgress ? 'animate-pulse' : ''
                 }`}>
-                  {animateProgress ? '₹2.5' : '₹0'}
+                  {animateProgress ? '₹2.5' : '₹5.2'}
                 </div>
                 <div className="text-xs text-purple-600">Cost/Click</div>
               </div>

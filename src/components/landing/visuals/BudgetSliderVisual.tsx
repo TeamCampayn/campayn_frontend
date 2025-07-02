@@ -74,7 +74,7 @@ export const BudgetSliderVisual: React.FC<BudgetSliderVisualProps> = ({ isActive
               <div className={`text-sm font-bold text-blue-800 transition-all duration-500 truncate ${
                 animateProgress ? 'animate-bounce' : ''
               }`}>
-                {animateProgress ? '2.5K+' : '0'}
+                {animateProgress ? '2.5K+' : '500'}
               </div>
               <div className="text-xs text-blue-600 truncate">Small Campaigns</div>
             </div>
@@ -82,7 +82,7 @@ export const BudgetSliderVisual: React.FC<BudgetSliderVisualProps> = ({ isActive
               <div className={`text-sm font-bold text-green-800 transition-all duration-500 truncate ${
                 animateProgress ? 'animate-bounce' : ''
               }`}>
-                {animateProgress ? '₹1,250' : '₹0'}
+                {animateProgress ? '₹1,250' : '₹750'}
               </div>
               <div className="text-xs text-green-600 truncate">Avg. Size</div>
             </div>
@@ -91,7 +91,7 @@ export const BudgetSliderVisual: React.FC<BudgetSliderVisualProps> = ({ isActive
           <div className="text-center bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-2 border border-yellow-200">
             <div className="text-xs text-gray-800 font-medium">
               <span className={`transition-all duration-500 truncate ${animateProgress ? 'animate-pulse' : ''}`}>
-                {animateProgress ? '15K+' : '0'} businesses monthly
+                {animateProgress ? '15K+' : '5K'} businesses monthly
               </span>
             </div>
           </div>
@@ -168,7 +168,7 @@ export const BudgetSliderVisual: React.FC<BudgetSliderVisualProps> = ({ isActive
               <div className={`text-sm font-bold text-blue-800 transition-all duration-500 ${
                 animateProgress ? 'animate-bounce' : ''
               }`}>
-                {animateProgress ? '2.5K+' : '0'}
+                {animateProgress ? '2.5K+' : '500'}
               </div>
               <div className="text-xs text-blue-600">Small Campaigns</div>
             </div>
@@ -176,7 +176,7 @@ export const BudgetSliderVisual: React.FC<BudgetSliderVisualProps> = ({ isActive
               <div className={`text-sm font-bold text-green-800 transition-all duration-500 ${
                 animateProgress ? 'animate-bounce' : ''
               }`}>
-                {animateProgress ? '₹1,250' : '₹0'}
+                {animateProgress ? '₹1,250' : '₹750'}
               </div>
               <div className="text-xs text-green-600">Avg. Size</div>
             </div>
@@ -197,7 +197,7 @@ export const BudgetSliderVisual: React.FC<BudgetSliderVisualProps> = ({ isActive
             </div>
             <div className="text-xs text-gray-600 font-medium">
               <span className={`transition-all duration-500 ${animateProgress ? 'animate-pulse' : ''}`}>
-                {animateProgress ? '15K+' : '0'} businesses monthly
+                {animateProgress ? '15K+' : '5K'} businesses monthly
               </span>
             </div>
           </div>
