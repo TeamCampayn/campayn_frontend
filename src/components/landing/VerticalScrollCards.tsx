@@ -11,6 +11,7 @@ import {
   TrustSystemVisual,
   BharatSplitVisual
 } from './visuals';
+import { Particles } from '../ui/particles';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -100,9 +101,18 @@ export const VerticalScrollCards: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-white">
+    <div className="relative w-full overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Optimized particles background - reduced quantity for better performance */}
+      <Particles
+        className="absolute inset-0 pointer-events-none"
+        quantity={30}
+        ease={60}
+        color="#000000"
+        refresh={false}
+      />
+      
       {/* Fixed Heading */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center relative z-10">
         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
           Your Brand Deserves Better Than an Agency. It Deserves Campayn
         </h2>
@@ -114,7 +124,7 @@ export const VerticalScrollCards: React.FC = () => {
       {/* Scrollable Cards Section */}
       <section 
         ref={sectionRef} 
-        className="relative w-full h-screen"
+        className="relative w-full h-screen z-10"
       >
         <div className="relative w-full h-screen flex items-center justify-center">
           {featuresData.map((card, index) => {
