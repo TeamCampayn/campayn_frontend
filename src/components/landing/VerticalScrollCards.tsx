@@ -100,9 +100,16 @@ export const VerticalScrollCards: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-white">
+    <div className="relative bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/40 overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-32 w-80 h-80 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-gradient-to-tr from-indigo-400/10 to-cyan-400/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-violet-400/5 to-pink-400/5 rounded-full blur-3xl animate-pulse" style={{animationDelay: '4s'}}></div>
+      </div>
+
       {/* Fixed Heading */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center">
         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
           Your Brand Deserves Better Than an Agency. It Deserves Campayn
         </h2>
@@ -114,7 +121,7 @@ export const VerticalScrollCards: React.FC = () => {
       {/* Scrollable Cards Section */}
       <section 
         ref={sectionRef} 
-        className="relative w-full h-screen"
+        className="relative w-full h-screen z-10"
       >
         <div className="relative w-full h-screen flex items-center justify-center">
           {featuresData.map((card, index) => {
@@ -127,7 +134,7 @@ export const VerticalScrollCards: React.FC = () => {
                   top: '10vh'
                 }}
               >
-                <div className={`w-full max-w-7xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full overflow-hidden`}>
+                <div className={`w-full max-w-7xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200/50 shadow-xl backdrop-blur-sm h-full overflow-hidden`}>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 items-center p-4 sm:p-6 lg:p-8 h-full">
                     {/* Content - Left side on large screens, bottom on small */}
                     <div className="flex flex-col justify-center text-center lg:text-left order-2 lg:order-1 space-y-3 lg:space-y-4">
