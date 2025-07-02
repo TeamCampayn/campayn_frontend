@@ -14,20 +14,21 @@ import {
 
 gsap.registerPlugin(ScrollTrigger);
 
-const renderVisual = (visualType: string) => {
+const renderVisual = (visualType: string, isActive: boolean) => {
+  const props = { isActive };
   switch (visualType) {
     case 'ai-matching':
-      return <AIMatchingVisual />;
+      return <AIMatchingVisual {...props} />;
     case 'local-reach':
-      return <LocalReachVisual />;
+      return <LocalReachVisual {...props} />;
     case 'roi-mix':
-      return <ROIMixVisual />;
+      return <ROIMixVisual {...props} />;
     case 'budget-slider':
-      return <BudgetSliderVisual />;
+      return <BudgetSliderVisual {...props} />;
     case 'trust-system':
-      return <TrustSystemVisual />;
+      return <TrustSystemVisual {...props} />;
     case 'bharat-split':
-      return <BharatSplitVisual />;
+      return <BharatSplitVisual {...props} />;
     default:
       return null;
   }
@@ -60,6 +61,20 @@ export const VerticalScrollCards: React.FC = () => {
         end: `+=${items.length * 100}%`,
         scrub: 1,
         invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          // Calculate which card is currently active
+          const progress = self.progress;
+          const activeIndex = Math.min(Math.floor(progress * items.length), items.length - 1);
+          
+          // Add active class to current card
+          items.forEach((item, idx) => {
+            if (idx === activeIndex) {
+              item.classList.add('active');
+            } else {
+              item.classList.remove('active');
+            }
+          });
+        }
       },
       defaults: { ease: "none" },
     });
@@ -115,20 +130,32 @@ export const VerticalScrollCards: React.FC = () => {
                 <div className={`w-full max-w-6xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full overflow-hidden`}>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 xl:gap-8 items-center p-4 sm:p-6 lg:p-8 xl:p-12 h-full">
                     {/* Content - Left side on large screens, full width on small */}
-                    <div className="flex flex-col justify-center text-center lg:text-left order-1">
+                    <div className="flex flex-col justify-center text-center lg:text-left order-2 lg:order-1">
                       <h3 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold text-gray-900 mb-3 sm:mb-4 lg:mb-6 leading-tight">
                         {card.title}
                       </h3>
-                      <p className="text-sm sm:text-base lg:text-lg xl:text-xl text-gray-600 leading-relaxed">
+                      <p className="text-sm sm:text-base lg:text-lg xl:text-xl text-gray-600 leading-relaxed mb-4 lg:mb-6">
                         {card.description}
                       </p>
+                      
+                      {/* Bullet Points */}
+                      <div className="space-y-2 sm:space-y-3">
+                        {card.bulletPoints?.map((point, idx) => (
+                          <div key={idx} className="flex items-start space-x-2 sm:space-x-3 text-left">
+                            <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mt-2 flex-shrink-0"></div>
+                            <span className="text-xs sm:text-sm lg:text-base text-gray-700 leading-relaxed">
+                              {point}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                     
-                    {/* Visual - Right side, responsive sizing */}
-                    <div className="flex justify-center items-center h-full order-2">
+                    {/* Visual - Above content on mobile, right side on desktop */}
+                    <div className="flex justify-center items-center h-full order-1 lg:order-2">
                       <div className="w-full h-full max-w-xs sm:max-w-sm lg:max-w-md xl:max-w-lg relative">
                         <div className="transform scale-75 sm:scale-90 lg:scale-100 origin-center">
-                          {renderVisual(card.visualType)}
+                          {renderVisual(card.visualType, false)}
                         </div>
                       </div>
                     </div>
