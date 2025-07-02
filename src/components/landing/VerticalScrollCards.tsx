@@ -11,7 +11,6 @@ import {
   TrustSystemVisual,
   BharatSplitVisual
 } from './visuals';
-import { Particles } from '../ui/particles';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -60,8 +59,10 @@ export const VerticalScrollCards: React.FC = () => {
         pin: true,
         start: "top top",
         end: `+=${items.length * 100}%`,
-        scrub: 1,
+        scrub: 0.5, // Reduced from 1 for smoother scrolling
+        anticipatePin: 1,
         invalidateOnRefresh: true,
+        refreshPriority: -1,
         onUpdate: (self) => {
           // Calculate which card is currently active
           const progress = self.progress;
@@ -77,18 +78,18 @@ export const VerticalScrollCards: React.FC = () => {
           });
         }
       },
-      defaults: { ease: "none" },
+      defaults: { ease: "power2.out" }, // Smoother easing
     });
 
     items.forEach((item, idx) => {
       // Scale down and move up current item slightly
-      timeline.to(item, { scale: 0.95, y: -30 });
+      timeline.to(item, { scale: 0.95, y: -30, duration: 1 });
       
       // Slide up next item from bottom
       if (items[idx + 1]) {
         timeline.to(
           items[idx + 1],
-          { y: 0 },
+          { y: 0, duration: 1 },
           "<"
         );
       }
@@ -101,15 +102,16 @@ export const VerticalScrollCards: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative w-full overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Optimized particles background - reduced quantity for better performance */}
-      <Particles
-        className="absolute inset-0 pointer-events-none"
-        quantity={30}
-        ease={60}
-        color="#000000"
-        refresh={false}
-      />
+    <div className="relative w-full overflow-hidden">
+      {/* Optimized CSS-only animated background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        {/* Subtle animated gradients for visual interest without performance impact */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-transparent rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-purple-200 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-r from-indigo-200 to-transparent rounded-full blur-2xl animate-pulse" style={{ animationDelay: '4s' }}></div>
+        </div>
+      </div>
       
       {/* Fixed Heading */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center relative z-10">
