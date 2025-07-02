@@ -59,7 +59,7 @@ export const VerticalScrollCards: React.FC = () => {
         pin: true,
         start: "top top",
         end: `+=${items.length * 100}%`,
-        scrub: 0.5, // Reduced from 1 for smoother scrolling
+        scrub: 0.8,
         anticipatePin: 1,
         invalidateOnRefresh: true,
         refreshPriority: -1,
@@ -78,20 +78,22 @@ export const VerticalScrollCards: React.FC = () => {
           });
         }
       },
-      defaults: { ease: "power2.out" }, // Smoother easing
+      defaults: { ease: "none" },
     });
 
+    // Create smoother transitions between cards
     items.forEach((item, idx) => {
-      // Scale down and move up current item slightly
-      timeline.to(item, { scale: 0.95, y: -30, duration: 1 });
-      
-      // Slide up next item from bottom
-      if (items[idx + 1]) {
-        timeline.to(
-          items[idx + 1],
-          { y: 0, duration: 1 },
-          "<"
-        );
+      if (idx < items.length - 1) {
+        timeline
+          .to(item, { 
+            scale: 0.95, 
+            y: -50,
+            duration: 0.5
+          })
+          .to(items[idx + 1], { 
+            y: 0,
+            duration: 0.5 
+          }, "<0.25");
       }
     });
 
