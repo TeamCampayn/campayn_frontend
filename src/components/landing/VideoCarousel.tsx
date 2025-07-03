@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 
 interface VideoCard {
@@ -199,17 +198,6 @@ export const VideoCarousel: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      <style jsx>{`
-        @keyframes scroll-left {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-      `}</style>
     </div>
   );
 };
