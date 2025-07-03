@@ -60,6 +60,8 @@ export const LandingHeader = () => {
       navigate("/creators");
     } else if (label === "Brands") {
       navigate("/");
+    } else if (label === "About Us") {
+      navigate("/about");
     } else {
       const href = menuItems.find(item => item.label === label)?.href;
       if (href) {
