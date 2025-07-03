@@ -4,7 +4,8 @@ import {
   FeaturesSection,
   ContactSection,
   LandingHeader,
-  VerticalScrollCards
+  VerticalScrollCards,
+  Footer
 } from '../components/landing';
 import { DashboardPreview } from '../components/landing/DashboardPreview';
 import { VideoCarousel } from '../components/landing/VideoCarousel';
@@ -24,6 +25,7 @@ const LandingPage = () => {
         <DashboardPreview />
       </div>
       <ContactSection />
+      <Footer />
     </div>
   );
 };

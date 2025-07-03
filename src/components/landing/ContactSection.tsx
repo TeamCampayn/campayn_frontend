@@ -1,6 +1,10 @@
 
 import { useState } from 'react';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -24,80 +28,79 @@ export const ContactSection = () => {
   };
 
   return (
-    <section className="py-32 bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 relative overflow-hidden">
+    <section className="py-24 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0">
-        <div className="absolute top-20 left-20 w-96 h-96 bg-blue-400/10 rounded-full mix-blend-multiply filter blur-3xl"></div>
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-400/10 rounded-full mix-blend-multiply filter blur-3xl"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-400/20 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-400/20 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-5xl font-bold text-white mb-6">
-            Ready to Transform Your Marketing?
+      <div className="relative z-10 max-w-6xl mx-auto px-6">
+        <div className="text-center mb-20">
+          <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
+            Let's Start Something Amazing
           </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Get in touch with our team to learn how Campayn can elevate your brand 
-            and connect you with the perfect creators for your next campaign.
+          <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            Ready to transform your brand's reach? Connect with creators who'll bring your vision to life.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-16">
+        <div className="grid lg:grid-cols-5 gap-12">
           {/* Contact Info */}
-          <div className="space-y-8">
-            <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20">
-              <h3 className="text-2xl font-bold text-white mb-6">Get in Touch</h3>
+          <div className="lg:col-span-2 space-y-8">
+            <div className="bg-white/70 backdrop-blur-lg rounded-2xl p-8 border border-white/40 shadow-xl">
+              <h3 className="text-2xl font-bold text-slate-800 mb-6">Get in Touch</h3>
               
               <div className="space-y-6">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                    <Mail className="w-6 h-6 text-blue-300" />
+                <div className="flex items-center space-x-4 group">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                    <Mail className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <div className="text-white font-medium">Email</div>
-                    <div className="text-gray-300">hello@campayn.com</div>
+                    <div className="text-slate-800 font-semibold">Email Us</div>
+                    <div className="text-slate-600">hello@campayn.com</div>
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                    <Phone className="w-6 h-6 text-purple-300" />
+                <div className="flex items-center space-x-4 group">
+                  <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                    <Phone className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <div className="text-white font-medium">Phone</div>
-                    <div className="text-gray-300">+91 12345 67890</div>
+                    <div className="text-slate-800 font-semibold">Call Us</div>
+                    <div className="text-slate-600">+91 12345 67890</div>
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-pink-500/20 rounded-xl flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-pink-300" />
+                <div className="flex items-center space-x-4 group">
+                  <div className="w-14 h-14 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                    <MapPin className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <div className="text-white font-medium">Location</div>
-                    <div className="text-gray-300">Mumbai, India</div>
+                    <div className="text-slate-800 font-semibold">Visit Us</div>
+                    <div className="text-slate-600">Mumbai, India</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20">
-              <h4 className="text-xl font-bold text-white mb-4">Why Choose Campayn?</h4>
-              <ul className="space-y-3 text-gray-300">
+            <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
+              <h4 className="text-xl font-bold mb-4">Why Choose Campayn?</h4>
+              <ul className="space-y-3">
                 <li className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <ArrowRight className="w-4 h-4 text-blue-200" />
                   <span>AI-powered creator matching</span>
                 </li>
                 <li className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                  <ArrowRight className="w-4 h-4 text-purple-200" />
                   <span>Real-time campaign analytics</span>
                 </li>
                 <li className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-pink-400 rounded-full"></div>
+                  <ArrowRight className="w-4 h-4 text-pink-200" />
                   <span>Automated workflow management</span>
                 </li>
                 <li className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <ArrowRight className="w-4 h-4 text-blue-200" />
                   <span>Transparent pricing & payments</span>
                 </li>
               </ul>
@@ -105,79 +108,83 @@ export const ContactSection = () => {
           </div>
 
           {/* Contact Form */}
-          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="name" className="block text-white font-medium mb-2">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter your full name"
-                  required
-                />
-              </div>
+          <div className="lg:col-span-3">
+            <div className="bg-white/70 backdrop-blur-lg rounded-2xl p-8 border border-white/40 shadow-xl">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-slate-700 font-medium">
+                      Full Name *
+                    </Label>
+                    <Input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="h-12 bg-white/80 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Enter your full name"
+                      required
+                    />
+                  </div>
 
-              <div>
-                <label htmlFor="email" className="block text-white font-medium mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-slate-700 font-medium">
+                      Email Address *
+                    </Label>
+                    <Input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="h-12 bg-white/80 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Enter your email"
+                      required
+                    />
+                  </div>
+                </div>
 
-              <div>
-                <label htmlFor="company" className="block text-white font-medium mb-2">
-                  Company Name
-                </label>
-                <input
-                  type="text"
-                  id="company"
-                  name="company"
-                  value={formData.company}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter your company name"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company" className="text-slate-700 font-medium">
+                    Company Name
+                  </Label>
+                  <Input
+                    type="text"
+                    id="company"
+                    name="company"
+                    value={formData.company}
+                    onChange={handleChange}
+                    className="h-12 bg-white/80 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Enter your company name"
+                  />
+                </div>
 
-              <div>
-                <label htmlFor="message" className="block text-white font-medium mb-2">
-                  Message
-                </label>
-                <textarea
-                  id="message"
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  rows={4}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  placeholder="Tell us about your campaign goals..."
-                  required
-                ></textarea>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="message" className="text-slate-700 font-medium">
+                    Message *
+                  </Label>
+                  <Textarea
+                    id="message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    rows={5}
+                    className="bg-white/80 border-slate-200 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                    placeholder="Tell us about your campaign goals, target audience, and what you'd like to achieve..."
+                    required
+                  />
+                </div>
 
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2"
-              >
-                <span>Send Message</span>
-                <Send className="w-5 h-5" />
-              </button>
-            </form>
+                <Button
+                  type="submit"
+                  className="w-full h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                >
+                  <span>Send Message</span>
+                  <Send className="w-5 h-5 ml-2" />
+                </Button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
