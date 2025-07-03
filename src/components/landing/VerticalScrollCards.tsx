@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -101,16 +102,12 @@ export const VerticalScrollCards: React.FC = () => {
   return (
     <div className="relative">
       {/* Fixed Heading */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-6 sm:pb-8 text-center">
-        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-heading font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-purple-900 bg-clip-text text-transparent mb-6 sm:mb-8 leading-tight tracking-tight">
-          Your Brand Deserves Better Than an Agency.{" "}
-          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            It Deserves Campayn
-          </span>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
+          Your Brand Deserves Better Than an Agency. It Deserves Campayn
         </h2>
-        <p className="text-lg sm:text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-medium tracking-wide">
-          Everything you need to run successful creator campaigns,{" "}
-          <span className="text-blue-700 font-semibold">all in one platform.</span>
+        <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          Everything you need to run successful creator campaigns, all in one platform.
         </p>
       </div>
 
@@ -130,23 +127,23 @@ export const VerticalScrollCards: React.FC = () => {
                   top: '10vh'
                 }}
               >
-                <div className={`w-full max-w-7xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200/60 shadow-2xl shadow-gray-900/10 h-full overflow-hidden backdrop-blur-sm`}>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-center p-6 sm:p-8 lg:p-12 h-full">
+                <div className={`w-full max-w-7xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full overflow-hidden`}>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 items-center p-4 sm:p-6 lg:p-8 h-full">
                     {/* Content - Left side on large screens, bottom on small */}
-                    <div className="flex flex-col justify-center text-center lg:text-left order-2 lg:order-1 space-y-4 lg:space-y-6 px-2">
-                      <h3 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-heading font-bold text-slate-900 leading-tight tracking-tight">
+                    <div className="flex flex-col justify-center text-center lg:text-left order-2 lg:order-1 space-y-3 lg:space-y-4 px-2">
+                      <h3 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 leading-tight">
                         {card.title}
                       </h3>
-                      <p className="text-base sm:text-lg lg:text-xl text-slate-700 leading-relaxed font-medium tracking-wide max-w-xl">
+                      <p className="text-sm sm:text-base lg:text-lg text-gray-600 leading-relaxed">
                         {card.description}
                       </p>
                       
                       {/* Bullet Points */}
-                      <div className="space-y-3 lg:space-y-4 max-w-2xl">
+                      <div className="space-y-2 max-w-2xl">
                         {card.bulletPoints?.map((point, idx) => (
-                          <div key={idx} className="flex items-start space-x-3 sm:space-x-4 text-left group">
-                            <div className="w-2.5 h-2.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mt-2.5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200"></div>
-                            <span className="text-sm sm:text-base lg:text-lg text-slate-700 leading-relaxed break-words font-medium tracking-wide group-hover:text-slate-900 transition-colors duration-200">
+                          <div key={idx} className="flex items-start space-x-2 sm:space-x-3 text-left">
+                            <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mt-2 flex-shrink-0"></div>
+                            <span className="text-xs sm:text-sm lg:text-base text-gray-700 leading-relaxed break-words">
                               {point}
                             </span>
                           </div>
