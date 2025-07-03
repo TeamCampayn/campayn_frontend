@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
+import { LiquidButton } from './ui/liquid-glass-button';
 
 interface CursorFollowButtonProps {
   text?: string;
@@ -64,18 +65,11 @@ export const CursorFollowButton = ({
   };
 
   return (
-    <button
+    <LiquidButton
       ref={buttonRef}
       onClick={handleClick}
       className={`
         fixed z-50 pointer-events-auto
-        bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600
-        hover:from-blue-700 hover:via-purple-700 hover:to-pink-700
-        text-white px-6 py-3 rounded-full font-semibold text-sm
-        shadow-lg hover:shadow-xl hover:shadow-purple-500/25
-        transform hover:scale-105 active:scale-95
-        border border-white/20 backdrop-blur-sm
-        transition-all duration-200 ease-out
         ${isVisible ? 'opacity-100' : 'opacity-0'}
         ${className}
       `}
@@ -86,6 +80,6 @@ export const CursorFollowButton = ({
       }}
     >
       {text}
-    </button>
+    </LiquidButton>
   );
 };
