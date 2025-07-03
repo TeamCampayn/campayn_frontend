@@ -5,6 +5,7 @@ import { Footer } from '../components/landing/Footer';
 import { ParticleTextEffect } from '../components/ParticleTextEffect';
 import { CursorFollowButton } from '../components/CursorFollowButton';
 import { CreatorJourneyTimeline } from '../components/CreatorJourneyTimeline';
+import WaitlistComponent from '../components/ui/waiting-list';
 
 const CreatorsPage = () => {
   const heroRef = useRef<HTMLElement>(null);
@@ -65,18 +66,18 @@ const CreatorsPage = () => {
       {/* Creator Journey Timeline Section */}
       <CreatorJourneyTimeline />
       
-      {/* Content sections would go here */}
-      <section className="py-20 px-6 bg-gray-50">
-        <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
-            Join Our Creator Community
-          </h2>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Connect with brands, showcase your creativity, and monetize your influence. 
-            Our platform empowers creators to build meaningful partnerships and grow their audience.
-          </p>
-        </div>
-      </section>
+      {/* Waitlist Section */}
+      <WaitlistComponent 
+        title="Join the Creator Revolution"
+        subtitle="Be among the first creators to experience the future of brand partnerships. Get early access to exclusive campaigns, better rates, and innovative collaboration tools."
+        placeholder="Enter your email address"
+        buttonText={{
+          idle: "Join Creator Waitlist",
+          loading: "Joining...",
+          success: "Welcome aboard!",
+        }}
+        theme="dark"
+      />
       
       <Footer />
     </div>
