@@ -22,9 +22,9 @@ export const CursorFollowButton = ({
     const handleMouseMove = (e: MouseEvent) => {
       if (containerRef?.current) {
         const rect = containerRef.current.getBoundingClientRect();
-        // Only track if mouse is within the container
+        // Only track if mouse is within the container and below navbar (assuming navbar is ~80px)
         if (e.clientX >= rect.left && e.clientX <= rect.right && 
-            e.clientY >= rect.top && e.clientY <= rect.bottom) {
+            e.clientY >= Math.max(rect.top, 80) && e.clientY <= rect.bottom) {
           setMousePosition({ x: e.clientX, y: e.clientY });
           setIsVisible(true);
         } else {
