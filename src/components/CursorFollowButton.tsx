@@ -45,19 +45,20 @@ export const CursorFollowButton = ({
       onClick={handleClick}
       className={`
         fixed z-50 pointer-events-auto
-        bg-gradient-to-br from-primary via-accent to-secondary
-        hover:from-primary/90 hover:via-accent/90 hover:to-secondary/90
-        text-primary-foreground px-4 py-2 rounded-full font-medium text-sm
-        shadow-2xl hover:shadow-primary/20
+        bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600
+        hover:from-blue-700 hover:via-purple-700 hover:to-pink-700
+        text-white px-6 py-3 rounded-full font-semibold text-sm
+        shadow-lg hover:shadow-xl hover:shadow-purple-500/25
         transform hover:scale-105 active:scale-95
-        backdrop-blur-md border border-primary/20
+        border border-white/20 backdrop-blur-sm
+        transition-all duration-200 ease-out
         ${isVisible ? 'opacity-100' : 'opacity-0'}
         ${className}
       `}
       style={{
-        left: mousePosition.x + 10, // Small offset to avoid cursor overlap
-        top: mousePosition.y - 40,
-        transition: 'opacity 0.2s ease-out, transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        left: mousePosition.x - 10, // Close to cursor for easy clicking
+        top: mousePosition.y - 50,
+        transition: 'opacity 0.2s ease-out',
       }}
     >
       {text}
