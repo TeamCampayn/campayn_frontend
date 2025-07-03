@@ -4,35 +4,59 @@ import { useEffect, useRef, useState } from 'react';
 interface CursorFollowButtonProps {
   text?: string;
   className?: string;
+  containerRef?: React.RefObject<HTMLElement>;
 }
 
 export const CursorFollowButton = ({ 
   text = "Join the Waitlist", 
-  className = "" 
+  className = "",
+  containerRef
 }: CursorFollowButtonProps) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
+    const container = containerRef?.current || document;
+    
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-      setIsVisible(true);
+      if (containerRef?.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        // Only track if mouse is within the container
+        if (e.clientX >= rect.left && e.clientX <= rect.right && 
+            e.clientY >= rect.top && e.clientY <= rect.bottom) {
+          setMousePosition({ x: e.clientX, y: e.clientY });
+          setIsVisible(true);
+        } else {
+          setIsVisible(false);
+        }
+      } else {
+        setMousePosition({ x: e.clientX, y: e.clientY });
+        setIsVisible(true);
+      }
     };
 
     const handleMouseLeave = () => {
       setIsVisible(false);
     };
 
-    // Add event listeners to the document
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseleave', handleMouseLeave);
+    // Add event listeners
+    container.addEventListener('mousemove', handleMouseMove);
+    if (containerRef?.current) {
+      containerRef.current.addEventListener('mouseleave', handleMouseLeave);
+    } else {
+      document.addEventListener('mouseleave', handleMouseLeave);
+    }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseleave', handleMouseLeave);
+      container.removeEventListener('mousemove', handleMouseMove);
+      if (containerRef?.current) {
+        containerRef.current.removeEventListener('mouseleave', handleMouseLeave);
+      } else {
+        document.removeEventListener('mouseleave', handleMouseLeave);
+      }
     };
-  }, []);
+  }, [containerRef]);
 
   const handleClick = () => {
     // For now, just log - later this can be connected to waitlist functionality
@@ -56,8 +80,8 @@ export const CursorFollowButton = ({
         ${className}
       `}
       style={{
-        left: mousePosition.x - 10, // Close to cursor for easy clicking
-        top: mousePosition.y - 50,
+        left: mousePosition.x - 75, // Center cursor on button (button width ~150px)
+        top: mousePosition.y - 25, // Center cursor vertically (button height ~50px)
         transition: 'opacity 0.2s ease-out',
       }}
     >

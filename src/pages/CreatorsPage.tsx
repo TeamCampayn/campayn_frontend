@@ -1,18 +1,21 @@
 
+import { useRef } from 'react';
 import { LandingHeader } from '../components/landing/LandingHeader';
 import { Footer } from '../components/landing/Footer';
 import { ParticleTextEffect } from '../components/ParticleTextEffect';
 import { CursorFollowButton } from '../components/CursorFollowButton';
 
 const CreatorsPage = () => {
+  const heroRef = useRef<HTMLElement>(null);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <LandingHeader />
       
       {/* Hero Section with Particle Text Effect */}
-      <section className="relative">
+      <section ref={heroRef} className="relative">
         <ParticleTextEffect words={["Collab", "Create", "Collect"]} />
-        <CursorFollowButton text="Join the Waitlist" />
+        <CursorFollowButton text="Join the Waitlist" containerRef={heroRef} />
       </section>
       
       {/* Content sections would go here */}
