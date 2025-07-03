@@ -5,6 +5,7 @@ import {
   ContactSection,
   LandingHeader,
   VerticalScrollCards,
+  TestimonialsSection,
   Footer
 } from '../components/landing';
 import { DashboardPreview } from '../components/landing/DashboardPreview';
@@ -24,6 +25,8 @@ const LandingPage = () => {
       <div className="bg-gradient-to-b from-white via-blue-50 to-purple-50">
         <DashboardPreview />
       </div>
+      {/* Testimonials section */}
+      <TestimonialsSection />
       <ContactSection />
       <Footer />
     </div>
