@@ -1,11 +1,10 @@
-
 import { useRef } from 'react';
 import { LandingHeader } from '../components/landing/LandingHeader';
 import { Footer } from '../components/landing/Footer';
-import { ContactSection } from '../components/landing/ContactSection';
 import { ParticleTextEffect } from '../components/ParticleTextEffect';
 import { CursorFollowButton } from '../components/CursorFollowButton';
 import { CreatorJourneyTimeline } from '../components/CreatorJourneyTimeline';
+import { CreatorContactForm } from '../components/CreatorContactForm';
 import WaitlistComponent from '../components/ui/waiting-list';
 
 const CreatorsPage = () => {
@@ -38,7 +37,7 @@ const CreatorsPage = () => {
           {backgroundVideos.map((video, index) => (
             <video
               key={index}
-              className={`absolute w-48 h-64 object-cover rounded-xl border-4 border-white/30 shadow-2xl opacity-30 md:opacity-30 opacity-10 ${
+              className={`absolute w-48 h-64 object-cover rounded-xl border-4 border-white/30 shadow-2xl md:opacity-30 opacity-10 ${
                 index === 0 ? 'top-24 left-8 rotate-12' : 
                 index === 1 ? 'top-40 right-12 -rotate-6' : 
                 'bottom-32 left-16 rotate-3'
@@ -57,7 +56,7 @@ const CreatorsPage = () => {
         </div>
 
         {/* Particle Text Effect */}
-        <div className="relative z-10 md:opacity-100 opacity-90">
+        <div className="relative z-10 md:opacity-100 opacity-100">
           <ParticleTextEffect words={["Collab", "Create", "Collect"]} />
         </div>
         
@@ -89,8 +88,8 @@ const CreatorsPage = () => {
         />
       </div>
       
-      {/* Contact Section */}
-      <ContactSection />
+      {/* Creator Contact Section */}
+      <CreatorContactForm />
       
       <Footer />
     </div>
