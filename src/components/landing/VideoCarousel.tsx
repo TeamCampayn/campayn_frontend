@@ -128,7 +128,7 @@ const VideoCardComponent: React.FC<VideoCardComponentProps> = ({ card, isHovered
       </div>
       
       {/* Brand Logo */}
-      <div className="absolute bottom-3 left-3 w-16 h-16 p-1">
+      <div className="absolute bottom-3 left-3 w-20 h-20 p-1">
         <img
           src={card.brandLogoUrl}
           alt="Brand Logo"
@@ -151,9 +151,9 @@ export const VideoCarousel: React.FC = () => {
 
   return (
     <div className="py-20 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 bg-clip-text text-transparent mb-6">
+      <div className="w-full">
+        <div className="text-center mb-16 px-4">
+          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
             Creator Content in Action
           </h2>
           <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-medium">
