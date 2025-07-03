@@ -2,6 +2,7 @@
 import { useRef } from 'react';
 import { LandingHeader } from '../components/landing/LandingHeader';
 import { Footer } from '../components/landing/Footer';
+import { ContactSection } from '../components/landing/ContactSection';
 import { ParticleTextEffect } from '../components/ParticleTextEffect';
 import { CursorFollowButton } from '../components/CursorFollowButton';
 import { CreatorJourneyTimeline } from '../components/CreatorJourneyTimeline';
@@ -87,6 +88,9 @@ const CreatorsPage = () => {
           }}
         />
       </div>
+      
+      {/* Contact Section */}
+      <ContactSection />
       
       <Footer />
     </div>
