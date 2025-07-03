@@ -94,13 +94,12 @@ const VideoCardComponent: React.FC<VideoCardComponentProps> = ({ card, isHovered
 
   useEffect(() => {
     if (videoRef.current) {
-      if (isHovered) {
-        videoRef.current.play();
-      } else {
-        videoRef.current.pause();
-      }
+      // Always play videos continuously
+      videoRef.current.play().catch(() => {
+        // Handle autoplay restrictions gracefully
+      });
     }
-  }, [isHovered]);
+  }, []);
 
   return (
     <div
@@ -116,6 +115,7 @@ const VideoCardComponent: React.FC<VideoCardComponentProps> = ({ card, isHovered
         poster={card.posterUrl}
         muted
         loop
+        autoPlay
         playsInline
         preload="metadata"
       >
@@ -123,7 +123,7 @@ const VideoCardComponent: React.FC<VideoCardComponentProps> = ({ card, isHovered
       </video>
       
       {/* Category Label */}
-      <div className="absolute top-3 left-3 bg-black/70 text-white px-2 py-1 rounded-md text-xs font-medium">
+      <div className="absolute top-3 left-3 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
         {card.category}
       </div>
       
@@ -150,27 +150,23 @@ export const VideoCarousel: React.FC = () => {
   const duplicatedData = [...videoData, ...videoData];
 
   return (
-    <div className="py-16 bg-gradient-to-b from-purple-50 to-white overflow-hidden">
+    <div className="py-20 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 bg-clip-text text-transparent mb-6">
             Creator Content in Action
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-medium">
             See how creators bring brands to life with authentic, engaging content across different categories
           </p>
         </div>
         
         <div className="relative">
-          {/* Gradient masks for smooth fade effect */}
-          <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-r from-white to-transparent z-10"></div>
-          <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-white to-transparent z-10"></div>
-          
           <div className="overflow-hidden">
             <div
-              className={`flex gap-4 ${isPaused ? '' : 'animate-infinite-scroll'}`}
+              className={`flex gap-6 ${isPaused ? '' : 'animate-infinite-scroll'}`}
               style={{
-                width: `${duplicatedData.length * 256}px`, // 256px = 240px width + 16px gap
+                width: `${duplicatedData.length * 264}px`, // 264px = 240px width + 24px gap
               }}
             >
               {duplicatedData.map((card, index) => (
