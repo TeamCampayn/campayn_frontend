@@ -76,7 +76,6 @@ const CreatorsPage = () => {
           loading: "Joining...",
           success: "Welcome aboard!",
         }}
-        theme="dark"
       />
       
       <Footer />
