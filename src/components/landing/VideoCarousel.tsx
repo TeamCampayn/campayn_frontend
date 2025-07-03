@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 
 interface VideoCard {
@@ -149,20 +148,8 @@ export const VideoCarousel: React.FC = () => {
   // Duplicate the data for seamless loop
   const duplicatedData = [...videoData, ...videoData];
 
-  const handleSectionHover = () => {
-    setIsPaused(true);
-  };
-
-  const handleSectionLeave = () => {
-    setIsPaused(false);
-  };
-
   return (
-    <div 
-      className="py-20 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden"
-      onMouseEnter={handleSectionHover}
-      onMouseLeave={handleSectionLeave}
-    >
+    <div className="py-20 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden">
       <div className="w-full">
         <div className="text-center mb-16 px-4">
           <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
@@ -188,9 +175,11 @@ export const VideoCarousel: React.FC = () => {
                   isHovered={hoveredCard === `${card.id}-${index}`}
                   onHover={() => {
                     setHoveredCard(`${card.id}-${index}`);
+                    setIsPaused(true);
                   }}
                   onLeave={() => {
                     setHoveredCard(null);
+                    setIsPaused(false);
                   }}
                 />
               ))}
