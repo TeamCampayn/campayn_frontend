@@ -67,16 +67,18 @@ const CreatorsPage = () => {
       <CreatorJourneyTimeline />
       
       {/* Waitlist Section */}
-      <WaitlistComponent 
-        title="Join the Creator Revolution"
-        subtitle="Be among the first creators to experience the future of brand partnerships. Get early access to exclusive campaigns, better rates, and innovative collaboration tools."
-        placeholder="Enter your email address"
-        buttonText={{
-          idle: "Join Creator Waitlist",
-          loading: "Joining...",
-          success: "Welcome aboard!",
-        }}
-      />
+      <div id="waitlist-section">
+        <WaitlistComponent 
+          title="Join the Creator Revolution"
+          subtitle="Be among the first creators to experience the future of brand partnerships. Get early access to exclusive campaigns, better rates, and innovative collaboration tools."
+          placeholder="Enter your email address"
+          buttonText={{
+            idle: "Join Creator Waitlist",
+            loading: "Joining...",
+            success: "Welcome aboard!",
+          }}
+        />
+      </div>
       
       <Footer />
     </div>

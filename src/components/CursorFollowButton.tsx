@@ -60,8 +60,14 @@ export const CursorFollowButton = ({
   }, [containerRef]);
 
   const handleClick = () => {
-    // For now, just log - later this can be connected to waitlist functionality
-    console.log('Join the waitlist clicked!');
+    // Scroll to waitlist section
+    const waitlistSection = document.getElementById('waitlist-section');
+    if (waitlistSection) {
+      waitlistSection.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
   };
 
   return (
