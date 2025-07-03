@@ -3,7 +3,7 @@ import { RetroGrid } from '../ui/retro-grid';
 
 export const AboutHero = () => {
   return (
-    <section className="relative pt-24 pb-16 overflow-hidden min-h-[85vh] flex items-center">
+    <section className="relative overflow-hidden min-h-screen flex items-center justify-center">
       <RetroGrid />
       
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
