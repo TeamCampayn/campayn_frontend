@@ -49,7 +49,6 @@ export const CursorFollowButton = ({
         hover:from-blue-700 hover:to-purple-700
         text-white px-6 py-3 rounded-full font-medium
         shadow-lg hover:shadow-xl
-        transition-all duration-200 ease-out
         transform hover:scale-105
         backdrop-blur-sm
         ${isVisible ? 'opacity-100' : 'opacity-0'}
@@ -58,7 +57,8 @@ export const CursorFollowButton = ({
       style={{
         left: mousePosition.x - 80, // Offset to center the button on cursor
         top: mousePosition.y - 25,
-        transition: 'left 0.1s ease-out, top 0.1s ease-out, opacity 0.3s ease-out',
+        transform: `translate(${mousePosition.x - 80}px, ${mousePosition.y - 25}px)`,
+        transition: 'opacity 0.2s ease-out',
       }}
     >
       {text}
