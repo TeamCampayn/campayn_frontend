@@ -51,8 +51,6 @@ const CreatorsPage = () => {
             </video>
           ))}
           
-          {/* Gradient overlay to blend videos with background */}
-          <div className="absolute inset-0 bg-gradient-to-b from-gray-50/80 via-gray-50/60 to-gray-50/80"></div>
         </div>
 
         {/* Particle Text Effect */}
