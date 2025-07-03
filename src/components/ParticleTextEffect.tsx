@@ -316,8 +316,9 @@ export function ParticleTextEffect({ words = DEFAULT_WORDS }: ParticleTextEffect
     const canvas = canvasRef.current
     if (!canvas) return
 
-    canvas.width = 1000
-    canvas.height = 500
+    // Set canvas to viewport dimensions
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
 
     // Initialize with first word
     nextWord(words[0], canvas)
@@ -366,11 +367,10 @@ export function ParticleTextEffect({ words = DEFAULT_WORDS }: ParticleTextEffect
   }, [words])
 
   return (
-    <div className="flex items-center justify-center h-screen bg-black">
+    <div className="w-full h-screen bg-black">
       <canvas
         ref={canvasRef}
-        className="rounded-lg shadow-2xl"
-        style={{ maxWidth: "100%", height: "auto" }}
+        className="w-full h-full"
       />
     </div>
   )
