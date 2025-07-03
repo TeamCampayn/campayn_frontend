@@ -31,14 +31,14 @@ const CreatorsPage = () => {
       {/* Hero Section with Particle Text Effect and Background Videos */}
       <section ref={heroRef} className="relative overflow-hidden">
         {/* Background Videos */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-20">
           {backgroundVideos.map((video, index) => (
             <video
               key={index}
-              className={`absolute w-48 h-64 object-cover rounded-xl border-4 border-white/30 shadow-2xl opacity-20 ${
-                index === 0 ? 'top-20 left-10 rotate-12' : 
-                index === 1 ? 'top-32 right-16 -rotate-6' : 
-                'bottom-20 left-1/2 transform -translate-x-1/2 rotate-3'
+              className={`absolute w-48 h-64 object-cover rounded-xl border-4 border-white/30 shadow-2xl opacity-30 ${
+                index === 0 ? 'top-24 left-8 rotate-12' : 
+                index === 1 ? 'top-40 right-12 -rotate-6' : 
+                'bottom-32 left-16 rotate-3'
               }`}
               poster={video.poster}
               muted
