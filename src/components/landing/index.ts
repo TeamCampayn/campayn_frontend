@@ -4,3 +4,4 @@ export { FeaturesSection } from './FeaturesSection';
 export { ContactSection } from './ContactSection';
 export { LandingHeader } from './LandingHeader';
 export { VerticalScrollCards } from './VerticalScrollCards';
+export { VideoCarousel } from './VideoCarousel';

@@ -7,12 +7,14 @@ import {
   VerticalScrollCards
 } from '../components/landing';
 import { DashboardPreview } from '../components/landing/DashboardPreview';
+import { VideoCarousel } from '../components/landing/VideoCarousel';
 
 const LandingPage = () => {
   return (
     <div className="min-h-screen">
       <LandingHeader />
       <HeroSection />
+      <VideoCarousel />
       {/* Smooth gradient transition from hero to vertical cards */}
       <div className="bg-gradient-to-b from-purple-50 via-gray-50 to-white">
         <VerticalScrollCards />
