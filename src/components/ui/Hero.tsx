@@ -1,6 +1,7 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { MoveRight, PhoneCall } from "lucide-react";
+import { MoveRight } from "lucide-react";
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -128,10 +129,7 @@ function Hero() {
               From AI-powered matchmaking to real-time performance tracking, we take care of the heavy lifting so you can focus on what matters: building meaningful influence and measurable results.
             </p>
           </div>
-          <div className="flex flex-row gap-3">
-            <Button size="lg" className="gap-4" variant="outline">
-              Jump on a call <PhoneCall className="w-4 h-4" />
-            </Button>
+          <div className="flex flex-row justify-center">
             <Button 
               size="lg" 
               className="gap-4"
