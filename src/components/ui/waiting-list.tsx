@@ -113,7 +113,7 @@ const MeshGradient: React.FC = () => {
     <canvas
       ref={canvasRef}
       style={{
-        position: "fixed",
+        position: "absolute",
         top: 0,
         left: 0,
         width: "100%",
@@ -422,79 +422,7 @@ const WaitlistComponent: React.FC<WaitlistFormProps> = ({
   }
 
   return (
-    <>
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        
-        :root {
-          --slate-1: 252, 252, 253;
-          --slate-2: 249, 249, 251;
-          --slate-3: 240, 240, 243;
-          --slate-4: 232, 232, 236;
-          --slate-5: 224, 225, 230;
-          --slate-6: 217, 217, 224;
-          --slate-7: 205, 206, 214;
-          --slate-8: 185, 187, 198;
-          --slate-9: 139, 141, 152;
-          --slate-10: 128, 131, 141;
-          --slate-11: 96, 100, 108;
-          --slate-12: 28, 32, 36;
-          --gray-1: 252, 252, 252;
-          --gray-2: 249, 249, 249;
-          --gray-3: 240, 240, 240;
-          --gray-4: 232, 232, 232;
-          --gray-5: 224, 224, 224;
-          --gray-6: 217, 217, 217;
-          --gray-7: 206, 206, 206;
-          --gray-8: 187, 187, 187;
-          --gray-9: 141, 141, 141;
-          --gray-10: 131, 131, 131;
-          --gray-11: 100, 100, 100;
-          --gray-12: 32, 32, 32;
-        }
-
-        html.dark {
-          --slate-1: 17, 17, 19;
-          --slate-2: 24, 25, 27;
-          --slate-3: 33, 34, 37;
-          --slate-4: 39, 42, 45;
-          --slate-5: 46, 49, 53;
-          --slate-6: 54, 58, 63;
-          --slate-7: 67, 72, 78;
-          --slate-8: 90, 97, 105;
-          --slate-9: 105, 110, 119;
-          --slate-10: 119, 123, 132;
-          --slate-11: 176, 180, 186;
-          --slate-12: 237, 238, 240;
-          --gray-1: 17, 17, 17;
-          --gray-2: 25, 25, 25;
-          --gray-3: 34, 34, 34;
-          --gray-4: 42, 42, 42;
-          --gray-5: 49, 49, 49;
-          --gray-6: 58, 58, 58;
-          --gray-7: 72, 72, 72;
-          --gray-8: 96, 96, 96;
-          --gray-9: 110, 110, 110;
-          --gray-10: 123, 123, 123;
-          --gray-11: 180, 180, 180;
-          --gray-12: 238, 238, 238;
-        }
-
-        * {
-          box-sizing: border-box;
-        }
-
-        body {
-          margin: 0;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-          background-color: rgb(var(--slate-12));
-          color: rgb(var(--slate-1));
-          min-height: 100vh;
-        }
-      `}</style>
-
+    <section style={{ position: "relative", overflow: "hidden" }}>
       <MeshGradient />
 
       <div
@@ -505,7 +433,7 @@ const WaitlistComponent: React.FC<WaitlistFormProps> = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "20px",
+          padding: "60px 20px",
         }}
       >
         <div
@@ -754,7 +682,7 @@ const WaitlistComponent: React.FC<WaitlistFormProps> = ({
           </footer>
         </div>
       </div>
-    </>
+    </section>
   )
 }
 
