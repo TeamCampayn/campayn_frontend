@@ -3,53 +3,48 @@ import { RetroGrid } from '../ui/retro-grid';
 
 export const AboutHero = () => {
   return (
-    <section className="relative pt-32 pb-20 overflow-hidden min-h-[80vh] flex items-center">
+    <section className="relative pt-24 pb-16 overflow-hidden min-h-[85vh] flex items-center">
       <RetroGrid />
       
-      <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
-        <h1 className="text-5xl md:text-7xl font-bold mb-8">
-          <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Building the Future of Creator Economy
+      <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+          <span className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Building the Future of
+          </span>
+          <br />
+          <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-violet-500 bg-clip-text text-transparent">
+            Creator Economy
           </span>
         </h1>
 
-        <div className="max-w-4xl mx-auto space-y-6 text-lg md:text-xl text-gray-700 leading-relaxed">
-          <p>
-            We are a team of passionate students from <span className="font-semibold text-blue-600">IIT Roorkee</span>, 
-            driven by a vision to revolutionize how creators and brands connect in the digital age.
+        <div className="max-w-3xl mx-auto space-y-4 text-base md:text-lg text-gray-600 leading-relaxed">
+          <p className="font-medium">
+            We are passionate students from <span className="text-blue-600 font-semibold">IIT Roorkee</span>, 
+            driven by a vision to revolutionize how creators and brands connect.
           </p>
           
           <p>
-            The creator economy has exploded into a <span className="font-bold text-purple-600">$450 billion market</span>, 
-            yet millions of macro and micro influencers still struggle to find meaningful brand partnerships. 
-            We witnessed talented creators with authentic voices being overlooked while brands spent countless 
-            hours searching for the right creative partners.
+            The creator economy has exploded into a <span className="text-purple-600 font-semibold">$450 billion market</span>, 
+            yet millions of macro and micro influencers struggle to find meaningful brand partnerships. 
+            We witnessed talented creators being overlooked while brands spent countless hours searching 
+            for the right creative partners.
           </p>
           
           <p>
-            This gap inspired us to build <span className="font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Campayn</span> – 
-            a platform that democratizes creator-brand collaborations, ensuring every authentic voice gets the 
-            opportunity to shine and every brand finds their perfect creative match.
-          </p>
-          
-          <p className="text-gray-600 italic">
-            We're not just building a platform; we're crafting a movement that empowers creators 
-            and transforms how authentic storytelling drives business success.
+            This inspired us to build <span className="font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Campayn</span> – 
+            democratizing creator-brand collaborations and ensuring every authentic voice gets heard.
           </p>
         </div>
 
-        <div className="mt-12 flex flex-wrap justify-center gap-8 text-center">
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
-            <div className="text-2xl font-bold text-blue-600 mb-2">🎓</div>
-            <div className="text-gray-600 font-medium">IIT Roorkee Students</div>
+        <div className="mt-10 flex flex-wrap justify-center gap-6">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/30 shadow-sm">
+            <div className="text-blue-600 font-semibold text-sm">🎓 IIT Roorkee</div>
           </div>
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
-            <div className="text-2xl font-bold text-purple-600 mb-2">💡</div>
-            <div className="text-gray-600 font-medium">Innovation Driven</div>
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/30 shadow-sm">
+            <div className="text-purple-600 font-semibold text-sm">💡 Innovation Driven</div>
           </div>
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
-            <div className="text-2xl font-bold text-pink-600 mb-2">🚀</div>
-            <div className="text-gray-600 font-medium">Creator First</div>
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/30 shadow-sm">
+            <div className="text-pink-600 font-semibold text-sm">🚀 Creator First</div>
           </div>
         </div>
       </div>
