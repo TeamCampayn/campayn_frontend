@@ -49,12 +49,17 @@ export const LocalReachVisual: React.FC<LocalReachVisualProps> = ({ isActive = f
 
         {/* Connection Flow - Simplified */}
         <div className="bg-white rounded-lg shadow-md p-3 border border-gray-100">
+          <div className="text-center mb-2">
+            <div className="text-xs font-bold text-gray-800">Local Store Needs Creators</div>
+            <div className="text-xs text-gray-600">Find Perfect Matches</div>
+          </div>
           <div className="grid grid-cols-3 gap-3 items-center text-center">
             <div>
               <div className="w-8 h-8 bg-green-400 rounded-lg mx-auto mb-1 flex items-center justify-center">
                 <Store className="w-4 h-4 text-white" />
               </div>
-              <div className="text-xs font-semibold text-green-700">Store</div>
+              <div className="text-xs font-semibold text-green-700">Local Store</div>
+              <div className="text-xs text-gray-500">Mumbai</div>
             </div>
             
             <div className="flex justify-center">
@@ -66,6 +71,7 @@ export const LocalReachVisual: React.FC<LocalReachVisualProps> = ({ isActive = f
                 <span className="text-xs text-white font-bold">C</span>
               </div>
               <div className="text-xs font-semibold text-gray-600">Creators</div>
+              <div className="text-xs text-gray-500">Nearby</div>
             </div>
           </div>
         </div>

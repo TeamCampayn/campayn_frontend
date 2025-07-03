@@ -10,12 +10,10 @@ export const ROIMixVisual: React.FC<ROIMixVisualProps> = ({ isActive = false }) 
   const [animateProgress, setAnimateProgress] = useState(false);
 
   useEffect(() => {
-    if (isActive) {
-      setTimeout(() => setAnimateProgress(true), 500);
-    } else {
-      setAnimateProgress(false);
-    }
-  }, [isActive]);
+    // Always animate on mount for better UX, regardless of isActive
+    const timer = setTimeout(() => setAnimateProgress(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center p-1 overflow-hidden">
