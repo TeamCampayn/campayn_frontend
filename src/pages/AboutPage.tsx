@@ -3,9 +3,6 @@ import { LandingHeader } from '../components/landing/LandingHeader';
 import { Footer } from '../components/landing/Footer';
 import { AboutHero } from '../components/about/AboutHero';
 import { AboutJourney } from '../components/about/AboutJourney';
-import { AboutMission } from '../components/about/AboutMission';
-import { AboutTeam } from '../components/about/AboutTeam';
-import { AboutValues } from '../components/about/AboutValues';
 
 const AboutPage = () => {
   return (
@@ -13,9 +10,6 @@ const AboutPage = () => {
       <LandingHeader />
       <AboutHero />
       <AboutJourney />
-      <AboutMission />
-      <AboutValues />
-      <AboutTeam />
       <Footer />
     </div>
   );
