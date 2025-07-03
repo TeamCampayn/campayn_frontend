@@ -1,10 +1,25 @@
 
-import { RetroGrid } from '../ui/retro-grid';
+import { Particles } from '../ui/particles';
+import { useTheme } from "next-themes";
+import { useEffect, useState } from 'react';
 
 export const AboutHero = () => {
+  const { theme } = useTheme();
+  const [color, setColor] = useState("#ffffff");
+
+  useEffect(() => {
+    setColor(theme === "dark" ? "#ffffff" : "#000000");
+  }, [theme]);
+
   return (
     <section className="relative overflow-hidden min-h-screen flex items-center justify-center">
-      <RetroGrid />
+      <Particles
+        className="absolute inset-0"
+        quantity={80}
+        ease={80}
+        color={color}
+        refresh
+      />
       
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">

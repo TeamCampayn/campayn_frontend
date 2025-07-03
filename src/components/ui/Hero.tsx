@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { MoveRight } from "lucide-react";
@@ -7,8 +6,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { Particles } from "./particles";
-import { useTheme } from "next-themes";
+import { RetroGrid } from "./retro-grid";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
@@ -61,9 +59,7 @@ Button.displayName = "Button";
 
 function Hero() {
   const navigate = useNavigate();
-  const { theme } = useTheme();
   const [titleNumber, setTitleNumber] = useState(0);
-  const [color, setColor] = useState("#ffffff");
   const titles = useMemo(
     () => ["effortless", "smart", "scalable", "personal", "powerful"],
     []
@@ -80,19 +76,9 @@ function Hero() {
     return () => clearTimeout(timeoutId);
   }, [titleNumber, titles]);
 
-  useEffect(() => {
-    setColor(theme === "dark" ? "#ffffff" : "#000000");
-  }, [theme]);
-
   return (
     <div className="relative w-full overflow-hidden">
-      <Particles
-        className="absolute inset-0"
-        quantity={80}
-        ease={80}
-        color={color}
-        refresh
-      />
+      <RetroGrid />
       <div className="container mx-auto relative z-10">
         <div className="flex gap-8 py-32 lg:py-40 items-center justify-center flex-col min-h-screen">
           <div className="flex gap-4 flex-col">
@@ -104,7 +90,7 @@ function Hero() {
                   <motion.span
                     key={index}
                     className="absolute font-semibold"
-                    initial={{ opacity: 0, y: "-100" }}
+                    initial={{ opacity: 0, y: "-100px" }}
                     transition={{ type: "spring", stiffness: 50 }}
                     animate={
                       titleNumber === index
@@ -113,7 +99,7 @@ function Hero() {
                             opacity: 1,
                           }
                         : {
-                            y: titleNumber > index ? -150 : 150,
+                            y: titleNumber > index ? "-150px" : "150px",
                             opacity: 0,
                           }
                     }

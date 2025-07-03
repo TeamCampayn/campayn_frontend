@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 
 interface VideoCard {
@@ -175,10 +176,9 @@ export const VideoCarousel: React.FC = () => {
         <div className="relative">
           <div className="overflow-hidden">
             <div
-              className="flex gap-6"
+              className={`flex gap-6 ${isPaused ? 'animate-infinite-scroll-paused' : 'animate-infinite-scroll'}`}
               style={{
                 width: `${duplicatedData.length * 264}px`, // 264px = 240px width + 24px gap
-                animation: isPaused ? 'none' : 'scroll-left 60s linear infinite',
               }}
             >
               {duplicatedData.map((card, index) => (

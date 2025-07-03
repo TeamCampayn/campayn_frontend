@@ -148,8 +148,8 @@
   animation: infinite-scroll 60s linear infinite;
 }
 
-/* Pause animation on hover */
-.animate-infinite-scroll:hover {
+.animate-infinite-scroll-paused {
+  animation: infinite-scroll 60s linear infinite;
   animation-play-state: paused;
 }
 
