@@ -37,7 +37,7 @@ const CreatorsPage = () => {
           {backgroundVideos.map((video, index) => (
             <video
               key={index}
-              className={`absolute w-48 h-64 object-cover rounded-xl border-4 border-white/30 shadow-2xl opacity-30 ${
+              className={`absolute w-48 h-64 object-cover rounded-xl border-4 border-white/30 shadow-2xl opacity-30 md:opacity-30 opacity-10 ${
                 index === 0 ? 'top-24 left-8 rotate-12' : 
                 index === 1 ? 'top-40 right-12 -rotate-6' : 
                 'bottom-32 left-16 rotate-3'
@@ -56,11 +56,19 @@ const CreatorsPage = () => {
         </div>
 
         {/* Particle Text Effect */}
-        <div className="relative z-10">
+        <div className="relative z-10 md:opacity-100 opacity-90">
           <ParticleTextEffect words={["Collab", "Create", "Collect"]} />
         </div>
         
-        <CursorFollowButton text="Join the Waitlist" containerRef={heroRef} />
+        {/* Desktop cursor follow button */}
+        <div className="hidden md:block">
+          <CursorFollowButton text="Join the Waitlist" containerRef={heroRef} />
+        </div>
+        
+        {/* Mobile fixed button */}
+        <div className="md:hidden fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50">
+          <CursorFollowButton text="Join the Waitlist" />
+        </div>
       </section>
 
       {/* Creator Journey Timeline Section */}

@@ -89,22 +89,26 @@ const liquidbuttonVariants = cva(
   }
 )
 
-function LiquidButton({
+const LiquidButton = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<"button"> &
+    VariantProps<typeof liquidbuttonVariants> & {
+      asChild?: boolean
+    }
+>(({
   className,
   variant,
   size,
   asChild = false,
   children,
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof liquidbuttonVariants> & {
-    asChild?: boolean
-  }) {
+}, ref) => {
   const Comp = asChild ? Slot : "button"
 
   return (
     <>
       <Comp
+        ref={ref}
         data-slot="button"
         className={cn(
           "relative",
@@ -127,7 +131,9 @@ function LiquidButton({
       </Comp>
     </>
   )
-}
+})
+
+LiquidButton.displayName = "LiquidButton"
 
 
 function GlassFilter() {
