@@ -128,11 +128,11 @@ const VideoCardComponent: React.FC<VideoCardComponentProps> = ({ card, isHovered
       </div>
       
       {/* Brand Logo */}
-      <div className="absolute bottom-3 left-3 w-14 h-14 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">
+      <div className="absolute bottom-3 left-3 w-16 h-16 p-1">
         <img
           src={card.brandLogoUrl}
           alt="Brand Logo"
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain drop-shadow-lg"
           onError={(e) => {
             e.currentTarget.style.display = 'none';
           }}
