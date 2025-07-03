@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Menu, X, Home, Users, Info } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { MenuBar } from '../ui/glow-menu';
 
 const menuItems = [
@@ -32,6 +33,7 @@ export const LandingHeader = () => {
   const [activeItem, setActiveItem] = useState<string>("Brands");
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -54,9 +56,15 @@ export const LandingHeader = () => {
 
   const handleItemClick = (label: string) => {
     setActiveItem(label);
-    const href = menuItems.find(item => item.label === label)?.href;
-    if (href) {
-      document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' });
+    if (label === "Creators") {
+      navigate("/creators");
+    } else if (label === "Brands") {
+      navigate("/");
+    } else {
+      const href = menuItems.find(item => item.label === label)?.href;
+      if (href) {
+        document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
@@ -69,7 +77,7 @@ export const LandingHeader = () => {
           {/* Unified navbar with logo, menu items, and buttons */}
           <div className="hidden md:flex items-center justify-between w-full bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-lg px-6 py-3">
             {/* Logo */}
-            <div className="flex items-center space-x-3">
+            <Link to="/" className="flex items-center space-x-3 cursor-pointer">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-lg">C</span>
               </div>
@@ -79,7 +87,7 @@ export const LandingHeader = () => {
                 </span>
                 <div className="text-xs text-gray-500 font-medium">Influencer Platform</div>
               </div>
-            </div>
+            </Link>
             
             {/* Menu items */}
             <MenuBar
@@ -101,7 +109,7 @@ export const LandingHeader = () => {
           </div>
 
           {/* Mobile logo (shown when menu is collapsed) */}
-          <div className="md:hidden flex items-center space-x-3 bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-lg px-4 py-2">
+          <Link to="/" className="md:hidden flex items-center space-x-3 bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-lg px-4 py-2">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-lg">C</span>
             </div>
@@ -111,7 +119,7 @@ export const LandingHeader = () => {
               </span>
               <div className="text-xs text-gray-500 font-medium">Influencer Platform</div>
             </div>
-          </div>
+          </Link>
 
           {/* Mobile menu button */}
           <button 
