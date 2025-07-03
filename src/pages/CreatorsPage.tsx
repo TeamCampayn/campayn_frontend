@@ -1,6 +1,8 @@
+
 import { LandingHeader } from '../components/landing/LandingHeader';
 import { Footer } from '../components/landing/Footer';
 import { ParticleTextEffect } from '../components/ParticleTextEffect';
+import { CursorFollowButton } from '../components/CursorFollowButton';
 
 const CreatorsPage = () => {
   return (
@@ -10,6 +12,7 @@ const CreatorsPage = () => {
       {/* Hero Section with Particle Text Effect */}
       <section className="relative">
         <ParticleTextEffect words={["Collab", "Create", "Collect"]} />
+        <CursorFollowButton text="Join the Waitlist" />
       </section>
       
       {/* Content sections would go here */}
