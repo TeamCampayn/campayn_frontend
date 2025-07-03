@@ -10,11 +10,17 @@ import { DashboardPreview } from '../components/landing/DashboardPreview';
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen">
       <LandingHeader />
       <HeroSection />
-      <VerticalScrollCards />
-      <DashboardPreview />
+      {/* Smooth gradient transition from hero to vertical cards */}
+      <div className="bg-gradient-to-b from-purple-50 via-gray-50 to-white">
+        <VerticalScrollCards />
+      </div>
+      {/* Smooth gradient transition from cards to dashboard */}
+      <div className="bg-gradient-to-b from-white via-blue-50 to-purple-50">
+        <DashboardPreview />
+      </div>
       <ContactSection />
     </div>
   );

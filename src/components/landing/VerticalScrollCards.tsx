@@ -100,7 +100,7 @@ export const VerticalScrollCards: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-white">
+    <div className="relative">
       {/* Fixed Heading */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center">
         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
@@ -130,7 +130,7 @@ export const VerticalScrollCards: React.FC = () => {
                 <div className={`w-full max-w-7xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full overflow-hidden`}>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 items-center p-4 sm:p-6 lg:p-8 h-full">
                     {/* Content - Left side on large screens, bottom on small */}
-                    <div className="flex flex-col justify-center text-center lg:text-left order-2 lg:order-1 space-y-3 lg:space-y-4">
+                    <div className="flex flex-col justify-center text-center lg:text-left order-2 lg:order-1 space-y-3 lg:space-y-4 px-2">
                       <h3 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 leading-tight">
                         {card.title}
                       </h3>
@@ -143,7 +143,7 @@ export const VerticalScrollCards: React.FC = () => {
                         {card.bulletPoints?.map((point, idx) => (
                           <div key={idx} className="flex items-start space-x-2 sm:space-x-3 text-left">
                             <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mt-2 flex-shrink-0"></div>
-                            <span className="text-xs sm:text-sm lg:text-base text-gray-700 leading-relaxed">
+                            <span className="text-xs sm:text-sm lg:text-base text-gray-700 leading-relaxed break-words">
                               {point}
                             </span>
                           </div>
