@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
@@ -13,7 +14,6 @@ interface WaitlistFormProps {
     success: string
   }
   logo?: string
-  theme?: "light" | "dark" | "system"
 }
 
 type FormState = "idle" | "loading" | "success" | "error"
@@ -125,42 +125,6 @@ const MeshGradient: React.FC = () => {
   )
 }
 
-// GitHub Icon Component
-const GitHubIcon: React.FC = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ display: "inline-block" }}>
-    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-  </svg>
-)
-
-// Theme Switcher Component
-const ThemeSwitcher: React.FC<{ theme: "light" | "dark" | "system"; setTheme: (theme: "light" | "dark" | "system") => void }> = ({ theme, setTheme }) => {
-  const options = ["dark", "system", "light"] as const
-
-  return (
-    <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-      {options.map((option, i) => (
-        <React.Fragment key={option}>
-          <button
-            onClick={() => setTheme(option)}
-            style={{
-              fontSize: "12px",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: theme === option ? "rgb(28, 32, 36)" : "rgb(139, 141, 152)",
-              fontWeight: theme === option ? "500" : "300",
-              textTransform: "capitalize",
-            }}
-          >
-            {option}
-          </button>
-          {i < options.length - 1 && <span style={{ fontSize: "12px", color: "rgb(176, 180, 186)" }}>/</span>}
-        </React.Fragment>
-      ))}
-    </div>
-  )
-}
-
 // Loading Spinner Component
 const LoadingSpinner: React.FC = () => (
   <div
@@ -191,8 +155,8 @@ const TabNavigation: React.FC<{ activeTab: ActiveTab; setActiveTab: (tab: Active
           border: "none",
           borderRadius: "8px",
           cursor: "pointer",
-          backgroundColor: activeTab === "waitlist" ? "rgba(var(--gray-12), 0.1)" : "transparent",
-          color: activeTab === "waitlist" ? "rgb(var(--slate-12))" : "rgb(var(--slate-10))",
+          backgroundColor: activeTab === "waitlist" ? "rgba(255, 255, 255, 0.1)" : "transparent",
+          color: activeTab === "waitlist" ? "#e2e8f0" : "#94a3b8",
           transition: "all 0.2s ease",
         }}
       >
@@ -207,8 +171,8 @@ const TabNavigation: React.FC<{ activeTab: ActiveTab; setActiveTab: (tab: Active
           border: "none",
           borderRadius: "8px",
           cursor: "pointer",
-          backgroundColor: activeTab === "manifesto" ? "rgba(var(--gray-12), 0.1)" : "transparent",
-          color: activeTab === "manifesto" ? "rgb(var(--slate-12))" : "rgb(var(--slate-10))",
+          backgroundColor: activeTab === "manifesto" ? "rgba(255, 255, 255, 0.1)" : "transparent",
+          color: activeTab === "manifesto" ? "#e2e8f0" : "#94a3b8",
           transition: "all 0.2s ease",
         }}
       >
@@ -227,7 +191,7 @@ const ManifestoContent: React.FC = () => {
           style={{
             fontSize: "20px",
             fontWeight: "600",
-            color: "rgb(var(--slate-12))",
+            color: "#e2e8f0",
             margin: 0,
             textAlign: "center",
           }}
@@ -238,7 +202,7 @@ const ManifestoContent: React.FC = () => {
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <p
             style={{
-              color: "rgb(var(--slate-11))",
+              color: "#cbd5e1",
               margin: 0,
               fontSize: "15px",
               lineHeight: "1.6",
@@ -249,7 +213,7 @@ const ManifestoContent: React.FC = () => {
 
           <p
             style={{
-              color: "rgb(var(--slate-11))",
+              color: "#cbd5e1",
               margin: 0,
               fontSize: "15px",
               lineHeight: "1.6",
@@ -260,15 +224,15 @@ const ManifestoContent: React.FC = () => {
 
           <div
             style={{
-              backgroundColor: "rgba(var(--gray-12), 0.05)",
+              backgroundColor: "rgba(255, 255, 255, 0.05)",
               padding: "16px",
               borderRadius: "12px",
-              borderLeft: "3px solid rgb(var(--slate-9))",
+              borderLeft: "3px solid #64748b",
             }}
           >
             <p
               style={{
-                color: "rgb(var(--slate-12))",
+                color: "#e2e8f0",
                 margin: 0,
                 fontSize: "14px",
                 fontStyle: "italic",
@@ -284,7 +248,7 @@ const ManifestoContent: React.FC = () => {
               style={{
                 fontSize: "16px",
                 fontWeight: "600",
-                color: "rgb(var(--slate-12))",
+                color: "#e2e8f0",
                 margin: 0,
               }}
             >
@@ -295,7 +259,7 @@ const ManifestoContent: React.FC = () => {
               style={{
                 margin: 0,
                 paddingLeft: "20px",
-                color: "rgb(var(--slate-11))",
+                color: "#cbd5e1",
                 fontSize: "14px",
                 lineHeight: "1.6",
               }}
@@ -317,7 +281,7 @@ const ManifestoContent: React.FC = () => {
 
           <p
             style={{
-              color: "rgb(var(--slate-11))",
+              color: "#cbd5e1",
               margin: 0,
               fontSize: "15px",
               lineHeight: "1.6",
@@ -342,34 +306,12 @@ const WaitlistComponent: React.FC<WaitlistFormProps> = ({
     success: "Joined!",
   },
   logo,
-  theme: initialTheme = "system",
 }) => {
   const [email, setEmail] = useState("")
   const [state, setState] = useState<FormState>("idle")
   const [error, setError] = useState<string>()
-  const [theme, setTheme] = useState(initialTheme)
   const [activeTab, setActiveTab] = useState<ActiveTab>("waitlist")
   const errorTimeout = useRef<NodeJS.Timeout | null>(null)
-
-  // Handle system theme
-  useEffect(() => {
-    const updateTheme = () => {
-      if (theme === "system") {
-        const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-        document.documentElement.className = isDark ? "dark" : "light"
-      } else {
-        document.documentElement.className = theme
-      }
-    }
-
-    updateTheme()
-
-    if (theme === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-      mediaQuery.addEventListener("change", updateTheme)
-      return () => mediaQuery.removeEventListener("change", updateTheme)
-    }
-  }, [theme])
 
   // Auto-reset success state
   useEffect(() => {
@@ -422,267 +364,226 @@ const WaitlistComponent: React.FC<WaitlistFormProps> = ({
   }
 
   return (
-    <section style={{ position: "relative", overflow: "hidden" }}>
-      <MeshGradient />
+    <>
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+      
+      <section style={{ position: "relative", overflow: "hidden" }}>
+        <MeshGradient />
 
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "60px 20px",
-        }}
-      >
         <div
           style={{
-            width: "100%",
-            maxWidth: "600px",
-            backgroundColor: "rgba(var(--gray-1), 0.85)",
-            borderRadius: "16px",
-            overflow: "hidden",
-            boxShadow:
-              "0px 170px 48px 0px rgba(18, 18, 19, 0.00), 0px 109px 44px 0px rgba(18, 18, 19, 0.01), 0px 61px 37px 0px rgba(18, 18, 19, 0.05), 0px 27px 27px 0px rgba(18, 18, 19, 0.09), 0px 7px 15px 0px rgba(18, 18, 19, 0.10)",
+            position: "relative",
+            zIndex: 1,
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "60px 20px",
           }}
         >
-          {/* Main Content */}
           <div
             style={{
-              padding: "32px",
-              paddingBottom: "16px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "16px",
-              textAlign: "center",
+              width: "100%",
+              maxWidth: "600px",
+              backgroundColor: "rgba(255, 255, 255, 0.05)",
+              borderRadius: "16px",
+              overflow: "hidden",
+              boxShadow:
+                "0px 170px 48px 0px rgba(18, 18, 19, 0.00), 0px 109px 44px 0px rgba(18, 18, 19, 0.01), 0px 61px 37px 0px rgba(18, 18, 19, 0.05), 0px 27px 27px 0px rgba(18, 18, 19, 0.09), 0px 7px 15px 0px rgba(18, 18, 19, 0.10)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
             }}
           >
-            {/* Logo */}
-            {logo && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  width: "128px",
-                  height: "auto",
-                  marginBottom: "16px",
-                }}
-              >
-                <img
-                  src={logo || "/placeholder.svg"}
-                  alt="Logo"
+            {/* Main Content */}
+            <div
+              style={{
+                padding: "32px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "16px",
+                textAlign: "center",
+              }}
+            >
+              {/* Logo */}
+              {logo && (
+                <div
                   style={{
-                    maxWidth: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                    width: "128px",
                     height: "auto",
-                    objectFit: "contain",
+                    marginBottom: "16px",
                   }}
-                />
-              </div>
-            )}
+                >
+                  <img
+                    src={logo || "/placeholder.svg"}
+                    alt="Logo"
+                    style={{
+                      maxWidth: "100%",
+                      height: "auto",
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              )}
 
-            {/* Tab Navigation */}
-            <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+              {/* Tab Navigation */}
+              <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
 
-            {/* Content */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "32px", width: "100%" }}>
-              {activeTab === "waitlist" ? (
-                <>
-                  {/* Heading */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <h1
-                      style={{
-                        fontSize: "28px",
-                        fontWeight: "600",
-                        color: "rgb(var(--slate-12))",
-                        margin: 0,
-                        lineHeight: "1.2",
-                        letterSpacing: "-0.02em",
-                      }}
-                    >
-                      {title}
-                    </h1>
-                    <p
-                      style={{
-                        color: "rgb(var(--slate-10))",
-                        margin: 0,
-                        fontSize: "16px",
-                        lineHeight: "1.6",
-                        letterSpacing: "-0.01em",
-                        maxWidth: "480px",
-                        marginLeft: "auto",
-                        marginRight: "auto",
-                      }}
-                    >
-                      {subtitle}
-                    </p>
-                  </div>
+              {/* Content */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "32px", width: "100%" }}>
+                {activeTab === "waitlist" ? (
+                  <>
+                    {/* Heading */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <h1
+                        style={{
+                          fontSize: "28px",
+                          fontWeight: "600",
+                          color: "#e2e8f0",
+                          margin: 0,
+                          lineHeight: "1.2",
+                          letterSpacing: "-0.02em",
+                        }}
+                      >
+                        {title}
+                      </h1>
+                      <p
+                        style={{
+                          color: "#94a3b8",
+                          margin: 0,
+                          fontSize: "16px",
+                          lineHeight: "1.6",
+                          letterSpacing: "-0.01em",
+                          maxWidth: "480px",
+                          marginLeft: "auto",
+                          marginRight: "auto",
+                        }}
+                      >
+                        {subtitle}
+                      </p>
+                    </div>
 
-                  {/* Form */}
-                  <div style={{ padding: "0 4px", width: "100%" }}>
-                    <form
-                      onSubmit={handleSubmit}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "8px",
-                        width: "100%",
-                        position: "relative",
-                      }}
-                    >
-                      <div
+                    {/* Form */}
+                    <div style={{ padding: "0 4px", width: "100%" }}>
+                      <form
+                        onSubmit={handleSubmit}
                         style={{
                           display: "flex",
-                          alignItems: "center",
-                          gap: "12px",
+                          flexDirection: "column",
+                          gap: "8px",
+                          width: "100%",
                           position: "relative",
                         }}
                       >
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder={placeholder}
-                          disabled={state === "loading"}
+                        <div
                           style={{
-                            flex: 1,
-                            fontSize: "14px",
-                            paddingLeft: "16px",
-                            paddingRight: "112px",
-                            paddingTop: "8px",
-                            paddingBottom: "8px",
-                            height: "44px",
-                            backgroundColor: "rgba(var(--gray-11), 0.05)",
-                            borderRadius: "22px",
-                            color: "rgb(var(--gray-12))",
-                            border: "1px solid rgba(var(--gray-11), 0.1)",
-                            outline: "none",
-                            transition: "all 0.2s ease",
-                          }}
-                          onFocus={(e) => {
-                            e.target.style.borderColor = "rgba(var(--gray-11), 0.2)"
-                          }}
-                          onBlur={(e) => {
-                            e.target.style.borderColor = "rgba(var(--gray-11), 0.1)"
-                          }}
-                        />
-                        <button
-                          type="submit"
-                          disabled={state === "loading"}
-                          style={{
-                            position: "absolute",
-                            height: "32px",
-                            paddingLeft: "14px",
-                            paddingRight: "14px",
-                            backgroundColor: "rgb(var(--gray-12))",
-                            color: "rgb(var(--gray-1))",
-                            fontSize: "14px",
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            right: "6px",
-                            borderRadius: "16px",
-                            fontWeight: "500",
                             display: "flex",
-                            gap: "4px",
                             alignItems: "center",
-                            border: "none",
-                            cursor: state === "loading" ? "not-allowed" : "pointer",
-                            opacity: state === "loading" ? 0.7 : 1,
-                            transition: "all 0.2s ease",
+                            gap: "12px",
+                            position: "relative",
                           }}
                         >
-                          {state === "loading" ? (
-                            <>
-                              {buttonText.loading}
-                              <LoadingSpinner />
-                            </>
-                          ) : state === "success" ? (
-                            buttonText.success
-                          ) : (
-                            buttonText.idle
-                          )}
-                        </button>
-                      </div>
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder={placeholder}
+                            disabled={state === "loading"}
+                            style={{
+                              flex: 1,
+                              fontSize: "14px",
+                              paddingLeft: "16px",
+                              paddingRight: "112px",
+                              paddingTop: "8px",
+                              paddingBottom: "8px",
+                              height: "44px",
+                              backgroundColor: "rgba(255, 255, 255, 0.05)",
+                              borderRadius: "22px",
+                              color: "#e2e8f0",
+                              border: "1px solid rgba(255, 255, 255, 0.1)",
+                              outline: "none",
+                              transition: "all 0.2s ease",
+                            }}
+                            onFocus={(e) => {
+                              e.target.style.borderColor = "rgba(255, 255, 255, 0.2)"
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.borderColor = "rgba(255, 255, 255, 0.1)"
+                            }}
+                          />
+                          <button
+                            type="submit"
+                            disabled={state === "loading"}
+                            style={{
+                              position: "absolute",
+                              height: "32px",
+                              paddingLeft: "14px",
+                              paddingRight: "14px",
+                              backgroundColor: "#e2e8f0",
+                              color: "#1e293b",
+                              fontSize: "14px",
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              right: "6px",
+                              borderRadius: "16px",
+                              fontWeight: "500",
+                              display: "flex",
+                              gap: "4px",
+                              alignItems: "center",
+                              border: "none",
+                              cursor: state === "loading" ? "not-allowed" : "pointer",
+                              opacity: state === "loading" ? 0.7 : 1,
+                              transition: "all 0.2s ease",
+                            }}
+                          >
+                            {state === "loading" ? (
+                              <>
+                                {buttonText.loading}
+                                <LoadingSpinner />
+                              </>
+                            ) : state === "success" ? (
+                              buttonText.success
+                            ) : (
+                              buttonText.idle
+                            )}
+                          </button>
+                        </div>
 
-                      <div style={{ width: "100%", height: "8px" }} />
+                        <div style={{ width: "100%", height: "8px" }} />
 
-                      {error && (
-                        <p
-                          style={{
-                            position: "absolute",
-                            fontSize: "12px",
-                            color: "#ff0000",
-                            top: "100%",
-                            transform: "translateY(-50%)",
-                            paddingLeft: "8px",
-                            margin: 0,
-                          }}
-                        >
-                          {error}
-                        </p>
-                      )}
-                    </form>
-                  </div>
-                </>
-              ) : (
-                <ManifestoContent />
-              )}
+                        {error && (
+                          <p
+                            style={{
+                              position: "absolute",
+                              fontSize: "12px",
+                              color: "#f87171",
+                              top: "100%",
+                              transform: "translateY(-50%)",
+                              paddingLeft: "8px",
+                              margin: 0,
+                            }}
+                          >
+                            {error}
+                          </p>
+                        )}
+                      </form>
+                    </div>
+                  </>
+                ) : (
+                  <ManifestoContent />
+                )}
+              </div>
             </div>
           </div>
-
-          {/* Footer */}
-          <footer
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              width: "100%",
-              padding: "12px 32px",
-              fontSize: "14px",
-              backgroundColor: "rgba(var(--gray-12), 0.07)",
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <p
-                style={{
-                  fontSize: "12px",
-                  color: "rgb(var(--slate-10))",
-                  margin: 0,
-                }}
-              >
-                © 2025 Your Company. All rights reserved.
-              </p>
-              <a
-                href="https://github.com/moazamtech"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  color: "rgb(var(--slate-10))",
-                  textDecoration: "none",
-                  fontSize: "12px",
-                  transition: "color 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "rgb(var(--slate-12))"
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "rgb(var(--slate-10))"
-                }}
-              >
-                <GitHubIcon />
-                moazamtech
-              </a>
-            </div>
-            <ThemeSwitcher theme={theme} setTheme={setTheme} />
-          </footer>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   )
 }
 
