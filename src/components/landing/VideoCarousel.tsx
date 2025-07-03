@@ -128,7 +128,7 @@ const VideoCardComponent: React.FC<VideoCardComponentProps> = ({ card, isHovered
       </div>
       
       {/* Brand Logo */}
-      <div className="absolute bottom-3 right-3 w-10 h-10 bg-white rounded-full p-1.5 shadow-lg">
+      <div className="absolute bottom-3 left-3 w-14 h-14 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">
         <img
           src={card.brandLogoUrl}
           alt="Brand Logo"
