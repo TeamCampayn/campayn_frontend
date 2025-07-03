@@ -389,13 +389,13 @@ const WaitlistComponent: React.FC<WaitlistFormProps> = ({
             style={{
               width: "100%",
               maxWidth: "600px",
-              backgroundColor: "rgba(255, 255, 255, 0.05)",
+              backgroundColor: "rgba(0, 0, 0, 0.4)",
               borderRadius: "16px",
               overflow: "hidden",
               boxShadow:
-                "0px 170px 48px 0px rgba(18, 18, 19, 0.00), 0px 109px 44px 0px rgba(18, 18, 19, 0.01), 0px 61px 37px 0px rgba(18, 18, 19, 0.05), 0px 27px 27px 0px rgba(18, 18, 19, 0.09), 0px 7px 15px 0px rgba(18, 18, 19, 0.10)",
+                "0px 170px 48px 0px rgba(0, 0, 0, 0.3), 0px 109px 44px 0px rgba(0, 0, 0, 0.25), 0px 61px 37px 0px rgba(0, 0, 0, 0.2), 0px 27px 27px 0px rgba(0, 0, 0, 0.15), 0px 7px 15px 0px rgba(0, 0, 0, 0.1)",
               backdropFilter: "blur(20px)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
             }}
           >
             {/* Main Content */}
