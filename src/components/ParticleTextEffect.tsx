@@ -366,18 +366,12 @@ export function ParticleTextEffect({ words = DEFAULT_WORDS }: ParticleTextEffect
   }, [words])
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black p-4">
+    <div className="flex items-center justify-center h-screen bg-black">
       <canvas
         ref={canvasRef}
-        className="border border-gray-800 rounded-lg shadow-2xl"
+        className="rounded-lg shadow-2xl"
         style={{ maxWidth: "100%", height: "auto" }}
       />
-      <div className="mt-4 text-white text-sm text-center max-w-md">
-        <p className="mb-2">Particle Text Effect</p>
-        <p className="text-gray-400 text-xs">
-          Right-click and hold while moving mouse to destroy particles • Words change automatically every 4 seconds
-        </p>
-      </div>
     </div>
   )
 }

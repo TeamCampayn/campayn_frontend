@@ -1,15 +1,15 @@
-import { Navbar } from '../components/Navbar';
+import { LandingHeader } from '../components/landing/LandingHeader';
 import { Footer } from '../components/landing/Footer';
 import { ParticleTextEffect } from '../components/ParticleTextEffect';
 
 const CreatorsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <LandingHeader />
       
       {/* Hero Section with Particle Text Effect */}
       <section className="relative">
-        <ParticleTextEffect words={["Create", "Inspire", "Monetize"]} />
+        <ParticleTextEffect words={["Collab", "Create", "Collect"]} />
       </section>
       
       {/* Content sections would go here */}
