@@ -4,6 +4,7 @@ import { LandingHeader } from '../components/landing/LandingHeader';
 import { Footer } from '../components/landing/Footer';
 import { ParticleTextEffect } from '../components/ParticleTextEffect';
 import { CursorFollowButton } from '../components/CursorFollowButton';
+import { CreatorJourneyTimeline } from '../components/CreatorJourneyTimeline';
 
 const CreatorsPage = () => {
   const heroRef = useRef<HTMLElement>(null);
@@ -60,9 +61,12 @@ const CreatorsPage = () => {
         
         <CursorFollowButton text="Join the Waitlist" containerRef={heroRef} />
       </section>
+
+      {/* Creator Journey Timeline Section */}
+      <CreatorJourneyTimeline />
       
       {/* Content sections would go here */}
-      <section className="py-20 px-6">
+      <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
             Join Our Creator Community
