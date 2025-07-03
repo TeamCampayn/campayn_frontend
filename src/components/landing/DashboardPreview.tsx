@@ -1,7 +1,5 @@
-
 import React, { useRef } from "react";
 import { useScroll, useTransform, motion, MotionValue } from "framer-motion";
-import { AuroraBackground } from "../ui/aurora-background";
 
 export const ContainerScroll = ({
   titleComponent,
@@ -37,11 +35,11 @@ export const ContainerScroll = ({
 
   return (
     <div
-      className="h-[50rem] md:h-[65rem] flex items-center justify-center relative p-2 md:p-20"
+      className="h-[60rem] md:h-[80rem] flex items-center justify-center relative p-2 md:p-20"
       ref={containerRef}
     >
       <div
-        className="py-6 md:py-20 w-full relative"
+        className="py-10 md:py-40 w-full relative"
         style={{
           perspective: "1000px",
         }}
@@ -105,37 +103,35 @@ export const Card = ({
 
 export const DashboardPreview = () => {
   return (
-    <AuroraBackground className="h-auto min-h-screen">
-      <div className="flex flex-col overflow-hidden">
-        <ContainerScroll
-          titleComponent={
-            <>
-              <h1 className="text-3xl md:text-5xl font-semibold text-black dark:text-white mb-4">
-                Experience the Power of <br />
-                <span className="text-4xl md:text-[5rem] font-bold mt-2 leading-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Campayn Dashboard
-                </span>
-              </h1>
-              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                Manage campaigns, track performance, and grow your business with our intuitive dashboard
-              </p>
-            </>
-          }
-        >
-          <picture className="w-full h-full">
-            <source 
-              media="(min-width: 768px)" 
-              srcSet="/lovable-uploads/7d0ec114-6ea6-4cb4-adac-ee9259b74802.png"
-            />
-            <img
-              src="/lovable-uploads/04edaae1-6768-43f4-95f9-f1361319cfcd.png"
-              alt="Campayn Dashboard Screenshot"
-              className="w-full h-full object-contain rounded-2xl"
-              draggable={false}
-            />
-          </picture>
-        </ContainerScroll>
-      </div>
-    </AuroraBackground>
+    <div className="flex flex-col overflow-hidden">
+      <ContainerScroll
+        titleComponent={
+          <>
+            <h1 className="text-3xl md:text-5xl font-semibold text-black dark:text-white mb-4">
+              Experience the Power of <br />
+              <span className="text-4xl md:text-[5rem] font-bold mt-2 leading-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Campayn Dashboard
+              </span>
+            </h1>
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Manage campaigns, track performance, and grow your business with our intuitive dashboard
+            </p>
+          </>
+        }
+      >
+        <picture className="w-full h-full">
+          <source 
+            media="(min-width: 768px)" 
+            srcSet="/lovable-uploads/7d0ec114-6ea6-4cb4-adac-ee9259b74802.png"
+          />
+          <img
+            src="/lovable-uploads/04edaae1-6768-43f4-95f9-f1361319cfcd.png"
+            alt="Campayn Dashboard Screenshot"
+            className="w-full h-full object-contain rounded-2xl"
+            draggable={false}
+          />
+        </picture>
+      </ContainerScroll>
+    </div>
   );
 };

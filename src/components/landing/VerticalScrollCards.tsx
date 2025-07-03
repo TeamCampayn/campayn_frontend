@@ -59,10 +59,8 @@ export const VerticalScrollCards: React.FC = () => {
         pin: true,
         start: "top top",
         end: `+=${items.length * 100}%`,
-        scrub: 0.8,
-        anticipatePin: 1,
+        scrub: 1,
         invalidateOnRefresh: true,
-        refreshPriority: -1,
         onUpdate: (self) => {
           // Calculate which card is currently active
           const progress = self.progress;
@@ -81,19 +79,17 @@ export const VerticalScrollCards: React.FC = () => {
       defaults: { ease: "none" },
     });
 
-    // Create smoother transitions between cards
     items.forEach((item, idx) => {
-      if (idx < items.length - 1) {
-        timeline
-          .to(item, { 
-            scale: 0.95, 
-            y: -50,
-            duration: 0.5
-          })
-          .to(items[idx + 1], { 
-            y: 0,
-            duration: 0.5 
-          }, "<0.25");
+      // Scale down and move up current item slightly
+      timeline.to(item, { scale: 0.95, y: -30 });
+      
+      // Slide up next item from bottom
+      if (items[idx + 1]) {
+        timeline.to(
+          items[idx + 1],
+          { y: 0 },
+          "<"
+        );
       }
     });
 
@@ -104,12 +100,9 @@ export const VerticalScrollCards: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative w-full overflow-hidden">
-      {/* Simple gradient background for smooth performance */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50"></div>
-      
+    <div className="bg-gradient-to-br from-gray-50 to-white">
       {/* Fixed Heading */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center relative z-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-4 sm:pb-6 text-center">
         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
           Your Brand Deserves Better Than an Agency. It Deserves Campayn
         </h2>
@@ -121,7 +114,7 @@ export const VerticalScrollCards: React.FC = () => {
       {/* Scrollable Cards Section */}
       <section 
         ref={sectionRef} 
-        className="relative w-full h-screen z-10"
+        className="relative w-full h-screen"
       >
         <div className="relative w-full h-screen flex items-center justify-center">
           {featuresData.map((card, index) => {
