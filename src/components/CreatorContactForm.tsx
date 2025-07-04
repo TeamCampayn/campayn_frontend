@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -37,13 +38,25 @@ export const CreatorContactForm = () => {
   const onSubmit = async (data: ContactForm) => {
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Creator contact form submitted:', data);
-      
-      toast.success('Message sent successfully! We\'ll get back to you soon.');
-      reset();
+      const response = await fetch('https://mailing-service-zeta.vercel.app/api/generic-mail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...data,
+          heading: 'Creator Contact Form'
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Message sent successfully! We\'ll get back to you soon.');
+        reset();
+      } else {
+        toast.error('Failed to send message. Please try again.');
+      }
     } catch (error) {
+      console.error('Form submission error:', error);
       toast.error('Failed to send message. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -63,7 +76,7 @@ export const CreatorContactForm = () => {
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-100 to-pink-100 px-4 py-2 rounded-full mb-6">
               <Sparkles className="w-4 h-4 text-purple-600" />
-              <span className="text-purple-700 font-medium">Get in Touch</span>
+              <span className="text-purple-700 font-medium">Contact Information</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-purple-800 to-pink-800 bg-clip-text text-transparent mb-4">
               Ready to Collaborate?

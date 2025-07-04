@@ -2,6 +2,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
+import { toast } from 'sonner';
 
 // Types
 interface WaitlistFormProps {
@@ -357,10 +358,42 @@ const WaitlistComponent: React.FC<WaitlistFormProps> = ({
       return
     }
 
-    // UI demo - just show loading then success
     setState("loading")
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setState("success")
+    
+    try {
+      const response = await fetch('https://mailing-service-zeta.vercel.app/api/generic-mail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          heading: 'Waitlist Form'
+        }),
+      });
+
+      if (response.ok) {
+        setState("success")
+        toast.success('Successfully joined the waitlist!')
+      } else {
+        setState("error")
+        setError("Failed to join waitlist. Please try again.")
+        toast.error('Failed to join waitlist. Please try again.')
+        errorTimeout.current = setTimeout(() => {
+          setError(undefined)
+          setState("idle")
+        }, 3000)
+      }
+    } catch (error) {
+      console.error('Waitlist submission error:', error);
+      setState("error")
+      setError("Failed to join waitlist. Please try again.")
+      toast.error('Failed to join waitlist. Please try again.')
+      errorTimeout.current = setTimeout(() => {
+        setError(undefined)
+        setState("idle")
+      }, 3000)
+    }
   }
 
   return (

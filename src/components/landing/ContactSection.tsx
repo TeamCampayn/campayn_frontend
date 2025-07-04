@@ -1,9 +1,11 @@
+
 import { useState } from 'react';
 import { Mail, Phone, MapPin, Send, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 export const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -12,11 +14,36 @@ export const ContactSection = () => {
     company: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Handle form submission
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch('https://mailing-service-zeta.vercel.app/api/generic-mail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          heading: 'Contact Us Brands Form'
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Message sent successfully! We\'ll get back to you soon.');
+        setFormData({ name: '', email: '', company: '', message: '' });
+      } else {
+        toast.error('Failed to send message. Please try again.');
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast.error('Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -157,9 +184,10 @@ export const ContactSection = () => {
 
                 <Button
                   type="submit"
+                  disabled={isSubmitting}
                   className="w-full h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
                 >
-                  <span>Send Message</span>
+                  <span>{isSubmitting ? 'Sending Message...' : 'Send Message'}</span>
                   <Send className="w-5 h-5 ml-2" />
                 </Button>
               </form>
