@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from './ui/button';
 
@@ -12,8 +13,12 @@ export const Navbar = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-lg">C</span>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
+              <img 
+                src="/lovable-uploads/50197cd5-740c-4048-b1cc-36754841abcb.png" 
+                alt="Campayn Logo" 
+                className="w-10 h-10 rounded-xl object-contain"
+              />
             </div>
             <div>
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">

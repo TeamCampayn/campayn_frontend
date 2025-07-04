@@ -80,8 +80,12 @@ export const LandingHeader = () => {
           <div className="hidden md:flex items-center justify-between w-full bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-lg px-6 py-3">
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3 cursor-pointer">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg">C</span>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
+                <img 
+                  src="/lovable-uploads/50197cd5-740c-4048-b1cc-36754841abcb.png" 
+                  alt="Campayn Logo" 
+                  className="w-10 h-10 rounded-xl object-contain"
+                />
               </div>
               <div>
                 <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -112,8 +116,12 @@ export const LandingHeader = () => {
 
           {/* Mobile logo (shown when menu is collapsed) */}
           <Link to="/" className="md:hidden flex items-center space-x-3 bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-lg px-4 py-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-lg">C</span>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
+              <img 
+                src="/lovable-uploads/50197cd5-740c-4048-b1cc-36754841abcb.png" 
+                alt="Campayn Logo" 
+                className="w-10 h-10 rounded-xl object-contain"
+              />
             </div>
             <div>
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
