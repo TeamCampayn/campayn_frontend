@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { MoveRight } from "lucide-react";
@@ -83,7 +84,7 @@ function Hero() {
         <div className="flex gap-8 py-32 lg:py-40 items-center justify-center flex-col min-h-screen">
           <div className="flex gap-4 flex-col">
             <h1 className="text-5xl md:text-7xl max-w-2xl tracking-tighter text-center font-regular">
-              <span className="text-foreground">Run campaigns that feel</span>
+              <span className="text-foreground">Campaigns that feel</span>
               <span className="relative flex w-full justify-center overflow-hidden text-center md:pb-4 md:pt-1">
                 &nbsp;
                 {titles.map((title, index) => (
@@ -111,7 +112,7 @@ function Hero() {
             </h1>
 
             <p className="text-lg md:text-xl leading-relaxed tracking-tight text-muted-foreground max-w-2xl text-center">
-              Campayn helps you launch creator campaigns in minutes—not weeks.
+              Campayn helps you launch creator campaigns in minutes, not weeks.
               From AI-powered matchmaking to real-time performance tracking, we take care of the heavy lifting so you can focus on what matters: building meaningful influence and measurable results.
             </p>
           </div>

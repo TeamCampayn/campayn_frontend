@@ -49,7 +49,7 @@ export const ContactSection = () => {
           {/* Contact Info */}
           <div className="lg:col-span-2 space-y-8">
             <div className="bg-white/70 backdrop-blur-lg rounded-2xl p-8 border border-white/40 shadow-xl">
-              <h3 className="text-2xl font-bold text-slate-800 mb-6">Get in Touch</h3>
+              <h3 className="text-2xl font-bold text-slate-800 mb-6">Contact Information</h3>
               
               <div className="space-y-6">
                 <div className="flex items-center space-x-4 group">
@@ -58,7 +58,7 @@ export const ContactSection = () => {
                   </div>
                   <div>
                     <div className="text-slate-800 font-semibold">Email Us</div>
-                    <div className="text-slate-600">hello@campayn.com</div>
+                    <div className="text-slate-600">contact@campayn.in</div>
                   </div>
                 </div>
                 

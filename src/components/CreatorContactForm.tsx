@@ -87,7 +87,7 @@ export const CreatorContactForm = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-1">Email Us</h4>
-                      <p className="text-gray-600">creators@oneimpression.com</p>
+                      <p className="text-gray-600">contact@campayn.in</p>
                     </div>
                   </div>
                   
