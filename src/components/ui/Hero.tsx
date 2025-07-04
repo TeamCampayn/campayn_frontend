@@ -1,100 +1,141 @@
+import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { MoveRight } from "lucide-react";
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { RetroGrid } from "./retro-grid";
 
-import { useState, useEffect } from 'react';
-import { ArrowRight, Sparkles, TrendingUp, Users, Zap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+);
 
-export default function HeroDemo() {
-  const [isVisible, setIsVisible] = useState(false);
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+Button.displayName = "Button";
+
+function Hero() {
+  const navigate = useNavigate();
+  const [titleNumber, setTitleNumber] = useState(0);
+  const titles = useMemo(
+    () => ["effortless", "smart", "scalable", "personal", "powerful"],
+    []
+  );
 
   useEffect(() => {
-    setIsVisible(true);
-  }, []);
-
-  const handleGetStarted = () => {
-    // Navigate to contact or signup
-    console.log('Get started clicked');
-  };
-
-  const handleWatchDemo = () => {
-    // Play demo video or show demo
-    console.log('Watch demo clicked');
-  };
+    const timeoutId = setTimeout(() => {
+      if (titleNumber === titles.length - 1) {
+        setTitleNumber(0);
+      } else {
+        setTitleNumber(titleNumber + 1);
+      }
+    }, 2000);
+    return () => clearTimeout(timeoutId);
+  }, [titleNumber, titles]);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-      {/* Background Effects */}
-      <div className="absolute inset-0">
-        <div className="absolute top-20 left-1/4 w-72 h-72 bg-blue-400/20 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-1/4 w-72 h-72 bg-purple-400/20 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-400/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
-      </div>
+    <div className="relative w-full overflow-hidden">
+      <RetroGrid />
+      <div className="container mx-auto relative z-10">
+        <div className="flex gap-8 py-32 lg:py-40 items-center justify-center flex-col min-h-screen">
+          <div className="flex gap-4 flex-col">
+            <h1 className="text-5xl md:text-7xl max-w-2xl tracking-tighter text-center font-regular">
+              <span className="text-foreground">Run campaigns that feel</span>
+              <span className="relative flex w-full justify-center overflow-hidden text-center md:pb-4 md:pt-1">
+                &nbsp;
+                {titles.map((title, index) => (
+                  <motion.span
+                    key={index}
+                    className="absolute font-semibold"
+                    initial={{ opacity: 0, y: "-100px" }}
+                    transition={{ type: "spring", stiffness: 50 }}
+                    animate={
+                      titleNumber === index
+                        ? {
+                            y: 0,
+                            opacity: 1,
+                          }
+                        : {
+                            y: titleNumber > index ? "-150px" : "150px",
+                            opacity: 0,
+                          }
+                    }
+                  >
+                    {title}
+                  </motion.span>
+                ))}
+              </span>
+            </h1>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
-        <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          {/* Badge */}
-          <Badge variant="secondary" className="mb-8 px-6 py-2 text-sm bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg">
-            <Sparkles className="w-4 h-4 mr-2 text-purple-600" />
-            Launching Soon
-          </Badge>
-
-          {/* Main Headline */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight">
-            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Campaign
-            </span>
-            <br />
-            <span className="text-slate-800">
-              Like Never Before
-            </span>
-          </h1>
-
-          {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-slate-600 mb-12 max-w-4xl mx-auto leading-relaxed">
-            Connect brands with authentic creators. Build campaigns that resonate. 
-            Drive results that matter. Welcome to the future of influencer marketing.
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
-            <Button 
-              size="lg" 
-              onClick={handleGetStarted}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-            >
-              Get Started
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              onClick={handleWatchDemo}
-              className="border-2 border-slate-300 hover:border-purple-400 text-slate-700 hover:text-purple-700 px-8 py-4 text-lg bg-white/70 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              Watch Demo
-            </Button>
+            <p className="text-lg md:text-xl leading-relaxed tracking-tight text-muted-foreground max-w-2xl text-center">
+              Campayn helps you launch creator campaigns in minutes—not weeks.
+              From AI-powered matchmaking to real-time performance tracking, we take care of the heavy lifting so you can focus on what matters: building meaningful influence and measurable results.
+            </p>
           </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
-              <TrendingUp className="w-8 h-8 text-blue-600 mx-auto mb-4" />
-              <div className="text-3xl font-bold text-slate-800 mb-2">10x</div>
-              <div className="text-slate-600">Better ROI</div>
-            </div>
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
-              <Users className="w-8 h-8 text-purple-600 mx-auto mb-4" />
-              <div className="text-3xl font-bold text-slate-800 mb-2">500K+</div>
-              <div className="text-slate-600">Active Creators</div>
-            </div>
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
-              <Zap className="w-8 h-8 text-pink-600 mx-auto mb-4" />
-              <div className="text-3xl font-bold text-slate-800 mb-2">24hrs</div>
-              <div className="text-slate-600">Campaign Launch</div>
-            </div>
+          <div className="flex flex-row justify-center">
+            <Button 
+              size="lg" 
+              className="gap-4"
+              onClick={() => navigate('/create-campaign')}
+            >
+              Start Your Campaign <MoveRight className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
+
+function HeroDemo() {
+  return (
+    <div className="flex text-center items-center justify-center">
+      <Hero />
+    </div>
+  );
+}
+
+export default HeroDemo;

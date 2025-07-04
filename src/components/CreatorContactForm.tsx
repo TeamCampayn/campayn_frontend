@@ -64,7 +64,7 @@ export const CreatorContactForm = () => {
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-100 to-pink-100 px-4 py-2 rounded-full mb-6">
               <Sparkles className="w-4 h-4 text-purple-600" />
-              <span className="text-purple-700 font-medium">Contact Us</span>
+              <span className="text-purple-700 font-medium">Get in Touch</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-purple-800 to-pink-800 bg-clip-text text-transparent mb-4">
               Ready to Collaborate?
@@ -87,7 +87,7 @@ export const CreatorContactForm = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-1">Email Us</h4>
-                      <p className="text-gray-600">contact@campayn.in</p>
+                      <p className="text-gray-600">creators@oneimpression.com</p>
                     </div>
                   </div>
                   
