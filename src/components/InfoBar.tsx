@@ -7,7 +7,7 @@ export const InfoBar = () => {
     "On-time delivery or money back", 
     "Receive 24 creator options",
     "Easy cancellation & refunds",
-    "Will buy support anytime"
+    "24/7 support anytime"
   ];
 
   return (

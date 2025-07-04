@@ -18,7 +18,7 @@ export const AboutMission = () => {
               and authentic content drives real results.
             </p>
             <p className="text-lg text-gray-600 leading-relaxed">
-              We're not just building a platform – we're fostering a community where creativity, 
+              We're not just building a platform. We're fostering a community where creativity, 
               authenticity, and business success intersect to create something truly special.
             </p>
           </div>

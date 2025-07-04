@@ -46,8 +46,8 @@ export const AboutHero = () => {
           </p>
           
           <p>
-            This inspired us to build <span className="font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Campayn</span> – 
-            democratizing creator-brand collaborations and ensuring every authentic voice gets heard.
+            This inspired us to build <span className="font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Campayn</span>. 
+            We're democratizing creator-brand collaborations and ensuring every authentic voice gets heard.
           </p>
         </div>
 
