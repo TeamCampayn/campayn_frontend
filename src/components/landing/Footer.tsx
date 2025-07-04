@@ -1,3 +1,4 @@
+
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
 
 export const Footer = () => {
@@ -66,7 +67,7 @@ export const Footer = () => {
                   <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                     <Mail className="w-4 h-4 text-white" />
                   </div>
-                  <span>hello@campayn.com</span>
+                  <span>contact@campayn.in</span>
                 </div>
                 <div className="flex items-center space-x-3 text-slate-600 hover:text-slate-800 transition-colors">
                   <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
