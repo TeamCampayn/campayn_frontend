@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Mail, Phone, MapPin, Send, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -59,26 +58,6 @@ export const ContactSection = () => {
                   <div>
                     <div className="text-slate-800 font-semibold">Email Us</div>
                     <div className="text-slate-600">contact@campayn.in</div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-4 group">
-                  <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                    <Phone className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <div className="text-slate-800 font-semibold">Call Us</div>
-                    <div className="text-slate-600">+91 12345 67890</div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-4 group">
-                  <div className="w-14 h-14 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                    <MapPin className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <div className="text-slate-800 font-semibold">Visit Us</div>
-                    <div className="text-slate-600">Mumbai, India</div>
                   </div>
                 </div>
               </div>

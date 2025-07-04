@@ -1,4 +1,3 @@
-
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
 
 export const Footer = () => {
@@ -68,18 +67,6 @@ export const Footer = () => {
                     <Mail className="w-4 h-4 text-white" />
                   </div>
                   <span>contact@campayn.in</span>
-                </div>
-                <div className="flex items-center space-x-3 text-slate-600 hover:text-slate-800 transition-colors">
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <Phone className="w-4 h-4 text-white" />
-                  </div>
-                  <span>+91 12345 67890</span>
-                </div>
-                <div className="flex items-center space-x-3 text-slate-600 hover:text-slate-800 transition-colors">
-                  <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg flex items-center justify-center">
-                    <MapPin className="w-4 h-4 text-white" />
-                  </div>
-                  <span>Mumbai, India</span>
                 </div>
               </div>
 
