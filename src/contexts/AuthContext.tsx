@@ -1,0 +1,208 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { User, Session } from '@supabase/supabase-js'
+import { supabase } from '../lib/supabase'
+
+interface Brand {
+  id: string
+  user_id: string
+  brand_name: string
+  brand_website: string
+  social_handles: string
+  niches: any[]
+  company_size?: string
+  industry?: string
+  brand_description?: string
+  marketing_goals?: string[]
+  monthly_budget?: string
+  experience_level?: string
+  created_at: string
+  updated_at: string
+}
+
+interface AuthContextType {
+  user: User | null
+  brand: Brand | null
+  session: Session | null
+  loading: boolean
+  signIn: (email: string, password: string) => Promise<User>
+  signUp: (email: string, password: string, brandData?: any) => Promise<void>
+  signOut: () => Promise<void>
+  createBrandProfile: (brandData: any) => Promise<void>
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+interface AuthProviderProps {
+  children: ReactNode
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null)
+  const [brand, setBrand] = useState<Brand | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Get initial session
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        setSession(session)
+        setUser(session?.user ?? null)
+        
+        if (session?.user) {
+          // Try to fetch brand data, but don't block the UI
+          fetchBrandData(session.user.id)
+        } else {
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error('Error getting initial session:', error)
+        setLoading(false)
+      }
+    }
+
+    initAuth()
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+      
+      if (session?.user) {
+        fetchBrandData(session.user.id)
+      } else {
+        setBrand(null)
+        setLoading(false)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  const fetchBrandData = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('brands')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') { // No rows returned
+          // Create a minimal brand profile
+          const defaultName = (user?.email?.split('@')[0] || 'Brand') as string
+          const { data: created, error: insertErr } = await supabase
+            .from('brands')
+            .insert({
+              user_id: userId,
+              brand_name: defaultName,
+              brand_website: '',
+              social_handles: '',
+              niches: [],
+              company_size: '1-10',
+              industry: 'other',
+              brand_description: '',
+              marketing_goals: [],
+              monthly_budget: 'under-5k',
+              experience_level: 'beginner',
+            })
+            .select('*')
+            .single()
+
+          if (insertErr) {
+            console.error('Auto-create brand failed:', insertErr)
+            setBrand(null)
+          } else {
+            setBrand(created)
+          }
+        } else {
+          console.error('Error fetching brand data:', error)
+          setBrand(null)
+        }
+      } else {
+        setBrand(data)
+      }
+    } catch (error) {
+      console.error('Error in fetchBrandData:', error)
+      setBrand(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const signIn = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    if (error) throw error
+    return data.user
+  }
+
+  const signUp = async (email: string, password: string, brandData?: any) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    })
+    if (error) throw error
+    
+    // Store brand data in localStorage for later use
+    if (brandData) {
+      localStorage.setItem('pendingBrandData', JSON.stringify(brandData))
+    }
+  }
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
+    setUser(null)
+    setBrand(null)
+    setSession(null)
+  }
+
+  const createBrandProfile = async (brandData: any) => {
+    if (!user) throw new Error('No user logged in')
+    
+    const { data, error } = await supabase
+      .from('brands')
+      .insert({
+        user_id: user.id,
+        ...brandData,
+      })
+      .select('*')
+      .single()
+
+    if (error) throw error
+    setBrand(data)
+  }
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        brand,
+        session,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+        createBrandProfile,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
+}

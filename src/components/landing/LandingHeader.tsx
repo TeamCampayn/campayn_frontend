@@ -105,12 +105,16 @@ export const LandingHeader = () => {
             
             {/* Login and Get Started buttons */}
             <div className="flex items-center space-x-4">
-              <button className="bg-white/80 backdrop-blur-md border border-gray-200/50 text-gray-700 hover:text-blue-600 px-6 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200">
-                Login
-              </button>
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-                Get Started
-              </button>
+              <Link to="/auth">
+                <button className="bg-white/80 backdrop-blur-md border border-gray-200/50 text-gray-700 hover:text-blue-600 px-6 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+                  Login
+                </button>
+              </Link>
+              <Link to="/auth">
+                <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+                  Get Started
+                </button>
+              </Link>
             </div>
           </div>
 
@@ -159,12 +163,16 @@ export const LandingHeader = () => {
                 </button>
               ))}
               <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-                <button className="bg-white/80 backdrop-blur-md border border-gray-200/50 text-gray-700 px-6 py-2 rounded-lg font-medium w-fit">
-                  Login
-                </button>
-                <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium w-fit">
-                  Get Started
-                </button>
+                <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                  <button className="bg-white/80 backdrop-blur-md border border-gray-200/50 text-gray-700 px-6 py-2 rounded-lg font-medium w-fit">
+                    Login
+                  </button>
+                </Link>
+                <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                  <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium w-fit">
+                    Get Started
+                  </button>
+                </Link>
               </div>
             </div>
           </div>

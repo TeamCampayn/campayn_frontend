@@ -1,32 +1,33 @@
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
     company: [
-      { name: 'About Us', href: '#' },
-      { name: 'Careers', href: '#' },
-      { name: 'Press', href: '#' },
-      { name: 'Blog', href: '#' },
+      { name: 'About Us', href: '/about' },
+      { name: 'For Creators', href: '/creators' },
+      { name: 'For Brands', href: '/create-campaign' },
+      { name: 'Contact Us', href: '/contact' },
     ],
     services: [
-      { name: 'Creator Matching', href: '#' },
-      { name: 'Campaign Management', href: '#' },
-      { name: 'Analytics', href: '#' },
-      { name: 'Content Creation', href: '#' },
+      { name: 'Creator Matching', href: '/dashboard/explore-creators' },
+      { name: 'Campaign Management', href: '/dashboard' },
+      { name: 'Analytics', href: '/dashboard' },
+      { name: 'Support', href: '/dashboard/support' },
+    ],
+    legal: [
+      { name: 'Terms & Conditions', href: '/terms' },
+      { name: 'Privacy Policy', href: '/privacy' },
+      { name: 'Shipping Policy', href: '/shipping' },
+      { name: 'Refund Policy', href: '/refunds' },
     ],
     support: [
-      { name: 'Help Center', href: '#' },
-      { name: 'Contact Us', href: '#' },
-      { name: 'Privacy Policy', href: '#' },
-      { name: 'Terms of Service', href: '#' },
-    ],
-    creators: [
-      { name: 'Join as Creator', href: '#' },
-      { name: 'Creator Resources', href: '#' },
-      { name: 'Success Stories', href: '#' },
-      { name: 'Community', href: '#' },
+      { name: 'Help Center', href: '/dashboard/support' },
+      { name: 'Contact Us', href: '/contact' },
+      { name: 'FAQs', href: '/dashboard/support' },
+      { name: 'Report Issue', href: '/contact' },
     ],
   };
 
@@ -92,12 +93,12 @@ export const Footer = () => {
                 <ul className="space-y-3">
                   {footerLinks.company.map((link) => (
                     <li key={link.name}>
-                      <a
-                        href={link.href}
+                      <Link
+                        to={link.href}
                         className="text-slate-600 hover:text-blue-600 transition-colors duration-200"
                       >
                         {link.name}
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -108,44 +109,44 @@ export const Footer = () => {
                 <ul className="space-y-3">
                   {footerLinks.services.map((link) => (
                     <li key={link.name}>
-                      <a
-                        href={link.href}
+                      <Link
+                        to={link.href}
                         className="text-slate-600 hover:text-purple-600 transition-colors duration-200"
                       >
                         {link.name}
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>
               </div>
 
               <div>
-                <h4 className="text-lg font-semibold mb-4 text-pink-600">Support</h4>
+                <h4 className="text-lg font-semibold mb-4 text-pink-600">Legal</h4>
                 <ul className="space-y-3">
-                  {footerLinks.support.map((link) => (
+                  {footerLinks.legal.map((link) => (
                     <li key={link.name}>
-                      <a
-                        href={link.href}
+                      <Link
+                        to={link.href}
                         className="text-slate-600 hover:text-pink-600 transition-colors duration-200"
                       >
                         {link.name}
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>
               </div>
 
               <div>
-                <h4 className="text-lg font-semibold mb-4 text-blue-600">Creators</h4>
+                <h4 className="text-lg font-semibold mb-4 text-blue-600">Support</h4>
                 <ul className="space-y-3">
-                  {footerLinks.creators.map((link) => (
+                  {footerLinks.support.map((link) => (
                     <li key={link.name}>
-                      <a
-                        href={link.href}
+                      <Link
+                        to={link.href}
                         className="text-slate-600 hover:text-blue-600 transition-colors duration-200"
                       >
                         {link.name}
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -179,18 +180,18 @@ export const Footer = () => {
           <div className="max-w-7xl mx-auto px-6 py-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
               <p className="text-slate-500 text-sm">
-                © {currentYear} Campayn. All rights reserved.
+                © {currentYear} Campayn India Pvt Ltd. All rights reserved.
               </p>
               <div className="flex space-x-6 text-sm">
-                <a href="#" className="text-slate-500 hover:text-slate-700 transition-colors">
+                <Link to="/privacy" className="text-slate-500 hover:text-slate-700 transition-colors">
                   Privacy Policy
-                </a>
-                <a href="#" className="text-slate-500 hover:text-slate-700 transition-colors">
+                </Link>
+                <Link to="/terms" className="text-slate-500 hover:text-slate-700 transition-colors">
                   Terms of Service
-                </a>
-                <a href="#" className="text-slate-500 hover:text-slate-700 transition-colors">
-                  Cookie Policy
-                </a>
+                </Link>
+                <Link to="/refunds" className="text-slate-500 hover:text-slate-700 transition-colors">
+                  Refund Policy
+                </Link>
               </div>
             </div>
           </div>

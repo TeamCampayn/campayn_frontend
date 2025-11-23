@@ -130,3 +130,4 @@ export const CreatorSelection = ({ data, updateData, onNext, onPrev }: CreatorSe
     </Card>
   );
 };
+export default CreatorSelection;
