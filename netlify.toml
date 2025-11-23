@@ -1,0 +1,13 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Environment variables hint (set these in Netlify dashboard)
+# VITE_SUPABASE_URL
+# VITE_SUPABASE_ANON_KEY
+# VITE_SOCKET_URL
