@@ -50,7 +50,9 @@ const AdminPaymentDashboard: React.FC = () => {
     if (!socket) return;
     const handler = () => fetchPendingPayments();
     socket.on('payment_updated', handler);
-    return () => socket.off('payment_updated', handler);
+    return () => {
+      socket.off('payment_updated', handler);
+    };
   }, [socket]);
 
   const fetchPendingPayments = async () => {

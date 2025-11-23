@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import ConversationHistory from '@/components/ConversationHistory';
-import PaymentManagement from '@/components/PaymentManagement';
+import PaymentManagementRazorpay from '@/components/PaymentManagementRazorpay';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { io } from 'socket.io-client';
@@ -602,10 +602,12 @@ const BrandCampaignDetail: React.FC = () => {
                       );
                     })()}
                   </div>
-                  <PaymentManagement 
-                    campaignId={id!} 
+                  <PaymentManagementRazorpay 
+                    campaignId={id!}
+                    campaignName={campaign.campaign_name}
+                    amount={campaign.budget}
                     userType="brand"
-                    onPaymentUpdate={fetchCampaignDetails}
+                    onPaymentSuccess={fetchCampaignDetails}
                   />
                 </div>
               )}

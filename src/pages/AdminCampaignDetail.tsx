@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import ConversationHistory from '@/components/ConversationHistory';
-import PaymentManagement from '@/components/PaymentManagement';
+import PaymentManagementRazorpay from '@/components/PaymentManagementRazorpay';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { io } from 'socket.io-client';
@@ -517,10 +517,12 @@ const AdminCampaignDetail: React.FC = () => {
                       Send payment request to brand to proceed to content approval.
                     </p>
                   </div>
-                  <PaymentManagement 
-                    campaignId={id!} 
+                  <PaymentManagementRazorpay 
+                    campaignId={id!}
+                    campaignName={campaign.campaign_name}
+                    amount={campaign.budget}
                     userType="admin"
-                    onPaymentUpdate={fetchCampaignDetails}
+                    onPaymentSuccess={fetchCampaignDetails}
                   />
                 </div>
               )}

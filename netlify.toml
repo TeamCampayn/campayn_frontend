@@ -7,7 +7,8 @@
   to = "/index.html"
   status = 200
 
-# Environment variables hint (set these in Netlify dashboard)
-# VITE_SUPABASE_URL
-# VITE_SUPABASE_ANON_KEY
-# VITE_SOCKET_URL
+# Environment variables required (set these in Netlify dashboard):
+# VITE_BACKEND_URL=https://campayn-backend.netlify.app/.netlify/functions/api
+# VITE_SOCKET_URL=https://campayn-backend.netlify.app
+# VITE_SUPABASE_URL=https://rxsgvhstplsjahhvlhss.supabase.co
+# VITE_SUPABASE_ANON_KEY=<your-anon-key>

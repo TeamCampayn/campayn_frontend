@@ -44,6 +44,10 @@ import ShippingPolicy from './pages/legal/ShippingPolicy';
 import ContactUs from './pages/legal/ContactUs';
 import CancellationRefunds from './pages/legal/CancellationRefunds';
 
+// Razorpay Payment Link Pages
+import RazorpayPaymentLink from './pages/RazorpayPaymentLink';
+import AdminRazorpayVerification from './pages/AdminRazorpayVerification';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -150,6 +154,18 @@ function App() {
                 <AdminProtectedRoute>
                   <AdminPaymentDashboard />
                 </AdminProtectedRoute>
+              } />
+              <Route path="/admin/razorpay-verification" element={
+                <AdminProtectedRoute>
+                  <AdminRazorpayVerification />
+                </AdminProtectedRoute>
+              } />
+              
+              {/* Brand Payment Routes */}
+              <Route path="/campaigns/:campaignId/payment" element={
+                <ProtectedRoute>
+                  <RazorpayPaymentLink />
+                </ProtectedRoute>
               } />
               
               {/* Legal Pages - Public Access */}

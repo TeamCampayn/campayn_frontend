@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { SOCKET_URL } from '../lib/api';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -50,10 +51,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     }
 
     // Initialize socket connection
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000';
-    console.log('Connecting to socket server at:', socketUrl);
+    console.log('Connecting to socket server at:', SOCKET_URL);
     
-    const newSocket = io(socketUrl, {
+    const newSocket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       timeout: 20000,
       forceNew: false, // Reuse existing connections when possible
