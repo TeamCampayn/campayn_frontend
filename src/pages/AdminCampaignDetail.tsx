@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { io } from 'socket.io-client';
 import { formatNumber, formatPercentage } from '@/utils/formatters';
+import { getApiUrl, SOCKET_URL } from '@/lib/api';
 import {
   ArrowLeft,
   Users,
@@ -94,7 +95,7 @@ const AdminCampaignDetail: React.FC = () => {
   useEffect(() => {
     if (!id) return;
 
-    const socket = io('http://localhost:4000');
+    const socket = io(SOCKET_URL);
     
     // Listen for campaign phase changes
     socket.on('campaign_phase_changed', (data) => {
@@ -132,7 +133,7 @@ const AdminCampaignDetail: React.FC = () => {
   const fetchCampaignDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:4000/api/campaigns/${id}`);
+      const response = await fetch(getApiUrl('api/campaigns/${id}'));
       const data = await response.json();
 
       if (data.success) {

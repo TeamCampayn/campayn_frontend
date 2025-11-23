@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { formatNumber } from '@/utils/formatters';
+import { getApiUrl, SOCKET_URL } from '@/lib/api';
 import {
   Clock,
   Users,
@@ -85,7 +86,7 @@ const BrandCampaignManagement: React.FC = () => {
         params.append('phase', selectedPhase);
       }
 
-      const response = await fetch(`http://localhost:4000/api/campaigns?${params}`);
+      const response = await fetch(getApiUrl('api/campaigns?${params}'));
       const data = await response.json();
 
       if (data.success) {

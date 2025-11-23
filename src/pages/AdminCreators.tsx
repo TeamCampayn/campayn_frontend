@@ -22,6 +22,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import LoadingSpinner from '../components/ui/loading-spinner';
+import { getApiUrl, SOCKET_URL } from '@/lib/api';
 
 interface Creator {
   id: string;
@@ -104,7 +105,7 @@ const AdminCreators: React.FC = () => {
   const fetchCampaigns = async () => {
     try {
       setCampaignsLoading(true);
-      const response = await fetch('http://localhost:4000/api/campaigns?phase=creator_selection');
+      const response = await fetch(getApiUrl('api/campaigns?phase=creator_selection'));
       
       if (response.ok) {
         const data = await response.json();

@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import QuotationChat from './QuotationChat';
 import { supabase } from '@/lib/supabase';
+import { getApiUrl, SOCKET_URL } from '@/lib/api';
 
 const CONTENT_BUCKET = (import.meta as any)?.env?.VITE_CONTENT_BUCKET || 'campaign-contents';
 const MAX_UPLOAD_MB = Number((import.meta as any)?.env?.VITE_MAX_UPLOAD_MB) || 50; // Supabase free tier default
@@ -99,7 +100,7 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
     if (!resolvedCampaignId) return;
     setLoading(true);
     try {
-  const res = await fetch(`http://localhost:4000/api/campaigns/${resolvedCampaignId}`);
+  const res = await fetch(getApiUrl('api/campaigns/${resolvedCampaignId}'));
       const data: CampaignDetailsResponse = await res.json();
       if (!data?.success) throw new Error('Failed to load campaign');
       setCampaignName(data.campaign.campaign_name);
@@ -123,7 +124,7 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
   const fetchFinalizeStatus = async () => {
     if (!resolvedCampaignId) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/campaigns/${resolvedCampaignId}/finalize-status`);
+      const res = await fetch(getApiUrl('api/campaigns/${resolvedCampaignId}/finalize-status'));
       const data = await res.json();
       if (data?.success) {
         setFinalizeRequestedAt(data.finalize_requested_at || null);

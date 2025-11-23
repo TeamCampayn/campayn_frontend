@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { getApiUrl, SOCKET_URL } from '@/lib/api';
 import {
   Select,
   SelectContent,
@@ -96,7 +97,7 @@ const AdminCreatorSelection: React.FC = () => {
 
   const fetchCampaignDetails = async () => {
     try {
-      const response = await fetch(`http://localhost:4000/api/campaigns/${campaignId}`);
+      const response = await fetch(getApiUrl('api/campaigns/${campaignId}'));
       const data = await response.json();
       
       if (data.success && data.campaign) {
@@ -119,7 +120,7 @@ const AdminCreatorSelection: React.FC = () => {
         search: searchQuery
       });
 
-      const response = await fetch(`http://localhost:4000/api/creators?${params}`);
+      const response = await fetch(getApiUrl('api/creators?${params}'));
       const data = await response.json();
 
       if (data.success && data.creators) {

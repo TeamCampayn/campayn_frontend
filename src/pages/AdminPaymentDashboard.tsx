@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { getApiUrl, SOCKET_URL } from '@/lib/api';
 import { 
   CreditCard, 
   Eye, 
@@ -58,7 +59,7 @@ const AdminPaymentDashboard: React.FC = () => {
   const fetchPendingPayments = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:4000/api/payments/pending');
+      const response = await fetch(getApiUrl('api/payments/pending'));
       const data = await response.json();
 
       if (data.success) {

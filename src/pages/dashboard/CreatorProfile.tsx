@@ -20,6 +20,7 @@ import {
   Zap
 } from 'lucide-react';
 import LoadingSpinner from '../../components/ui/loading-spinner';
+import { getApiUrl, SOCKET_URL } from '@/lib/api';
 
 interface Creator {
   id: string;
@@ -94,7 +95,7 @@ const CreatorProfile: React.FC = () => {
   // Fetch creator by ID if we have numeric ID
   const fetchCreatorById = async (creatorId: string) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/creators/${creatorId}`);
+      const response = await fetch(getApiUrl('api/creators/${creatorId}'));
       if (!response.ok) {
         throw new Error('Failed to fetch creator data');
       }

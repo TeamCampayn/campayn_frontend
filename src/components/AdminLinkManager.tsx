@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { getApiUrl, SOCKET_URL } from '@/lib/api';
 import { 
   Link, 
   Users, 
@@ -63,7 +64,7 @@ const AdminLinkManager: React.FC = () => {
     
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:4000/api/campaigns/${campaignId}`);
+      const response = await fetch(getApiUrl('api/campaigns/${campaignId}'));
       const data: CampaignDetailsResponse = await response.json();
       
       if (!data.success) {

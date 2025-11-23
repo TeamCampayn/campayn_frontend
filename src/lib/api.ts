@@ -11,27 +11,29 @@ export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ||
 export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 
   (isDevelopment ? 'http://localhost:4000' : 'https://campayn-backend.netlify.app');
 
+console.log('API Configuration:', {
+  mode: import.meta.env.MODE,
+  isDevelopment,
+  BACKEND_URL,
+  SOCKET_URL,
+});
+
 /**
  * Constructs the full API URL
- * @param path - API endpoint path (e.g., '/api/campaigns')
+ * @param path - API endpoint path (e.g., '/api/campaigns' or 'api/campaigns')
  * @returns Full URL to the API endpoint
  */
 export function getApiUrl(path: string): string {
   // Remove leading slash if present to avoid double slashes
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   
-  // In production, we need to ensure proper path construction for Netlify Functions
-  if (!isDevelopment) {
-    // If path already includes /api, use it as is
-    if (cleanPath.startsWith('api/')) {
-      return `${BACKEND_URL}/${cleanPath}`;
-    }
-    // Otherwise prepend /api
-    return `${BACKEND_URL}/api/${cleanPath}`;
+  // If the path already starts with 'api/', just append to backend URL
+  if (cleanPath.startsWith('api/')) {
+    return `${BACKEND_URL}/${cleanPath}`;
   }
   
-  // In development, just append the path
-  return `${BACKEND_URL}/${cleanPath}`;
+  // Otherwise, prepend /api/
+  return `${BACKEND_URL}/api/${cleanPath}`;
 }
 
 /**

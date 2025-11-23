@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { getApiUrl, SOCKET_URL } from '@/lib/api';
 import {
   Clock,
   Users,
@@ -84,7 +85,7 @@ const CampaignManagement: React.FC = () => {
         params.append('phase', selectedPhase);
       }
 
-      const response = await fetch(`http://localhost:4000/api/campaigns?${params}`);
+      const response = await fetch(getApiUrl('api/campaigns?${params}'));
       const data = await response.json();
 
       if (data.success) {

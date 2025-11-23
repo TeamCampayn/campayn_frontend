@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { getApiUrl, SOCKET_URL } from '@/lib/api';
 import { 
   CreditCard, 
   QrCode, 
@@ -104,7 +105,7 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({
   const fetchPaymentInfo = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:4000/api/campaigns/${campaignId}/payment`);
+      const response = await fetch(getApiUrl('api/campaigns/${campaignId}/payment'));
       const data = await response.json();
 
       if (data.success) {
