@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { getApiUrl } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -144,7 +145,9 @@ const CampaignAnalytics: React.FC = () => {
   const { data: details, isLoading, isError, error, refetch } = useQuery<CampaignDetailsResponse>({
     queryKey: ['campaign-details', campaignId],
     queryFn: async () => {
-      const res = await fetch(`/api/campaigns/${campaignId}`);
+      const url = getApiUrl(`api/campaigns/${campaignId}`);
+      console.log('Fetching campaign from:', url);
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to load campaign');
       return res.json();
     },
@@ -177,7 +180,8 @@ const CampaignAnalytics: React.FC = () => {
         
         const handle = content.creators.ig_handle.replace(/^@/, '');
         try {
-          const res = await fetch(`/api/post-insights?postUrl=${encodeURIComponent(content.post_url)}&username=${encodeURIComponent(handle)}`);
+          const url = getApiUrl(`api/post-insights?postUrl=${encodeURIComponent(content.post_url)}&username=${encodeURIComponent(handle)}`);
+          const res = await fetch(url);
           if (!res.ok) {
             console.log(`Failed to fetch post insights for ${content.id}:`, await res.text());
             return [content.id, null] as const;
@@ -202,7 +206,8 @@ const CampaignAnalytics: React.FC = () => {
     queryKey: ['insights-by-handle', handles.sort().join(',')],
     queryFn: async () => {
       const entries = await Promise.all(handles.map(async (h) => {
-        const res = await fetch(`/api/insights?username=${encodeURIComponent(h)}`);
+        const url = getApiUrl(`api/insights?username=${encodeURIComponent(h)}`);
+        const res = await fetch(url);
         if (!res.ok) {
           // Return minimal stub to avoid breaking UI
           return [h, null] as const;

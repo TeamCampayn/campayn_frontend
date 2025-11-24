@@ -76,7 +76,9 @@ const AdminCreators: React.FC = () => {
         category: category
       });
 
-      const response = await fetch(`/api/creators?${params}`);
+      const url = getApiUrl(`api/creators?${params}`);
+      console.log('Fetching creators from:', url);
+      const response = await fetch(url);
       
       if (!response.ok) {
         if (response.status === 404) {

@@ -7,6 +7,7 @@ import { Badge } from '../../components/ui/badge';
 import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { Search, Filter, Users, Instagram, ExternalLink } from 'lucide-react';
 import LoadingSpinner from '../../components/ui/loading-spinner';
+import { getApiUrl } from '../../lib/api';
 
 interface Creator {
   id: string;
@@ -41,8 +42,9 @@ const ExploreCreators: React.FC = () => {
         category: category
       });
 
-      console.log('Fetching creators from API:', `/api/creators?${params}`);
-      const response = await fetch(`/api/creators?${params}`);
+      const url = getApiUrl(`api/creators?${params}`);
+      console.log('Fetching creators from API:', url);
+      const response = await fetch(url);
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -76,7 +78,9 @@ const ExploreCreators: React.FC = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/creators/categories');
+      const url = getApiUrl('api/creators/categories');
+      console.log('Fetching categories from:', url);
+      const response = await fetch(url);
       
       if (!response.ok) {
         throw new Error('Failed to fetch categories');

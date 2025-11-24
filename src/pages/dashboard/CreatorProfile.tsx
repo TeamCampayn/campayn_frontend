@@ -130,7 +130,9 @@ const CreatorProfile: React.FC = () => {
       setError(null);
 
       const cleanHandle = targetHandle.replace('@', '');
-      const response = await fetch(`/api/insights?username=${cleanHandle}`);
+      const url = getApiUrl(`api/insights?username=${cleanHandle}`);
+      console.log('Fetching insights from:', url);
+      const response = await fetch(url);
       
       if (!response.ok) {
         throw new Error('Failed to fetch creator analytics');
