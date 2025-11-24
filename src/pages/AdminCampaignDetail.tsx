@@ -7,12 +7,11 @@ import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import ConversationHistory from '@/components/ConversationHistory';
-import PaymentManagementRazorpay from '@/components/PaymentManagementRazorpay';
+import PaymentManagement from '@/components/PaymentManagement';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRealtimeCampaign } from '@/hooks/useRealtimeCampaign';
 import { formatNumber, formatPercentage } from '@/utils/formatters';
-import { getApiUrl } from '@/lib/api';
 import {
   ArrowLeft,
   Users,
@@ -91,28 +90,27 @@ const AdminCampaignDetail: React.FC = () => {
     }
   }, [id]);
 
-
   // Real-time campaign updates via Supabase Realtime
   const { campaign: realtimeCampaign } = useRealtimeCampaign(id);
   
   useEffect(() => {
     if (realtimeCampaign && campaign) {
       // Update campaign when it changes in real-time
-      if (realtimeCampaign.phase !== campaign.phase || realtimeCampaign.payment_status !== campaign.payment_status) {
+      if (realtimeCampaign.phase !== campaign.phase) {
         fetchCampaignDetails(); // Refetch to get complete updated data
         toast({
           title: "Campaign Updated",
-          description: "Campaign has been updated",
+          description: `Campaign phase changed`,
           variant: "default",
         });
       }
     }
-  }, [realtimeCampaign, campaign]);
+  }, [realtimeCampaign]);
 
   const fetchCampaignDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(getApiUrl(`api/campaigns/${id}`));
+      const response = await fetch(`http://localhost:4000/api/campaigns/${id}`);
       const data = await response.json();
 
       if (data.success) {
@@ -497,12 +495,10 @@ const AdminCampaignDetail: React.FC = () => {
                       Send payment request to brand to proceed to content approval.
                     </p>
                   </div>
-                  <PaymentManagementRazorpay 
-                    campaignId={id!}
-                    campaignName={campaign.campaign_name}
-                    amount={campaign.budget}
+                  <PaymentManagement 
+                    campaignId={id!} 
                     userType="admin"
-                    onPaymentSuccess={fetchCampaignDetails}
+                    onPaymentUpdate={fetchCampaignDetails}
                   />
                 </div>
               )}

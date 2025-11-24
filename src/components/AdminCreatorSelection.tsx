@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getApiUrl } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 import {
   Select,
   SelectContent,
@@ -76,6 +77,7 @@ interface Campaign {
 
 const AdminCreatorSelection: React.FC = () => {
   const { campaignId } = useParams<{ campaignId: string }>();
+  const { toast } = useToast();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [creators, setCreators] = useState<Creator[]>([]);
   const [selectedCreators, setSelectedCreators] = useState<Set<string>>(new Set());
@@ -120,8 +122,34 @@ const AdminCreatorSelection: React.FC = () => {
         search: searchQuery
       });
 
-      const response = await fetch(getApiUrl(`api/creators?${params}`));
+      const url = getApiUrl(`api/creators?${params}`);
+      console.log('🔍 Fetching creators from:', url);
+      
+      const response = await fetch(url);
+      
+      // Log the response details for debugging
+      console.log('📊 Response status:', response.status);
+      console.log('📊 Response content-type:', response.headers.get('content-type'));
+      
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('❌ Response body:', text.substring(0, 500));
+        throw new Error(`HTTP error! status: ${response.status}, body: ${text.substring(0, 200)}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('❌ Non-JSON response:', text.substring(0, 500));
+        throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 200)}`);
+      }
+      
       const data = await response.json();
+      console.log('✅ Received data:', { 
+        totalCreators: data.creators?.length, 
+        totalCount: data.totalCount,
+        hasMore: data.hasMore 
+      });
 
       if (data.creators) {
         // Sort by priority score and engagement rate
@@ -134,7 +162,12 @@ const AdminCreatorSelection: React.FC = () => {
         setCreators(sortedCreators);
       }
     } catch (error) {
-      console.error('Error fetching creators:', error);
+      console.error('❌ Error fetching creators:', error);
+      toast({
+        title: 'Error loading creators',
+        description: error instanceof Error ? error.message : 'Failed to fetch creators',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
