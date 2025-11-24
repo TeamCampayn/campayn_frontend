@@ -123,7 +123,7 @@ const AdminCreatorSelection: React.FC = () => {
       const response = await fetch(getApiUrl(`api/creators?${params}`));
       const data = await response.json();
 
-      if (data.success && data.creators) {
+      if (data.creators) {
         // Sort by priority score and engagement rate
         const sortedCreators = data.creators.sort((a: Creator, b: Creator) => {
           const scoreA = (a.priority_score || 0) + (a.engagement_rate || 0);
