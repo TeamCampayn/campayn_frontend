@@ -95,7 +95,7 @@ const CreatorProfile: React.FC = () => {
   // Fetch creator by ID if we have numeric ID
   const fetchCreatorById = async (creatorId: string) => {
     try {
-      const response = await fetch(getApiUrl('api/creators/${creatorId}'));
+      const response = await fetch(getApiUrl(`api/creators/${creatorId}`));
       if (!response.ok) {
         throw new Error('Failed to fetch creator data');
       }

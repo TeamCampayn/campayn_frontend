@@ -100,7 +100,7 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
     if (!resolvedCampaignId) return;
     setLoading(true);
     try {
-  const res = await fetch(getApiUrl('api/campaigns/${resolvedCampaignId}'));
+  const res = await fetch(getApiUrl(`api/campaigns/${resolvedCampaignId}`));
       const data: CampaignDetailsResponse = await res.json();
       if (!data?.success) throw new Error('Failed to load campaign');
       setCampaignName(data.campaign.campaign_name);
@@ -124,7 +124,7 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
   const fetchFinalizeStatus = async () => {
     if (!resolvedCampaignId) return;
     try {
-      const res = await fetch(getApiUrl('api/campaigns/${resolvedCampaignId}/finalize-status'));
+      const res = await fetch(getApiUrl(`api/campaigns/${resolvedCampaignId}/finalize-status`));
       const data = await res.json();
       if (data?.success) {
         setFinalizeRequestedAt(data.finalize_requested_at || null);

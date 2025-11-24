@@ -64,7 +64,7 @@ const AdminLinkManager: React.FC = () => {
     
     try {
       setLoading(true);
-      const response = await fetch(getApiUrl('api/campaigns/${campaignId}'));
+      const response = await fetch(getApiUrl(`api/campaigns/${campaignId}`));
       const data: CampaignDetailsResponse = await response.json();
       
       if (!data.success) {

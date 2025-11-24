@@ -85,7 +85,7 @@ const CampaignManagement: React.FC = () => {
         params.append('phase', selectedPhase);
       }
 
-      const response = await fetch(getApiUrl('api/campaigns?${params}'));
+      const response = await fetch(getApiUrl(`api/campaigns?${params}`));
       const data = await response.json();
 
       if (data.success) {

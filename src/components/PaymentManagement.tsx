@@ -105,7 +105,7 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({
   const fetchPaymentInfo = async () => {
     try {
       setLoading(true);
-      const response = await fetch(getApiUrl('api/campaigns/${campaignId}/payment'));
+      const response = await fetch(getApiUrl(`api/campaigns/${campaignId}/payment`));
       const data = await response.json();
 
       if (data.success) {

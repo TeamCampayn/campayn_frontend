@@ -97,7 +97,7 @@ const AdminCreatorSelection: React.FC = () => {
 
   const fetchCampaignDetails = async () => {
     try {
-      const response = await fetch(getApiUrl('api/campaigns/${campaignId}'));
+      const response = await fetch(getApiUrl(`api/campaigns/${campaignId}`));
       const data = await response.json();
       
       if (data.success && data.campaign) {
@@ -120,7 +120,7 @@ const AdminCreatorSelection: React.FC = () => {
         search: searchQuery
       });
 
-      const response = await fetch(getApiUrl('api/creators?${params}'));
+      const response = await fetch(getApiUrl(`api/creators?${params}`));
       const data = await response.json();
 
       if (data.success && data.creators) {
