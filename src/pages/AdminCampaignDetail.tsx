@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRealtimeCampaign } from '@/hooks/useRealtimeCampaign';
 import { formatNumber, formatPercentage } from '@/utils/formatters';
+import { getApiUrl } from '@/lib/api';
 import {
   ArrowLeft,
   Users,
@@ -110,7 +111,8 @@ const AdminCampaignDetail: React.FC = () => {
   const fetchCampaignDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:4000/api/campaigns/${id}`);
+      const url = getApiUrl(`api/campaigns/${id}`);
+      const response = await fetch(url);
       const data = await response.json();
 
       if (data.success) {

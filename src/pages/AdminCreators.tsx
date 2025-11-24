@@ -191,7 +191,9 @@ const AdminCreators: React.FC = () => {
       }
 
       // Then recommend creators
-      const response = await fetch(`http://localhost:4000/api/campaigns/${selectedCampaign}/recommend-creators`, {
+      const url = getApiUrl(`api/campaigns/${selectedCampaign}/recommend-creators`);
+      console.log('Recommending creators to:', url);
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

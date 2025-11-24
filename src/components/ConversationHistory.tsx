@@ -100,9 +100,8 @@ const ConversationHistory: React.FC<ConversationHistoryProps> = ({
 
   const fetchConversation = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:4000/api/campaigns/${campaignId}/creators/${creatorId}/conversation`
-      );
+      const url = getApiUrl(`api/campaigns/${campaignId}/creators/${creatorId}/conversation`);
+      const response = await fetch(url);
       const data = await response.json();
       
       if (data.success) {
@@ -200,8 +199,8 @@ const ConversationHistory: React.FC<ConversationHistoryProps> = ({
     setSending(true);
     try {
       const endpoint = userType === 'admin' 
-        ? `http://localhost:4000/api/campaigns/${campaignId}/creators/${creatorId}/admin-reply`
-        : `http://localhost:4000/api/campaigns/${campaignId}/creators/${creatorId}/brand-reply`;
+        ? getApiUrl(`api/campaigns/${campaignId}/creators/${creatorId}/admin-reply`)
+        : getApiUrl(`api/campaigns/${campaignId}/creators/${creatorId}/brand-reply`);
 
       const body = userType === 'admin'
         ? { admin_reply: newMessage.trim(), admin_id: 'admin' }
