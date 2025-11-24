@@ -11,7 +11,7 @@ import Auth from './pages/Auth';
 import BrandDashboard from './pages/BrandDashboard';
 import CreateCampaign from './pages/CreateCampaign';
 import { AuthProvider } from './contexts/AuthContext';
-import { SocketProvider } from './contexts/SocketContext';
+import { RealtimeProvider } from './contexts/RealtimeContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Dashboard Layout and Pages
@@ -57,7 +57,7 @@ function App() {
         <Toaster />
         <Sonner />
         <AuthProvider>
-          <SocketProvider>
+          <RealtimeProvider>
             <Router>
             <Routes>
               {/* Public Routes */}
@@ -177,7 +177,7 @@ function App() {
               
             </Routes>
           </Router>
-          </SocketProvider>
+          </RealtimeProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

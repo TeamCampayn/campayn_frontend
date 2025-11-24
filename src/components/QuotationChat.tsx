@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSocket } from '../contexts/SocketContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
-import { Send, Users, MessageCircle, Clock } from 'lucide-react';
+import { Send, MessageCircle, CheckCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useToast } from '../hooks/use-toast';
 
 interface QuotationChatProps {
   campaignId: string;
@@ -15,101 +16,49 @@ interface QuotationChatProps {
 }
 
 const QuotationChat: React.FC<QuotationChatProps> = ({ campaignId, campaignName }) => {
-  const { user, brand } = useAuth();
-  const { 
-    socket, 
-    isConnected, 
-    joinRoom, 
-    leaveRoom, 
-    sendMessage, 
-    sendTyping, 
-    currentRoom, 
-    roomUsers, 
-    messages, 
-    typingUsers 
-  } = useSocket();
+  const { user } = useAuth();
+  const { messages, loading, sendMessage: sendRealtimeMessage } = useRealtimeMessages(campaignId);
+  const { toast } = useToast();
 
   const [message, setMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Join room when component mounts
-  useEffect(() => {
-    if (campaignId && isConnected && socket) {
-      console.log('Joining room for campaign:', campaignId);
-      joinRoom(campaignId);
-    }
-
-    return () => {
-      if (campaignId) {
-        console.log('Leaving room for campaign:', campaignId);
-        leaveRoom();
-      }
-    };
-  }, [campaignId, isConnected, socket]);
-
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Handle typing
-  const handleTyping = (value: string) => {
-    setMessage(value);
-    
-    if (value.length > 0 && !isTyping) {
-      setIsTyping(true);
-      sendTyping(true);
-    } else if (value.length === 0 && isTyping) {
-      setIsTyping(false);
-      sendTyping(false);
-    }
-  };
-
-  // Send message
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim()) {
-      sendMessage(message);
-      setMessage('');
-      setIsTyping(false);
-      sendTyping(false);
+    if (message.trim() && !sending) {
+      setSending(true);
+      try {
+        await sendRealtimeMessage(message.trim());
+        setMessage('');
+        inputRef.current?.focus();
+      } catch (error) {
+        console.error('Error sending message:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to send message. Please try again.',
+          variant: 'destructive'
+        });
+      } finally {
+        setSending(false);
+      }
     }
   };
 
-  // Format timestamp
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Check if message is from current user
-  const isCurrentUser = (userId: string) => {
-    return user?.id === userId;
+  const isCurrentUser = (senderId: string) => {
+    return user?.id === senderId;
   };
 
-  // Get message sender label
-  const getMessageSender = (msg: any) => {
-    if (isCurrentUser(msg.userId)) {
-      return 'You';
-    }
-    
-    if (msg.userType === 'admin' || msg.isAdmin || msg.userEmail === 'admin@campayn.local') {
-      return 'Campayn Admin';
-    }
-    
-    return msg.userName || 'Brand';
-  };
-
-  // Get current user type
-  const getCurrentUserType = () => {
-    return user?.email === 'admin@campayn.local' || 
-           user?.user_metadata?.is_admin || 
-           user?.app_metadata?.is_admin ? 'admin' : 'brand';
-  };
-
-  // Get user type color
   const getUserTypeColor = (userType: string) => {
     switch (userType) {
       case 'admin':
@@ -121,12 +70,12 @@ const QuotationChat: React.FC<QuotationChatProps> = ({ campaignId, campaignName 
     }
   };
 
-  if (!isConnected) {
+  if (loading) {
     return (
       <Card className="h-[600px] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Connecting to chat server...</p>
+          <p className="text-gray-600">Loading messages...</p>
         </div>
       </Card>
     );
@@ -138,7 +87,7 @@ const QuotationChat: React.FC<QuotationChatProps> = ({ campaignId, campaignName 
         <div className="flex items-center justify-between">
           <div className="min-w-0 flex-1">
             <CardTitle className="text-lg truncate">
-              Quotation Chat
+              Campaign Chat
               {campaignName && (
                 <span className="text-sm font-normal text-gray-600 ml-2 hidden sm:inline">
                   - {campaignName}
@@ -146,18 +95,12 @@ const QuotationChat: React.FC<QuotationChatProps> = ({ campaignId, campaignName 
               )}
             </CardTitle>
             <div className="flex items-center space-x-2 mt-1">
-              <Badge variant="outline" className="text-xs">
-                <Users className="h-3 w-3 mr-1" />
-                {roomUsers.length} user{roomUsers.length !== 1 ? 's' : ''}
-              </Badge>
               <Badge 
                 variant="outline" 
-                className={cn(
-                  "text-xs",
-                  isConnected ? "text-green-600 border-green-600" : "text-red-600 border-red-600"
-                )}
+                className="text-xs text-green-600 border-green-600"
               >
-                {isConnected ? "Connected" : "Disconnected"}
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Connected
               </Badge>
             </div>
           </div>
@@ -165,7 +108,6 @@ const QuotationChat: React.FC<QuotationChatProps> = ({ campaignId, campaignName 
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col p-0 min-h-0">
-        {/* Messages Area */}
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full px-4 sm:px-6">
             <div className="space-y-3 py-4 min-h-full flex flex-col">
@@ -180,101 +122,79 @@ const QuotationChat: React.FC<QuotationChatProps> = ({ campaignId, campaignName 
                     key={msg.id}
                     className={cn(
                       "flex w-full mb-3",
-                      isCurrentUser(msg.userId) ? "justify-end" : "justify-start"
+                      isCurrentUser(msg.sender_id) ? "justify-end" : "justify-start"
                     )}
                   >
                     <div
                       className={cn(
                         "rounded-lg px-4 py-3 shadow-sm border max-w-[85%] sm:max-w-[75%] md:max-w-[65%] min-w-0 overflow-hidden",
-                        isCurrentUser(msg.userId)
+                        isCurrentUser(msg.sender_id)
                           ? "bg-blue-600 text-white border-blue-600"
                           : "bg-white text-gray-900 border-gray-200"
                       )}
                     >
-                      {/* Message Header - Only show for other users */}
-                      {!isCurrentUser(msg.userId) && (
+                      {!isCurrentUser(msg.sender_id) && (
                         <div className="flex items-center space-x-2 mb-1">
                           <Badge 
                             variant="secondary" 
-                            className={cn("text-xs", getUserTypeColor(msg.userType))}
+                            className={cn("text-xs", getUserTypeColor(msg.user_type))}
                           >
-                            {msg.userType === 'admin' || msg.isAdmin ? '👨‍💼 Admin' : '🏢 Brand'}
+                            {msg.user_type === 'admin' || msg.is_admin ? '👨‍💼 Admin' : '🏢 Brand'}
                           </Badge>
-                          <span className="text-xs font-medium text-gray-700 truncate">
-                            {getMessageSender(msg)}
+                          <span className="text-xs font-medium text-gray-700">
+                            {msg.user_email}
                           </span>
                         </div>
                       )}
-                      
-                      {/* Message Content */}
-                      <div className="break-words overflow-wrap-anywhere">
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words hyphens-auto">
-                          {msg.message}
-                        </p>
-                      </div>
-                      
-                      {/* Message Footer */}
-                      <div className="flex items-center justify-between mt-2">
-                        {isCurrentUser(msg.userId) && (
-                          <span className="text-xs text-blue-100 opacity-75">
-                            You
-                          </span>
+                      <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                        {msg.content}
+                      </p>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-current border-opacity-10">
+                        {isCurrentUser(msg.sender_id) && (
+                          <div className="flex items-center text-xs opacity-75">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Sent
+                          </div>
                         )}
-                        <span className={cn(
-                          "text-xs ml-auto",
-                          isCurrentUser(msg.userId) ? "text-blue-100 opacity-75" : "text-gray-500"
-                        )}>
-                          <Clock className="h-3 w-3 inline mr-1" />
-                          {formatTime(msg.timestamp)}
-                        </span>
+                        <div 
+                          className={cn(
+                            "text-xs ml-auto",
+                            isCurrentUser(msg.sender_id) ? "text-blue-100 opacity-75" : "text-gray-500"
+                          )}
+                        >
+                          {formatTime(msg.created_at)}
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))
               )}
-
-            {/* Typing Indicator */}
-            {typingUsers.length > 0 && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 rounded-lg px-4 py-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    </div>
-                    <span className="text-xs text-gray-600">
-                      {typingUsers.map(u => u.userName).join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
         </div>
-
-        {/* Message Input */}
-        <div className="flex-shrink-0 border-t p-4">
+        <div className="flex-shrink-0 border-t bg-gray-50 p-4">
           <form onSubmit={handleSendMessage} className="flex space-x-2">
             <Input
               ref={inputRef}
+              type="text"
               value={message}
-              onChange={(e) => handleTyping(e.target.value)}
+              onChange={(e) => setMessage(e.target.value)}
               placeholder="Type your message..."
+              disabled={sending}
               className="flex-1"
-              disabled={!isConnected}
             />
-            <Button 
-              type="submit" 
-              size="icon"
-              disabled={!message.trim() || !isConnected}
-            >
-              <Send className="h-4 w-4" />
+            <Button type="submit" disabled={!message.trim() || sending}>
+              {sending ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </form>
+          <p className="text-xs text-gray-500 mt-2">
+            💡 Messages are delivered in real-time via Supabase Realtime
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -282,4 +202,3 @@ const QuotationChat: React.FC<QuotationChatProps> = ({ campaignId, campaignName 
 };
 
 export default QuotationChat;
-
