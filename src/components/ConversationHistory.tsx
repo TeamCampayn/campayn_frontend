@@ -187,7 +187,8 @@ const ConversationHistory: React.FC<ConversationHistoryProps> = ({
       event.stopPropagation();
     }
 
-    if (!newMessage.trim()) {
+    // Only require message text for regular messages, not for approve/reject actions
+    if (actionType === 'message' && !newMessage.trim()) {
       toast({
         title: "Error",
         description: "Please enter a message",
@@ -203,9 +204,9 @@ const ConversationHistory: React.FC<ConversationHistoryProps> = ({
         : getApiUrl(`api/campaigns/${campaignId}/creators/${creatorId}/brand-reply`);
 
       const body = userType === 'admin'
-        ? { admin_reply: newMessage.trim(), admin_id: 'admin' }
+        ? { admin_reply: newMessage.trim() || `Creator ${actionType}`, admin_id: 'admin' }
         : { 
-            brand_reply: newMessage.trim(), 
+            brand_reply: newMessage.trim() || `Creator ${actionType}`, 
             action_type: actionType === 'message' ? 'continue_chat' : actionType,
             brand_id: 'brand' 
           };
@@ -422,7 +423,7 @@ const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                       type="button"
                       size="sm"
                       onClick={(e) => handleSendMessage('approved', e)}
-                      disabled={sending || !newMessage.trim()}
+                      disabled={sending}
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <ThumbsUp className="h-3 w-3 mr-1" />
@@ -432,7 +433,7 @@ const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                       type="button"
                       size="sm"
                       onClick={(e) => handleSendMessage('rejected', e)}
-                      disabled={sending || !newMessage.trim()}
+                      disabled={sending}
                       className="bg-red-600 hover:bg-red-700"
                     >
                       <ThumbsDown className="h-3 w-3 mr-1" />

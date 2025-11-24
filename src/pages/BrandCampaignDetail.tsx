@@ -170,8 +170,43 @@ const BrandCampaignDetail: React.FC = () => {
           description: `Creator ${status} successfully`,
         });
         
-        // Refresh the campaign creators
-        fetchCampaignDetails();
+        // Optimistically update the creator status without full page reload
+        setCampaignCreators(prev => 
+          prev.map(cc => 
+            cc.creator_id === creatorId 
+              ? { 
+                  ...cc, 
+                  status, 
+                  brand_response: responseData?.response || '',
+                  brand_response_at: new Date().toISOString() 
+                }
+              : cc
+          )
+        );
+
+        // Clear the response for this creator
+        setResponses(prev => {
+          const newResponses = { ...prev };
+          delete newResponses[creatorId];
+          return newResponses;
+        });
+
+        // Check if we need to update campaign phase (only if approved and reached target)
+        if (status === 'approved' && campaign) {
+          const approvedCount = campaignCreators.filter(cc => 
+            cc.status === 'approved' || (cc.creator_id === creatorId && status === 'approved')
+          ).length;
+          
+          if (approvedCount >= (campaign.target_creators_count || 1)) {
+            // Fetch updated campaign data to get new phase
+            const url = getApiUrl(`api/campaigns/${id}`);
+            const campaignResponse = await fetch(url);
+            const campaignData = await campaignResponse.json();
+            if (campaignData.success && campaignData.campaign) {
+              setCampaign(campaignData.campaign);
+            }
+          }
+        }
       } else {
         toast({
           title: "Error",
