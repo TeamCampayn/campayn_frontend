@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useSocket } from '@/contexts/SocketContext';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,19 +38,10 @@ const AdminPaymentDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { socket } = useSocket();
 
   useEffect(() => {
     fetchPendingPayments();
   }, []);
-
-  // Realtime updates via socket
-  useEffect(() => {
-    if (!socket) return;
-    const handler = () => fetchPendingPayments();
-    socket.on('payment_updated', handler);
-    return () => socket.off('payment_updated', handler);
-  }, [socket]);
 
   const fetchPendingPayments = async () => {
     try {
