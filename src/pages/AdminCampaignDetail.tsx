@@ -10,9 +10,9 @@ import ConversationHistory from '@/components/ConversationHistory';
 import PaymentManagementRazorpay from '@/components/PaymentManagementRazorpay';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { io } from 'socket.io-client';
+import { useRealtimeCampaign } from '@/hooks/useRealtimeCampaign';
 import { formatNumber, formatPercentage } from '@/utils/formatters';
-import { getApiUrl, SOCKET_URL } from '@/lib/api';
+import { getApiUrl } from '@/lib/api';
 import {
   ArrowLeft,
   Users,
@@ -91,44 +91,23 @@ const AdminCampaignDetail: React.FC = () => {
     }
   }, [id]);
 
-  // Socket listener for real-time updates
-  useEffect(() => {
-    if (!id) return;
 
-    const socket = io(SOCKET_URL);
-    
-    // Listen for campaign phase changes
-    socket.on('campaign_phase_changed', (data) => {
-      if (data.campaign_id === id) {
-        // Refresh campaign details to get updated phase
-        fetchCampaignDetails();
-        
+  // Real-time campaign updates via Supabase Realtime
+  const { campaign: realtimeCampaign } = useRealtimeCampaign(id);
+  
+  useEffect(() => {
+    if (realtimeCampaign && campaign) {
+      // Update campaign when it changes in real-time
+      if (realtimeCampaign.phase !== campaign.phase || realtimeCampaign.payment_status !== campaign.payment_status) {
+        fetchCampaignDetails(); // Refetch to get complete updated data
         toast({
           title: "Campaign Updated",
-          description: data.message,
+          description: "Campaign has been updated",
           variant: "default",
         });
       }
-    });
-
-    // Listen for creator response updates
-    socket.on('creator_response_updated', (data) => {
-      if (data.campaign_id === id) {
-        // Update the specific creator in the list
-        setCampaignCreators(prev => 
-          prev.map(creator => 
-            creator.creator_id === data.creator.creator_id 
-              ? { ...creator, ...data.creator }
-              : creator
-          )
-        );
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [id]);
+    }
+  }, [realtimeCampaign, campaign]);
 
   const fetchCampaignDetails = async () => {
     try {
