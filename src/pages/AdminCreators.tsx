@@ -174,7 +174,7 @@ const AdminCreators: React.FC = () => {
       const selectedCreatorIds = Array.from(selectedCreators);
 
       // First update the campaign's target creators count
-      const updateResponse = await fetch(`http://localhost:4000/api/campaigns/${selectedCampaign}`, {
+      const updateResponse = await fetch(getApiUrl(`api/campaigns/${selectedCampaign}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

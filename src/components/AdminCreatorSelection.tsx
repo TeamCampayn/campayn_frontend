@@ -176,7 +176,7 @@ const AdminCreatorSelection: React.FC = () => {
     try {
       setSubmitting(true);
       
-      const response = await fetch(`http://localhost:4000/api/campaigns/${campaignId}/recommend-creators`, {
+      const response = await fetch(getApiUrl(`api/campaigns/${campaignId}/recommend-creators`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

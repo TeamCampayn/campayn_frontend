@@ -147,7 +147,7 @@ const BrandCampaignDetail: React.FC = () => {
       const responseData = responses[creatorId];
       
       const response = await fetch(
-        `http://localhost:4000/api/campaigns/${id}/creators/${creatorId}/respond`,
+        getApiUrl(`api/campaigns/${id}/creators/${creatorId}/respond`),
         {
           method: 'PATCH',
           headers: {
