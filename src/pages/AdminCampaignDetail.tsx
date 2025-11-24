@@ -112,7 +112,7 @@ const AdminCampaignDetail: React.FC = () => {
   const fetchCampaignDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(getApiUrl('api/campaigns/${id}'));
+      const response = await fetch(getApiUrl(`api/campaigns/${id}`));
       const data = await response.json();
 
       if (data.success) {
