@@ -27,18 +27,12 @@ export function getApiUrl(path: string): string {
   // Remove leading slash if present to avoid double slashes
   let cleanPath = path.startsWith('/') ? path.slice(1) : path;
   
-  // Remove 'api/' prefix from path if present
-  if (cleanPath.startsWith('api/')) {
-    cleanPath = cleanPath.substring(4); // Remove 'api/'
+  // Ensure path starts with 'api/' if it doesn't already
+  if (!cleanPath.startsWith('api/')) {
+    cleanPath = `api/${cleanPath}`;
   }
   
-  // In development, backend URL is just http://localhost:4000, so add /api/
-  if (isDevelopment) {
-    return `${BACKEND_URL}/api/${cleanPath}`;
-  }
-  
-  // In production, BACKEND_URL already includes /.netlify/functions/api
-  // So just append the path without /api/
+  // Simply append the path to backend URL
   return `${BACKEND_URL}/${cleanPath}`;
 }
 
