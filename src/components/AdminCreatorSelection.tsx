@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { getApiUrl, SOCKET_URL } from '@/lib/api';
+import { getApiUrl } from '@/lib/api';
 import {
   Select,
   SelectContent,

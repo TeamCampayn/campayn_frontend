@@ -2,7 +2,6 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSocket } from '@/contexts/SocketContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -140,7 +139,6 @@ const CampaignAnalytics: React.FC = () => {
   const { id: campaignId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const { brand } = useAuth();
-  const { joinRoom, leaveRoom, currentRoom, socket } = useSocket();
 
   // Fetch campaign details (includes contents + creators)
   const { data: details, isLoading, isError, error, refetch } = useQuery<CampaignDetailsResponse>({
@@ -154,23 +152,6 @@ const CampaignAnalytics: React.FC = () => {
   });
 
   // Join campaign room for realtime content_posted/metrics updates
-  React.useEffect(() => {
-    if (!campaignId) return;
-    // Only join if not already in this room
-    if (currentRoom !== campaignId) joinRoom(campaignId);
-    const handler = () => {
-      // Revalidate on realtime updates
-      queryClient.invalidateQueries({ queryKey: ['campaign-details', campaignId] });
-    };
-    socket?.on('content_posted', handler);
-    socket?.on('content_metrics_updated', handler);
-    return () => {
-      socket?.off('content_posted', handler);
-      socket?.off('content_metrics_updated', handler);
-      // leaveRoom(); // optional: keep joined while in dashboard
-    };
-  }, [campaignId, currentRoom, joinRoom, leaveRoom, socket, queryClient]);
-
   const liveContents = React.useMemo(() => {
     const all = details?.contents || [];
     return all.filter((c) => !!c.post_url);

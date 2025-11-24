@@ -2,10 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
-import { useSocket } from '../contexts/SocketContext';
 import QuotationChat from './QuotationChat';
 import { supabase } from '@/lib/supabase';
-import { getApiUrl, SOCKET_URL } from '@/lib/api';
+import { getApiUrl } from '@/lib/api';
 
 const CONTENT_BUCKET = (import.meta as any)?.env?.VITE_CONTENT_BUCKET || 'campaign-contents';
 const MAX_UPLOAD_MB = Number((import.meta as any)?.env?.VITE_MAX_UPLOAD_MB) || 50; // Supabase free tier default
@@ -69,7 +68,6 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
   const resolvedCampaignId = campaignId || id || routeCampaignId;
   const { toast } = useToast();
   const { brand, user } = useAuth();
-  const { socket } = useSocket();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -140,48 +138,6 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
   }, [resolvedCampaignId]);
 
   // Realtime updates
-  useEffect(() => {
-    if (!socket || !resolvedCampaignId) return;
-    const onUploaded = (payload: any) => {
-      if (payload?.campaign_id === resolvedCampaignId) fetchCampaign();
-    };
-    const onApproval = (payload: any) => {
-      if (payload?.campaign_id === resolvedCampaignId) fetchCampaign();
-    };
-    socket.on('content_uploaded', onUploaded);
-    socket.on('content_approval_updated', onApproval);
-    const onPhaseChanged = (payload: any) => {
-      if (payload?.campaign_id === resolvedCampaignId) {
-        setCampaignPhase(payload.phase);
-      }
-    };
-    const onFinalizeRequested = (payload: any) => {
-      if (payload?.campaign_id === resolvedCampaignId) fetchFinalizeStatus();
-    };
-    const onFinalizeConfirmed = (payload: any) => {
-      if (payload?.campaign_id === resolvedCampaignId) fetchFinalizeStatus();
-    };
-    const onContentPosted = (payload: any) => {
-      if (payload?.campaign_id === resolvedCampaignId) fetchCampaign();
-    };
-    const onContentMetricsUpdated = (payload: any) => {
-      if (payload?.campaign_id === resolvedCampaignId) fetchCampaign();
-    };
-    socket.on('phase_changed', onPhaseChanged);
-    socket.on('finalize_requested', onFinalizeRequested);
-    socket.on('finalize_confirmed', onFinalizeConfirmed);
-    socket.on('content_posted', onContentPosted);
-    socket.on('content_metrics_updated', onContentMetricsUpdated);
-    return () => {
-      socket.off('content_uploaded', onUploaded);
-      socket.off('content_approval_updated', onApproval);
-      socket.off('phase_changed', onPhaseChanged);
-      socket.off('finalize_requested', onFinalizeRequested);
-      socket.off('finalize_confirmed', onFinalizeConfirmed);
-      socket.off('content_posted', onContentPosted);
-      socket.off('content_metrics_updated', onContentMetricsUpdated);
-    };
-  }, [socket, resolvedCampaignId]);
 
   // Helper to upload a file to Supabase Storage and return a public URL (or signed URL fallback)
   const uploadToStorage = async (file: File, folder: string) => {

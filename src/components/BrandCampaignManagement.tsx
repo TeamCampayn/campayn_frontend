@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { formatNumber } from '@/utils/formatters';
-import { getApiUrl, SOCKET_URL } from '@/lib/api';
+import { getApiUrl } from '@/lib/api';
 import {
   Clock,
   Users,

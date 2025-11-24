@@ -20,7 +20,7 @@ import {
   Zap
 } from 'lucide-react';
 import LoadingSpinner from '../../components/ui/loading-spinner';
-import { getApiUrl, SOCKET_URL } from '@/lib/api';
+import { getApiUrl } from '@/lib/api';
 
 interface Creator {
   id: string;

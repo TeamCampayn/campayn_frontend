@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useSocket } from '@/contexts/SocketContext';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { getApiUrl, SOCKET_URL } from '@/lib/api';
+import { getApiUrl } from '@/lib/api';
 import { 
   CreditCard, 
   QrCode, 
@@ -60,7 +59,6 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
   const { user, brand } = useAuth();
-  const { socket } = useSocket();
 
   // Admin form state
   const [adminForm, setAdminForm] = useState({
@@ -87,20 +85,6 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({
     fetchPaymentInfo();
   }, [campaignId]);
 
-  // Realtime updates via socket
-  useEffect(() => {
-    if (!socket) return;
-    const handler = (payload: any) => {
-      if (payload?.campaign_id === campaignId) {
-        fetchPaymentInfo();
-        onPaymentUpdate?.();
-      }
-    };
-    socket.on('payment_updated', handler);
-    return () => {
-      socket.off('payment_updated', handler);
-    };
-  }, [socket, campaignId]);
 
   const fetchPaymentInfo = async () => {
     try {
