@@ -120,7 +120,8 @@ const AdminLinkManager: React.FC = () => {
     try {
       setSaving(prev => ({ ...prev, [contentId]: true }));
       
-      const response = await fetch(`http://localhost:4000/api/campaigns/${campaignId}/contents/${contentId}/post`, {
+      const apiUrl = getApiUrl(`api/campaigns/${campaignId}/contents/${contentId}/post`);
+      const response = await fetch(apiUrl, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ post_url: url })

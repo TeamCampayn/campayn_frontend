@@ -240,7 +240,7 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
         uploaded_by: user.id,
         scheduled_post_time: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       };
-  const res = await fetch(`http://localhost:4000/api/campaigns/${resolvedCampaignId}/contents`, {
+  const res = await fetch(`${getApiUrl("api/campaigns/${resolvedCampaignId}/contents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -275,7 +275,7 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
     }
     setActionBusyId(contentId);
     try {
-  const res = await fetch(`http://localhost:4000/api/campaigns/${resolvedCampaignId}/contents/${contentId}/approve`, {
+  const res = await fetch(`${getApiUrl("api/campaigns/${resolvedCampaignId}/contents/${contentId}/approve`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ approval_status: status, brand_feedback: feedback || null, brand_id: brandId }),
@@ -297,7 +297,7 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
     if (!resolvedCampaignId || !user?.id) return;
     setFinalizeBusy(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/campaigns/${resolvedCampaignId}/finalize-request`, {
+      const res = await fetch(`${getApiUrl("api/campaigns/${resolvedCampaignId}/finalize-request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ admin_id: user.id }),
@@ -317,7 +317,7 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
     if (!resolvedCampaignId || !brandId) return;
     setFinalizeBusy(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/campaigns/${resolvedCampaignId}/finalize-confirm`, {
+      const res = await fetch(`${getApiUrl("api/campaigns/${resolvedCampaignId}/finalize-confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ brand_id: brandId }),
@@ -633,7 +633,7 @@ const ContentCard: React.FC<{
                 onClick={async () => {
                   try {
                     setPosting(true);
-                    const res = await fetch(`http://localhost:4000/api/campaigns/${campaignId}/contents/${item.id}/post`, {
+                    const res = await fetch(`${getApiUrl("api/campaigns/${campaignId}/contents/${item.id}/post`, {
                       method: 'PATCH',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ post_url: postUrl })
@@ -674,7 +674,7 @@ const ContentCard: React.FC<{
                     onClick={async () => {
                       try {
                         setSavingMetrics(true);
-                        const res = await fetch(`http://localhost:4000/api/campaigns/${campaignId}/contents/${item.id}/metrics`, {
+                        const res = await fetch(`${getApiUrl("api/campaigns/${campaignId}/contents/${item.id}/metrics`, {
                           method: 'PATCH',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ performance_metrics: metrics })

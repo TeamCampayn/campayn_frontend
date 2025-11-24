@@ -139,7 +139,8 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({
 
     try {
       setSubmitting(true);
-      const response = await fetch(`http://localhost:4000/api/campaigns/${campaignId}/payment-request`, {
+      const url = getApiUrl(`api/campaigns/${campaignId}/payment-request`);
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -192,7 +193,8 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({
 
     try {
       setSubmitting(true);
-      const response = await fetch(`http://localhost:4000/api/campaigns/${campaignId}/payment-proof`, {
+      const url = getApiUrl(`api/campaigns/${campaignId}/payment-proof`);
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -234,7 +236,8 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({
   const handleVerifyPayment = async (verified: boolean) => {
     try {
       setSubmitting(true);
-      const response = await fetch(`http://localhost:4000/api/campaigns/${campaignId}/verify-payment`, {
+      const url = getApiUrl(`api/campaigns/${campaignId}/verify-payment`);
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
