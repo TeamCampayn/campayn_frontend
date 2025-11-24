@@ -44,6 +44,16 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   useEffect(() => {
     if (!user?.id) return;
 
+    // Check if we're in production and Socket.IO is not supported
+    const isProduction = import.meta.env.MODE === 'production';
+    const isNetlifyBackend = SOCKET_URL.includes('netlify.app');
+    
+    if (isProduction && isNetlifyBackend) {
+      console.warn('⚠️ Socket.IO is disabled in production (Netlify Functions limitation)');
+      console.log('💡 Real-time features require a separate WebSocket server or Supabase Realtime');
+      return;
+    }
+
     // Don't reinitialize if socket already exists and is connected
     if (socket && socket.connected) {
       console.log('Socket already connected, skipping reinitialization');
