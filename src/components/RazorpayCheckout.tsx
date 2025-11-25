@@ -90,7 +90,9 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to create order');
+        const detail = data.gateway_details?.description || data.gateway_details?.error?.description || data.error || 'Failed to create order';
+        const code = data.gateway_details?.code || data.error_type || 'order_error';
+        throw new Error(`[${code}] ${detail}`);
       }
 
       return data.order;
