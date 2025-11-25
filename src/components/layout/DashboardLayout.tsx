@@ -8,7 +8,8 @@ import {
   HelpCircle, 
   LogOut,
   User,
-  Users
+  Users,
+  BarChart3
 } from 'lucide-react';
 
 const DashboardLayout: React.FC = () => {
@@ -20,6 +21,7 @@ const DashboardLayout: React.FC = () => {
     { icon: Home, label: "Dashboard", path: "/dashboard" },
     { icon: Target, label: "My Campaigns", path: "/campaigns" },
     { icon: Users, label: "Explore Creators", path: "/dashboard/explore-creators" },
+    { icon: BarChart3, label: "Analytics & Reports", path: "/dashboard/analytics" },
     { icon: HelpCircle, label: "Support", path: "/support" },
   ];
 

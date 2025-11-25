@@ -22,6 +22,7 @@ import CampaignDetail from './pages/dashboard/CampaignDetail';
 import ExploreCreators from './pages/dashboard/ExploreCreators';
 import CreatorProfile from './pages/dashboard/CreatorProfile';
 import Support from './pages/dashboard/Support';
+import BrandAnalytics from './pages/dashboard/BrandAnalytics';
 
 import AdminDashboard from './pages/AdminDashboard';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
@@ -86,6 +87,7 @@ function App() {
                 <Route path="explore-creators" element={<ExploreCreators />} />
                 <Route path="creator-profile/:igHandle" element={<CreatorProfile />} />
                 <Route path="creators/:id" element={<CreatorProfile />} />
+                <Route path="analytics" element={<BrandAnalytics />} />
                 <Route path="support" element={<Support />} />
                 {/* Brand content review for a specific campaign */}
                 <Route path="campaigns/:id/content" element={<BrandContentReview />} />
