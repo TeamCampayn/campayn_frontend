@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import ConversationHistory from '@/components/ConversationHistory';
-import PaymentManagement from '@/components/PaymentManagement';
+// Replaced legacy PaymentManagement (manual UPI) with RazorpayCheckout
+import RazorpayCheckout from '@/components/RazorpayCheckout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRealtimeCampaign } from '@/hooks/useRealtimeCampaign';
@@ -593,10 +594,9 @@ const BrandCampaignDetail: React.FC = () => {
                 <div className="space-y-6">
                   <div className="text-center">
                     <DollarSign className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
-                    <h3 className="text-lg font-semibold mb-2">Payment Processing</h3>
+                    <h3 className="text-lg font-semibold mb-2">Secure Payment Required</h3>
                     <p className="text-gray-600 mb-4">
-                      Great! You've approved the required number of creators. 
-                      Please complete the payment to proceed to the next phase.
+                      You've approved the required number of creators. Complete the payment securely to unlock content approval.
                     </p>
                     {(() => {
                       const approvedCreators = campaignCreators.filter(c => c.status === 'approved');
@@ -606,15 +606,35 @@ const BrandCampaignDetail: React.FC = () => {
                           <div className="text-sm text-green-800">
                             ✅ Target achieved: {approvedCreators.length}/{targetCount} creators approved
                           </div>
+                          <p className="text-xs text-green-700 mt-2">Next: Pay campaign budget to proceed</p>
                         </div>
                       );
                     })()}
                   </div>
-                  <PaymentManagement 
-                    campaignId={id!} 
-                    userType="brand"
-                    onPaymentUpdate={fetchCampaignDetails}
+                  <RazorpayCheckout
+                    campaignId={id!}
+                    amount={campaign.budget}
+                    campaignName={campaign.campaign_name}
+                    onSuccess={() => {
+                      // After successful payment, backend moves phase to content_approval. Refetch.
+                      fetchCampaignDetails();
+                      toast({
+                        title: 'Payment Verified',
+                        description: 'Campaign moved to Content Approval phase.',
+                      });
+                    }}
+                    onError={(err) => {
+                      console.error('Razorpay payment error:', err);
+                      toast({
+                        title: 'Payment Error',
+                        description: err.message || 'Payment failed or cancelled',
+                        variant: 'destructive'
+                      });
+                    }}
                   />
+                  <div className="text-xs text-gray-500 text-center">
+                    Powered by Razorpay • Supports UPI, Cards, NetBanking & Wallets
+                  </div>
                 </div>
               )}
               {campaign.phase === 'content_approval' && (() => {

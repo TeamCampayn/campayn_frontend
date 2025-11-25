@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import ConversationHistory from '@/components/ConversationHistory';
-import PaymentManagement from '@/components/PaymentManagement';
+// Legacy PaymentManagement (manual UPI flow) removed; admin now only monitors payment status.
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRealtimeCampaign } from '@/hooks/useRealtimeCampaign';
@@ -492,16 +492,12 @@ const AdminCampaignDetail: React.FC = () => {
                 <div className="space-y-6">
                   <div className="text-center">
                     <DollarSign className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
-                    <h3 className="text-lg font-semibold mb-2">Payment Processing</h3>
+                    <h3 className="text-lg font-semibold mb-2">Awaiting Brand Payment</h3>
                     <p className="text-gray-600 mb-4">
-                      Send payment request to brand to proceed to content approval.
+                      The brand is completing payment via Razorpay checkout. Once verified, the campaign will advance to content approval automatically.
                     </p>
+                    <p className="text-xs text-gray-500">Manual UPI payment flow removed.</p>
                   </div>
-                  <PaymentManagement 
-                    campaignId={id!} 
-                    userType="admin"
-                    onPaymentUpdate={fetchCampaignDetails}
-                  />
                 </div>
               )}
               {campaign.phase === 'content_approval' && (
