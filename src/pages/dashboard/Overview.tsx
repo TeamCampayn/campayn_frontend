@@ -87,12 +87,12 @@ const Overview: React.FC = () => {
       totalSpend = activeCampaigns.reduce((sum, c) => sum + (c.budget || 0), 0);
 
       if (campaignIds.length > 0) {
-        // Get all creators involved in campaigns (approved or contracted status)
+        // Get all creators involved in campaigns (any active status)
         const { count: creatorsCount } = await supabase
           .from('campaign_creators')
           .select('*', { count: 'exact', head: true })
           .in('campaign_id', campaignIds)
-          .in('status', ['approved', 'contracted', 'completed']);
+          .in('status', ['approved', 'contracted', 'completed', 'recommended']);
         
         activeCreators = creatorsCount || 0;
 
@@ -118,18 +118,27 @@ const Overview: React.FC = () => {
 
         // If no quotation reach data, estimate based on creators
         if (totalReach === 0) {
-          // Fetch follower count from all active creators (approved/contracted)
-          const { data: creatorData } = await supabase
+          // Fetch creator IDs from campaign_creators
+          const { data: campaignCreatorData } = await supabase
             .from('campaign_creators')
-            .select('creators(followers_count)')
+            .select('creator_id, status')
             .in('campaign_id', campaignIds)
-            .in('status', ['approved', 'contracted', 'completed']);
+            .in('status', ['approved', 'contracted', 'completed', 'recommended']);
           
-          if (creatorData && creatorData.length > 0) {
-            totalReach = creatorData.reduce((sum, cc: any) => {
-              const followers = cc.creators?.followers_count || 0;
-              return sum + Math.round(followers * 0.15); // Estimate 15% reach
-            }, 0);
+          if (campaignCreatorData && campaignCreatorData.length > 0) {
+            // Fetch follower counts for these creators
+            const creatorIds = campaignCreatorData.map(cc => cc.creator_id);
+            const { data: creators } = await supabase
+              .from('creators')
+              .select('id, followers_count')
+              .in('id', creatorIds);
+            
+            if (creators && creators.length > 0) {
+              totalReach = creators.reduce((sum, c) => {
+                const followers = c.followers_count || 0;
+                return sum + Math.round(followers * 0.15); // Estimate 15% reach
+              }, 0);
+            }
           }
         }
       }
