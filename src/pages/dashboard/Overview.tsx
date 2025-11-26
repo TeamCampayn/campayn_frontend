@@ -80,17 +80,19 @@ const Overview: React.FC = () => {
       const activeCampaigns = campaignList.filter(c => 
         c.phase === 'campaign_active' || 
         c.phase === 'content_creation' || 
-        c.phase === 'completed'
+        c.phase === 'completed' ||
+        c.phase === 'campaign_complete' ||
+        c.status === 'completed'
       );
       totalSpend = activeCampaigns.reduce((sum, c) => sum + (c.budget || 0), 0);
 
       if (campaignIds.length > 0) {
-        // Get all creators involved in campaigns (approved status)
+        // Get all creators involved in campaigns (approved or contracted status)
         const { count: creatorsCount } = await supabase
           .from('campaign_creators')
           .select('*', { count: 'exact', head: true })
           .in('campaign_id', campaignIds)
-          .eq('status', 'approved');
+          .in('status', ['approved', 'contracted', 'completed']);
         
         activeCreators = creatorsCount || 0;
 
@@ -115,13 +117,13 @@ const Overview: React.FC = () => {
         }
 
         // If no quotation reach data, estimate based on creators
-        if (totalReach === 0 && activeCreators > 0) {
-          // Fetch average follower count from approved creators
+        if (totalReach === 0) {
+          // Fetch follower count from all active creators (approved/contracted)
           const { data: creatorData } = await supabase
             .from('campaign_creators')
             .select('creators(followers_count)')
             .in('campaign_id', campaignIds)
-            .eq('status', 'approved');
+            .in('status', ['approved', 'contracted', 'completed']);
           
           if (creatorData && creatorData.length > 0) {
             totalReach = creatorData.reduce((sum, cc: any) => {
@@ -143,9 +145,14 @@ const Overview: React.FC = () => {
         ).length,
         liveCampaigns: campaignList.filter(c => 
           c.phase === 'campaign_active' || 
-          c.phase === 'content_creation'
+          c.phase === 'content_creation' ||
+          c.phase === 'content_approval'
         ).length,
-        completedCampaigns: campaignList.filter(c => c.phase === 'completed').length,
+        completedCampaigns: campaignList.filter(c => 
+          c.phase === 'completed' || 
+          c.phase === 'campaign_complete' ||
+          c.status === 'completed'
+        ).length,
         activeCreators,
         totalSpend,
         totalReach
@@ -178,13 +185,16 @@ const Overview: React.FC = () => {
         return 'bg-gray-100 text-gray-700';
       case 'quotation_sent':
       case 'quotation_accepted':
+      case 'payment_pending':
         return 'bg-yellow-100 text-yellow-700';
       case 'creator_selection':
         return 'bg-blue-100 text-blue-700';
       case 'campaign_active':
       case 'content_creation':
+      case 'content_approval':
         return 'bg-green-100 text-green-700';
       case 'completed':
+      case 'campaign_complete':
         return 'bg-purple-100 text-purple-700';
       default:
         return 'bg-gray-100 text-gray-700';
@@ -199,14 +209,19 @@ const Overview: React.FC = () => {
         return 'Quote Sent';
       case 'quotation_accepted':
         return 'Quote Accepted';
+      case 'payment_pending':
+        return 'payment pending';
       case 'creator_selection':
         return 'Selecting Creators';
       case 'campaign_active':
         return 'Live';
       case 'content_creation':
         return 'Creating Content';
+      case 'content_approval':
+        return 'content approval';
       case 'completed':
-        return 'Completed';
+      case 'campaign_complete':
+        return 'campaign complete';
       default:
         return phase?.replace(/_/g, ' ') || 'Draft';
     }
