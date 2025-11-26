@@ -8,10 +8,12 @@ import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
-import { ArrowLeft, ArrowRight, Check, DollarSign, Video, Users, Package, FileText, Info, Play, Image, Zap, Star, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, DollarSign, Video, Users, Package, FileText, Info, Play, Image, Zap, Star, X, Sparkles } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
+import { getApiUrl } from '../lib/api';
+import { calculateAffordableCreators, getRecommendedCreatorCount, formatINR, CREATOR_PRICING, type CreatorTier } from '../lib/pricing';
 
 interface CampaignFormData {
   budget: string;
@@ -24,6 +26,9 @@ interface CampaignFormData {
   category: string;
   shippingRequired: boolean;
   budgetFlexible: boolean;
+  targetCategory: string;
+  targetSubcategory: string;
+  creatorTier: string;
 }
 
 const CampaignForm: React.FC = () => {
@@ -32,6 +37,8 @@ const CampaignForm: React.FC = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAIProcessing, setShowAIProcessing] = useState(false);
+  const [aiProcessingStage, setAIProcessingStage] = useState(0);
   
   const [formData, setFormData] = useState<CampaignFormData>({
     budget: '50000',
@@ -44,7 +51,16 @@ const CampaignForm: React.FC = () => {
     category: '',
     shippingRequired: false,
     budgetFlexible: false,
+    targetCategory: '',
+    targetSubcategory: '',
+    creatorTier: '',
   });
+
+  // State for recommendation system
+  const [creatorCategories, setCreatorCategories] = useState<any[]>([]);
+  const [creatorSubcategories, setCreatorSubcategories] = useState<any[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [creatorStats, setCreatorStats] = useState<any>(null);
 
   const updateFormData = (field: keyof CampaignFormData, value: string | boolean) => {
     setFormData(prev => ({
@@ -52,6 +68,82 @@ const CampaignForm: React.FC = () => {
       [field]: value
     }));
   };
+
+  // Helper function to format numbers
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
+  };
+
+  // Fetch categories from API
+  const fetchCategories = async () => {
+    setLoadingCategories(true);
+    try {
+      const url = getApiUrl('/api/creators/categories');
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.success && data.categories) {
+        setCreatorCategories(data.categories);
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load creator categories',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  // Fetch subcategories for selected category
+  const fetchSubcategories = async (category: string) => {
+    try {
+      const url = getApiUrl(`/api/creators/categories/${encodeURIComponent(category)}/subcategories`);
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.success && data.subcategories) {
+        setCreatorSubcategories(data.subcategories);
+      } else {
+        setCreatorSubcategories([]);
+      }
+    } catch (error) {
+      setCreatorSubcategories([]);
+    }
+  };
+
+  // Fetch creator stats for selected category/subcategory
+  const fetchCreatorStats = async () => {
+    if (!formData.targetCategory) return;
+    
+    try {
+      const params = new URLSearchParams({
+        category: formData.targetCategory,
+        ...(formData.targetSubcategory && { subcategory: formData.targetSubcategory })
+      });
+      
+      const response = await fetch(getApiUrl(`/api/creator-stats?${params}`));
+      const data = await response.json();
+      if (data.success) {
+        setCreatorStats(data.stats);
+      }
+    } catch (error) {
+      // Silently fail - stats are optional
+    }
+  };
+
+  // Load categories on component mount
+  React.useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // Fetch stats when category or subcategory changes
+  React.useEffect(() => {
+    if (formData.targetCategory) {
+      fetchCreatorStats();
+    }
+  }, [formData.targetCategory, formData.targetSubcategory]);
 
   const nextStep = () => {
     if (currentStep < 5) {
@@ -90,10 +182,23 @@ const CampaignForm: React.FC = () => {
         return;
       }
 
-      console.log('Form data:', formData);
-      console.log('User:', user.id);
-      console.log('Brand:', brand.id);
+      // Validate creatorTier is set
+      if (!formData.creatorTier || !['micro', 'macro', 'mega'].includes(formData.creatorTier)) {
+        toast({
+          title: "Error",
+          description: "Please select a creator tier (Nano, Micro, or Macro creators)",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
+      // Calculate optimal creator count based on budget and tier
+      const budgetRecommendation = getRecommendedCreatorCount(
+        parseInt(formData.budget), 
+        formData.creatorTier as CreatorTier
+      );
+      
       // Create campaign in database (updated for new multi-phase system)
       const { data: campaignData, error: campaignError } = await supabase
         .from('campaigns')
@@ -111,6 +216,16 @@ const CampaignForm: React.FC = () => {
             product_name: formData.productName,
             shipping_required: formData.shippingRequired
           },
+          // NEW: Automated recommendation fields with budget-based calculation
+          target_category: formData.targetCategory,
+          target_subcategory: formData.targetSubcategory || null,
+          creator_type: formData.creatorTier,
+          target_creators_count: budgetRecommendation.optimal,
+          // Pricing fields (separate columns)
+          estimated_cost_per_creator: budgetRecommendation.pricing.pricePerCreator,
+          max_affordable_creators: budgetRecommendation.max,
+          actual_creators_selected: 0,
+          // END NEW
           phase: 'creator_selection',
           status: 'active',
           start_date: new Date().toISOString().split('T')[0],
@@ -120,7 +235,6 @@ const CampaignForm: React.FC = () => {
         .single();
 
       if (campaignError) {
-        console.error('Campaign creation error:', campaignError);
         throw new Error('Failed to create campaign');
       }
 
@@ -142,22 +256,79 @@ const CampaignForm: React.FC = () => {
         });
 
       if (activityError) {
-        console.error('Activity logging error:', activityError);
         // Don't throw error here, as campaign was created successfully
       }
 
-      // Show success message
-      toast({
-        title: "Campaign Created Successfully!",
-        description: "Your campaign has entered the creator selection phase. You'll be notified when creators are recommended.",
-        duration: 5000,
-      });
-
-      // Navigate back to dashboard
-      navigate('/dashboard');
+      // AUTO-GENERATE CREATOR RECOMMENDATIONS WITH AI ANIMATION
+      if (formData.targetCategory) {
+        
+        // Show AI processing animation
+        setShowAIProcessing(true);
+        setAIProcessingStage(0);
+        
+        const stages = [
+          { stage: 0, text: "Analyzing campaign requirements...", duration: 800 },
+          { stage: 1, text: "Searching creator database...", duration: 1000 },
+          { stage: 2, text: "AI matching creators to your criteria...", duration: 1200 },
+          { stage: 3, text: "Calculating engagement scores...", duration: 1000 },
+          { stage: 4, text: "Finalizing recommendations...", duration: 800 }
+        ];
+        
+        // Animate through stages
+        for (let i = 0; i < stages.length; i++) {
+          await new Promise(resolve => setTimeout(() => {
+            setAIProcessingStage(stages[i].stage);
+            resolve(true);
+          }, stages[i].duration));
+        }
+        
+        try {
+          const recsResponse = await fetch(
+            getApiUrl(`/api/campaigns/${campaignData.id}/generate-recommendations`),
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ autoApprove: false })
+            }
+          );
+          
+          const recsData = await recsResponse.json();
+          
+          if (recsData.success) {
+            setAIProcessingStage(5); // Success stage
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Navigate to campaign detail page
+            navigate(`/dashboard/campaigns/${campaignData.id}`);
+          } else {
+            setShowAIProcessing(false);
+            toast({
+              title: "Campaign Created Successfully!",
+              description: "Your campaign has been created. We'll recommend creators shortly.",
+              duration: 5000,
+            });
+            navigate('/dashboard');
+          }
+        } catch (recError) {
+          setShowAIProcessing(false);
+          toast({
+            title: "Campaign Created Successfully!",
+            description: "Your campaign has been created. We'll recommend creators shortly.",
+            duration: 5000,
+          });
+          navigate('/dashboard');
+        }
+      } else {
+        // No category selected, fallback
+        toast({
+          title: "Campaign Created Successfully!",
+          description: "Your campaign has been created.",
+          duration: 5000,
+        });
+        navigate('/dashboard');
+      }
       
     } catch (error) {
-      console.error('Error submitting campaign:', error);
       toast({
         title: "Submission Failed",
         description: "There was a problem submitting your campaign. Please try again.",
@@ -176,7 +347,7 @@ const CampaignForm: React.FC = () => {
       case 2:
         return formData.contentType !== '';
       case 3:
-        return formData.creatorType !== '' && formData.qualityLevel !== '';
+        return formData.creatorType !== '' && formData.creatorTier !== '' && formData.qualityLevel !== '' && formData.targetCategory !== '';
       case 4:
         return formData.productName !== '' && formData.productLink !== '' && formData.category !== '';
       case 5:
@@ -410,7 +581,10 @@ const CampaignForm: React.FC = () => {
                     ? "border-blue-500 bg-blue-50 shadow-lg" 
                     : "border-gray-200 hover:border-blue-300"
                 )}
-                onClick={() => updateFormData('creatorType', 'Nano creators')}
+                onClick={() => {
+                  updateFormData('creatorType', 'Nano creators');
+                  updateFormData('creatorTier', 'micro');
+                }}
               >
                 <CardContent className="p-6 text-center">
                   <div className="flex justify-center mb-4">
@@ -432,7 +606,10 @@ const CampaignForm: React.FC = () => {
                     ? "border-blue-500 bg-blue-50 shadow-lg" 
                     : "border-gray-200 hover:border-blue-300"
                 )}
-                onClick={() => updateFormData('creatorType', 'Micro creators')}
+                onClick={() => {
+                  updateFormData('creatorType', 'Micro creators');
+                  updateFormData('creatorTier', 'macro');
+                }}
               >
                 <CardContent className="p-6 text-center">
                   <div className="flex justify-center mb-4">
@@ -456,7 +633,10 @@ const CampaignForm: React.FC = () => {
                     ? "border-blue-500 bg-blue-50 shadow-lg" 
                     : "border-gray-200 hover:border-blue-300"
                 )}
-                onClick={() => updateFormData('creatorType', 'Macro creators')}
+                onClick={() => {
+                  updateFormData('creatorType', 'Macro creators');
+                  updateFormData('creatorTier', 'mega');
+                }}
               >
                 <CardContent className="p-6 text-center">
                   <div className="flex justify-center mb-4">
@@ -517,6 +697,264 @@ const CampaignForm: React.FC = () => {
                   </div>
                 </button>
               </div>
+            </div>
+
+            {/* Automated Creator Matching Section */}
+            <div className="space-y-6 mt-8 pt-8 border-t">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full mb-4">
+                  <Sparkles className="h-6 w-6 text-purple-600" />
+                </div>
+                <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+                  Automated Creator Matching
+                </h3>
+                <p className="text-gray-600">
+                  Select creator category to receive AI-powered recommendations
+                </p>
+              </div>
+
+              {/* Target Category Selection */}
+              <div>
+                <Label htmlFor="targetCategory" className="block text-sm font-medium text-gray-700 mb-2">
+                  Target Creator Category*
+                </Label>
+                <Select
+                  value={formData.targetCategory}
+                  onValueChange={(value) => {
+                    updateFormData('targetCategory', value);
+                    updateFormData('targetSubcategory', '');
+                    fetchSubcategories(value);
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select creator category" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {loadingCategories ? (
+                      <SelectItem value="loading" disabled>
+                        Loading categories...
+                      </SelectItem>
+                    ) : creatorCategories.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        No categories available
+                      </SelectItem>
+                    ) : (
+                      creatorCategories
+                        .filter(cat => cat.category && cat.category.trim() !== '')
+                        .map((cat) => (
+                          <SelectItem key={cat.category} value={cat.category}>
+                            {cat.category} ({cat.creator_count} creators)
+                          </SelectItem>
+                        ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-gray-500 mt-1">
+                  We'll match you with creators in this category
+                </p>
+              </div>
+
+              {/* Subcategory Selection */}
+              {formData.targetCategory && (
+                <div className="animate-fadeIn">
+                  <Label htmlFor="targetSubcategory" className="block text-sm font-medium text-gray-700 mb-2">
+                    Target Subcategory (Optional)
+                  </Label>
+                  <Select
+                    value={formData.targetSubcategory || '__any__'}
+                    onValueChange={(value) => updateFormData('targetSubcategory', value === '__any__' ? '' : value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select subcategory (optional)" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="__any__">Any Subcategory</SelectItem>
+                      {creatorSubcategories
+                        .filter((subcat) => subcat.name && subcat.name.trim() !== '')
+                        .map((subcat) => (
+                          <SelectItem key={subcat.name} value={subcat.name}>
+                            {subcat.name} ({subcat.count} creators)
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Narrow down to specific creator niches for better targeting
+                  </p>
+                </div>
+              )}
+
+              {/* Creator Stats Display */}
+              {formData.targetCategory && creatorStats && (
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <Info className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <div className="space-y-2">
+                      <p className="font-semibold text-purple-900">
+                        Available Creators in {formData.targetCategory}
+                      </p>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-600">Nano (1K-10K)</p>
+                          <p className="font-bold text-purple-900">{creatorStats.by_tier?.micro || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Micro (10K-100K)</p>
+                          <p className="font-bold text-purple-900">{creatorStats.by_tier?.macro || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Mega (100K-2M)</p>
+                          <p className="font-bold text-purple-900">{creatorStats.by_tier?.mega || 0}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-600">
+                        Avg. Engagement: {creatorStats.avg_engagement?.toFixed(2)}% | 
+                        Avg. Followers: {formatNumber(creatorStats.avg_followers)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Budget-Based Pricing Display */}
+              {formData.budget && formData.creatorTier && (
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-6 shadow-md">
+                  <div className="flex items-start space-x-3">
+                    <DollarSign className="h-6 w-6 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 space-y-4">
+                      <div>
+                        <p className="text-lg font-bold text-green-900 mb-1">
+                          Budget Analysis
+                        </p>
+                        <p className="text-sm text-gray-700">
+                          Based on your ₹{parseInt(formData.budget).toLocaleString('en-IN')} budget and selected creator tier
+                        </p>
+                      </div>
+
+                      {/* Pricing Cards */}
+                      <div className="grid grid-cols-3 gap-3">
+                        {/* Nano/Micro Creators */}
+                        <div className={cn(
+                          "p-4 rounded-lg border-2 transition-all",
+                          formData.creatorTier === 'micro' 
+                            ? "bg-blue-100 border-blue-500 shadow-md" 
+                            : "bg-white border-gray-200"
+                        )}>
+                          <div className="text-xs font-medium text-gray-600 mb-1">Nano Creators</div>
+                          <div className="text-lg font-bold text-gray-900">
+                            {formatINR(CREATOR_PRICING.micro.pricePerCreator)}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {CREATOR_PRICING.micro.followerRange}
+                          </div>
+                          {formData.creatorTier === 'micro' && (
+                            <div className="mt-2 text-xs font-semibold text-blue-700">
+                              ✓ You can afford {calculateAffordableCreators(parseInt(formData.budget), 'micro')} creators
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Macro Creators */}
+                        <div className={cn(
+                          "p-4 rounded-lg border-2 transition-all",
+                          formData.creatorTier === 'macro' 
+                            ? "bg-blue-100 border-blue-500 shadow-md" 
+                            : "bg-white border-gray-200"
+                        )}>
+                          <div className="text-xs font-medium text-gray-600 mb-1">Macro Creators</div>
+                          <div className="text-lg font-bold text-gray-900">
+                            {formatINR(CREATOR_PRICING.macro.pricePerCreator)}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {CREATOR_PRICING.macro.followerRange}
+                          </div>
+                          {formData.creatorTier === 'macro' && (
+                            <div className="mt-2 text-xs font-semibold text-blue-700">
+                              ✓ You can afford {calculateAffordableCreators(parseInt(formData.budget), 'macro')} creators
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Mega Creators */}
+                        <div className={cn(
+                          "p-4 rounded-lg border-2 transition-all",
+                          formData.creatorTier === 'mega' 
+                            ? "bg-blue-100 border-blue-500 shadow-md" 
+                            : "bg-white border-gray-200"
+                        )}>
+                          <div className="text-xs font-medium text-gray-600 mb-1">Mega Creators</div>
+                          <div className="text-lg font-bold text-gray-900">
+                            {formatINR(CREATOR_PRICING.mega.pricePerCreator)}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {CREATOR_PRICING.mega.followerRange}
+                          </div>
+                          {formData.creatorTier === 'mega' && (
+                            <div className="mt-2 text-xs font-semibold text-blue-700">
+                              ✓ You can afford {calculateAffordableCreators(parseInt(formData.budget), 'mega')} creators
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Recommendation Summary */}
+                      {(() => {
+                        const recommendation = getRecommendedCreatorCount(
+                          parseInt(formData.budget), 
+                          formData.creatorTier as CreatorTier
+                        );
+                        return (
+                          <div className="bg-white rounded-lg p-4 border border-green-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div>
+                                <p className="font-semibold text-gray-900 text-base">
+                                  Recommended Creator Count
+                                </p>
+                                <p className="text-xs text-gray-600 mt-0.5">
+                                  Optimized for {recommendation.pricing.followerRange} followers
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-3xl font-bold text-green-600">
+                                  {recommendation.optimal}
+                                </div>
+                                <div className="text-xs text-gray-500">creators</div>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div className="bg-gray-50 rounded p-2">
+                                <p className="text-xs text-gray-600">Cost per creator</p>
+                                <p className="font-bold text-gray-900">
+                                  {formatINR(recommendation.pricing.pricePerCreator)}
+                                </p>
+                              </div>
+                              <div className="bg-gray-50 rounded p-2">
+                                <p className="text-xs text-gray-600">Maximum affordable</p>
+                                <p className="font-bold text-gray-900">
+                                  {recommendation.max} creators
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="text-gray-600">Estimated Total Cost:</span>
+                                <span className="font-bold text-gray-900 text-lg">
+                                  {formatINR(recommendation.optimal * recommendation.pricing.pricePerCreator)}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Using {((recommendation.optimal * recommendation.pricing.pricePerCreator / parseInt(formData.budget)) * 100).toFixed(0)}% of your budget
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -825,6 +1263,75 @@ const CampaignForm: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Processing Modal */}
+      {showAIProcessing && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full animate-in fade-in zoom-in duration-300">
+            <div className="text-center">
+              {/* AI Icon Animation */}
+              <div className="relative mx-auto w-24 h-24 mb-6">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-blue-500 rounded-full animate-pulse"></div>
+                <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
+                  <Sparkles className="w-12 h-12 text-purple-600 animate-spin" style={{ animationDuration: '3s' }} />
+                </div>
+              </div>
+
+              {/* Stage Text */}
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                {aiProcessingStage === 5 ? '✅ Complete!' : '🤖 AI Processing'}
+              </h3>
+              
+              <p className="text-gray-600 mb-6 min-h-[48px] flex items-center justify-center">
+                {aiProcessingStage === 0 && "Analyzing your campaign requirements..."}
+                {aiProcessingStage === 1 && "Searching through 37,000+ creators..."}
+                {aiProcessingStage === 2 && "AI matching creators to your criteria..."}
+                {aiProcessingStage === 3 && "Calculating engagement scores..."}
+                {aiProcessingStage === 4 && "Finalizing top recommendations..."}
+                {aiProcessingStage === 5 && "Successfully matched creators to your campaign!"}
+              </p>
+
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                <div 
+                  className="bg-gradient-to-r from-purple-600 to-blue-500 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${((aiProcessingStage + 1) / 6) * 100}%` }}
+                ></div>
+              </div>
+
+              {/* Stage Indicators */}
+              <div className="flex justify-center space-x-2 mb-6">
+                {[0, 1, 2, 3, 4, 5].map((stage) => (
+                  <div
+                    key={stage}
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-all duration-300",
+                      stage <= aiProcessingStage 
+                        ? "bg-purple-600 scale-110" 
+                        : "bg-gray-300"
+                    )}
+                  />
+                ))}
+              </div>
+
+              {/* Fun Facts */}
+              <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                <p className="text-sm text-purple-800 font-medium">
+                  💡 Did you know?
+                </p>
+                <p className="text-xs text-purple-600 mt-1">
+                  {aiProcessingStage === 0 && "Our AI analyzes over 50 data points per creator"}
+                  {aiProcessingStage === 1 && "We have creators across 50+ categories"}
+                  {aiProcessingStage === 2 && "Matching considers engagement, reach, and niche fit"}
+                  {aiProcessingStage === 3 && "Higher engagement = better ROI for your campaign"}
+                  {aiProcessingStage === 4 && "We're selecting the perfect creators for you"}
+                  {aiProcessingStage === 5 && "You're about to see your personalized matches!"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -23,7 +23,8 @@ import {
   ArrowLeft,
   Clock,
   TrendingUp,
-  Heart
+  Heart,
+  Sparkles
 } from 'lucide-react';
 
 // Simple number formatters
@@ -89,6 +90,7 @@ const AdminCreatorSelection: React.FC = () => {
   const [minEngagement, setMinEngagement] = useState(0);
   const [adminNotes, setAdminNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [generatingRecs, setGeneratingRecs] = useState(false);
 
   useEffect(() => {
     if (campaignId) {
@@ -123,33 +125,21 @@ const AdminCreatorSelection: React.FC = () => {
       });
 
       const url = getApiUrl(`api/creators?${params}`);
-      console.log('🔍 Fetching creators from:', url);
       
       const response = await fetch(url);
       
-      // Log the response details for debugging
-      console.log('📊 Response status:', response.status);
-      console.log('📊 Response content-type:', response.headers.get('content-type'));
-      
       if (!response.ok) {
         const text = await response.text();
-        console.error('❌ Response body:', text.substring(0, 500));
         throw new Error(`HTTP error! status: ${response.status}, body: ${text.substring(0, 200)}`);
       }
       
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text();
-        console.error('❌ Non-JSON response:', text.substring(0, 500));
         throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 200)}`);
       }
       
       const data = await response.json();
-      console.log('✅ Received data:', { 
-        totalCreators: data.creators?.length, 
-        totalCount: data.totalCount,
-        hasMore: data.hasMore 
-      });
 
       if (data.creators) {
         // Sort by priority score and engagement rate
@@ -162,7 +152,6 @@ const AdminCreatorSelection: React.FC = () => {
         setCreators(sortedCreators);
       }
     } catch (error) {
-      console.error('❌ Error fetching creators:', error);
       toast({
         title: 'Error loading creators',
         description: error instanceof Error ? error.message : 'Failed to fetch creators',
@@ -170,6 +159,48 @@ const AdminCreatorSelection: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateAutoRecommendations = async () => {
+    if (!campaignId) return;
+    
+    setGeneratingRecs(true);
+    try {
+      const response = await fetch(
+        getApiUrl(`/api/campaigns/${campaignId}/generate-recommendations`),
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ autoApprove: false })
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: 'Recommendations Generated',
+          description: `${data.count} creators automatically matched based on campaign criteria!`,
+        });
+        // Refresh creators list to show recommendations
+        fetchCreators();
+      } else {
+        toast({
+          title: 'Error',
+          description: data.error || 'Failed to generate recommendations',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error generating recommendations:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate recommendations',
+        variant: 'destructive'
+      });
+    } finally {
+      setGeneratingRecs(false);
     }
   };
 
@@ -277,6 +308,35 @@ const AdminCreatorSelection: React.FC = () => {
           <Users className="h-4 w-4" />
           <span>{selectedCreators.size} selected</span>
         </div>
+      </div>
+
+      {/* Auto-Generate Recommendations Button */}
+      <div className="mb-6">
+        <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-purple-100 p-2 rounded-full">
+                  <Sparkles className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">AI-Powered Creator Matching</h3>
+                  <p className="text-sm text-gray-600">
+                    Automatically find the best creators based on campaign category and tier
+                  </p>
+                </div>
+              </div>
+              <Button 
+                onClick={generateAutoRecommendations}
+                disabled={!campaignId || generatingRecs}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                {generatingRecs ? 'Generating...' : 'Auto-Generate Recommendations'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Campaign Info Card */}

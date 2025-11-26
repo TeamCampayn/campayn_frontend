@@ -111,9 +111,6 @@ export const CampaignFormProvider: React.FC<CampaignFormProviderProps> = ({ chil
     setIsSubmitting(true);
     
     try {
-      // This will be implemented to save to database
-      console.log('Submitting campaign:', formData);
-      
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       

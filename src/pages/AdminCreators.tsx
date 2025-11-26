@@ -77,7 +77,6 @@ const AdminCreators: React.FC = () => {
       });
 
       const url = getApiUrl(`api/creators?${params}`);
-      console.log('Fetching creators from:', url);
       const response = await fetch(url);
       
       if (!response.ok) {
@@ -192,7 +191,6 @@ const AdminCreators: React.FC = () => {
 
       // Then recommend creators
       const url = getApiUrl(`api/campaigns/${selectedCampaign}/recommend-creators`);
-      console.log('Recommending creators to:', url);
       const response = await fetch(url, {
         method: 'POST',
         headers: {

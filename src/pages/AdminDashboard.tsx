@@ -45,7 +45,6 @@ const AdminDashboard: React.FC = () => {
         setIsCheckingAuth(true);
         
         if (!user) {
-          console.log('No user found, redirecting to login');
           navigate('/auth');
           return;
         }
@@ -55,24 +54,14 @@ const AdminDashboard: React.FC = () => {
                            user.user_metadata?.is_admin === true ||
                            user.app_metadata?.is_admin === true;
 
-        console.log('Admin check:', {
-          userEmail: user.email,
-          isAdmin: isAdminUser,
-          userMetadata: user.user_metadata,
-          appMetadata: user.app_metadata
-        });
-
         if (!isAdminUser) {
-          console.log('User is not admin, redirecting to brand dashboard');
           navigate('/dashboard');
           return;
         }
 
-        console.log('Admin access granted');
         setIsAdmin(true);
         
       } catch (error) {
-        console.error('Admin access check failed:', error);
         navigate('/auth');
       } finally {
         setIsCheckingAuth(false);

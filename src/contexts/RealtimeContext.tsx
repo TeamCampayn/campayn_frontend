@@ -31,8 +31,6 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
   useEffect(() => {
     if (!user) return;
 
-    console.log('🔌 Supabase Realtime initialized for user:', user.email);
-
     // Optional: Set up presence channel to track online users
     const presenceChannel = supabase.channel('online_users', {
       config: { presence: { key: user.id } }
@@ -40,8 +38,7 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
 
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
-        const state = presenceChannel.presenceState();
-        console.log('👥 Online users:', Object.keys(state).length);
+        // Presence synced
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -64,12 +61,9 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
 
     // Check if channel already exists
     if (channels.has(channelName)) {
-      console.log(`📡 Channel ${channelName} already subscribed`);
       return channels.get(channelName)!;
     }
 
-    console.log(`📡 Subscribing to channel: ${channelName}`);
-    
     const channel = supabase.channel(channelName);
     setChannels(prev => new Map(prev).set(channelName, channel));
     
@@ -78,7 +72,6 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
 
   const unsubscribeFromChannel = (channel: RealtimeChannel) => {
     if (channel) {
-      console.log(`📡 Unsubscribing from channel`);
       channel.unsubscribe();
       setChannels(prev => {
         const newMap = new Map(prev);
@@ -97,7 +90,6 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
   // Cleanup all channels on unmount
   useEffect(() => {
     return () => {
-      console.log('🧹 Cleaning up all Realtime channels');
       channels.forEach(channel => channel.unsubscribe());
     };
   }, []);

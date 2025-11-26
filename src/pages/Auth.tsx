@@ -20,10 +20,8 @@ const Auth: React.FC = () => {
   React.useEffect(() => {
     if (user) {
       if (isAdminUser(user)) {
-        console.log('Already logged in admin user, redirecting to admin dashboard')
         navigate('/admin')
       } else {
-        console.log('Already logged in regular user, redirecting to brand dashboard')
         navigate('/dashboard')
       }
     }
@@ -35,10 +33,8 @@ const Auth: React.FC = () => {
     
     // Check if it's admin by email (immediate) or wait for full user context
     if (userToCheck?.email === 'admin@campayn.local' || isAdminUser(userToCheck)) {
-      console.log('Admin user detected, redirecting to admin dashboard')
       navigate('/admin')
     } else {
-      console.log('Regular user detected, redirecting to brand dashboard')
       navigate('/dashboard')
     }
   }

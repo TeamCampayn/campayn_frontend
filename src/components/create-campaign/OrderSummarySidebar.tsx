@@ -22,9 +22,6 @@ const OrderSummarySidebar = () => {
     pricing.large.count * pricing.large.price;
 
   const handlePlaceOrder = async () => {
-    console.log('Place order clicked. User:', user, 'Brand:', brand);
-    console.log('Form data:', formData);
-    
     if (!user) {
       toast({
         title: 'Authentication Required',
@@ -99,10 +96,6 @@ const OrderSummarySidebar = () => {
     }
 
     try {
-      console.log('=== CREATING CAMPAIGN ===');
-      console.log('Effective brand ID:', effectiveBrandId);
-      console.log('Form data:', formData);
-      
       // Create campaign
       const { data: campaign, error: campaignError } = await supabase
         .from('campaigns')
@@ -121,14 +114,8 @@ const OrderSummarySidebar = () => {
         .select()
         .single();
 
-      console.log('Campaign creation result:', { data: campaign, error: campaignError });
-
       if (campaignError) throw campaignError;
 
-      console.log('=== CREATING QUOTATION ===');
-      console.log('Campaign ID:', campaign.id);
-      console.log('Total cost:', totalCost);
-      
       // Create quotation
       const { error: quotationError } = await supabase
         .from('quotations')
@@ -141,8 +128,6 @@ const OrderSummarySidebar = () => {
           status: 'pending',
           notes: `Budget: ₹${formData.budget.toLocaleString()}, Duration: ${formData.duration} days, Quality: ${formData.quality}`
         });
-
-      console.log('Quotation creation result:', { error: quotationError });
 
       if (quotationError) throw quotationError;
 

@@ -131,7 +131,6 @@ const CreatorProfile: React.FC = () => {
 
       const cleanHandle = targetHandle.replace('@', '');
       const url = getApiUrl(`api/insights?username=${cleanHandle}`);
-      console.log('Fetching insights from:', url);
       const response = await fetch(url);
       
       if (!response.ok) {
@@ -141,7 +140,6 @@ const CreatorProfile: React.FC = () => {
       const data = await response.json();
       setAnalytics(data);
     } catch (err: any) {
-      console.error('Error fetching analytics:', err);
       setError(err.message || 'Failed to load creator analytics');
     } finally {
       setLoading(false);

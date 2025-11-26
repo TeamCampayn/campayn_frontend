@@ -54,8 +54,6 @@ export function useRealtimeCampaign(campaignId: string | undefined) {
             filter: `id=eq.${campaignId}`
           },
           (payload) => {
-            console.log('📊 Campaign updated:', payload);
-            
             if (payload.eventType === 'UPDATE') {
               setCampaign(payload.new as CampaignUpdate);
             } else if (payload.eventType === 'DELETE') {
@@ -63,9 +61,7 @@ export function useRealtimeCampaign(campaignId: string | undefined) {
             }
           }
         )
-        .subscribe((status) => {
-          console.log(`📡 Campaign subscription status: ${status}`);
-        });
+        .subscribe();
     };
 
     setupSubscription();

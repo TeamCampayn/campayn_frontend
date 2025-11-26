@@ -146,7 +146,6 @@ const CampaignAnalytics: React.FC = () => {
     queryKey: ['campaign-details', campaignId],
     queryFn: async () => {
       const url = getApiUrl(`api/campaigns/${campaignId}`);
-      console.log('Fetching campaign from:', url);
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to load campaign');
       return res.json();
@@ -183,7 +182,6 @@ const CampaignAnalytics: React.FC = () => {
           const url = getApiUrl(`api/post-insights?postUrl=${encodeURIComponent(content.post_url)}&username=${encodeURIComponent(handle)}`);
           const res = await fetch(url);
           if (!res.ok) {
-            console.log(`Failed to fetch post insights for ${content.id}:`, await res.text());
             return [content.id, null] as const;
           }
           const data = await res.json();
@@ -229,10 +227,8 @@ const CampaignAnalytics: React.FC = () => {
   const getPostDataForContent = (contentId: string) => {
     const postData = postInsightsByContentId[contentId];
     if (postData && postData.success && postData.post) {
-      console.log(`Found specific post data for content ${contentId}:`, postData.post);
       return postData.post;
     }
-    console.log(`No specific post data found for content ${contentId}`);
     return null;
   };
 

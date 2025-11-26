@@ -59,7 +59,6 @@ export function useRealtimeMessages(campaignId: string | undefined) {
             filter: `campaign_id=eq.${campaignId}`
           },
           (payload) => {
-            console.log('💬 New message received:', payload);
             const newMessage = payload.new as Message;
             
             setMessages(prev => [...prev, newMessage]);
@@ -78,15 +77,12 @@ export function useRealtimeMessages(campaignId: string | undefined) {
             filter: `campaign_id=eq.${campaignId}`
           },
           (payload) => {
-            console.log('💬 Message updated:', payload);
             setMessages(prev =>
               prev.map(msg => msg.id === payload.new.id ? payload.new as Message : msg)
             );
           }
         )
-        .subscribe((status) => {
-          console.log(`📡 Messages subscription status: ${status}`);
-        });
+        .subscribe();
     };
 
     setupSubscription();
@@ -135,8 +131,8 @@ function playNotificationSound() {
   try {
     const audio = new Audio('/notification.mp3');
     audio.volume = 0.5;
-    audio.play().catch(e => console.log('Could not play notification sound:', e));
-  } catch (e) {
-    console.log('Notification sound not available');
+    audio.play().catch(() => {});
+  } catch {
+    // Notification sound not available
   }
 }

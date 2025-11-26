@@ -84,8 +84,8 @@ const Analytics = () => {
         title="🎉 Campaign Performance Alert"
         description="Diwali Festive Collection has achieved 650% ROI - highest performing campaign this quarter!"
         actionLabel="View Details"
-        onAction={() => console.log('Navigate to campaign details')}
-        onDismiss={() => console.log('Dismiss alert')}
+        onAction={() => {}}
+        onDismiss={() => {}}
       />
 
       {/* Filter Bar */}

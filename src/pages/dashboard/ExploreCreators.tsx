@@ -43,7 +43,6 @@ const ExploreCreators: React.FC = () => {
       });
 
       const url = getApiUrl(`api/creators?${params}`);
-      console.log('Fetching creators from API:', url);
       const response = await fetch(url);
       
       if (!response.ok) {
@@ -52,7 +51,6 @@ const ExploreCreators: React.FC = () => {
         }
         
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('API Error:', errorData);
         throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch creators`);
       }
 
@@ -61,10 +59,7 @@ const ExploreCreators: React.FC = () => {
       setCreators(data.creators || []);
       setFilteredCreators(data.creators || []);
       setTotalCount(data.totalCount || 0);
-      
-      console.log(`✅ Loaded ${data.creators?.length || 0} creators (${data.totalCount} total)`);
     } catch (error: any) {
-      console.error('❌ Error fetching creators:', error);
       setError(error.message || 'Failed to load creators');
       setCreators([]);
       setFilteredCreators([]);
@@ -79,7 +74,6 @@ const ExploreCreators: React.FC = () => {
   const fetchCategories = async () => {
     try {
       const url = getApiUrl('api/creators/categories');
-      console.log('Fetching categories from:', url);
       const response = await fetch(url);
       
       if (!response.ok) {
@@ -87,9 +81,23 @@ const ExploreCreators: React.FC = () => {
       }
 
       const data = await response.json();
-      setCategories(data.categories || []);
+      
+      // Extract category names from the response
+      // API returns array of objects with {name, count, ...}
+      if (data.success && data.categories) {
+        const categoryNames = data.categories.map((cat: any) => 
+          typeof cat === 'string' ? cat : cat.name || cat.category
+        );
+        setCategories(categoryNames);
+      } else if (Array.isArray(data.categories)) {
+        // Fallback for simple string array
+        setCategories(data.categories);
+      } else {
+        setCategories([]);
+      }
     } catch (error) {
       console.error('Error fetching categories:', error);
+      setCategories([]);
     }
   };
 

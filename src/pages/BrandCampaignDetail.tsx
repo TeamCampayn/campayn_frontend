@@ -34,19 +34,25 @@ import {
 } from 'lucide-react';
 
 interface Creator {
-  id: string;
+  id: string | number;
   name: string;
   ig_handle: string;
   category: string;
+  subcategory?: string;
   followers_count: number;
   engagement_rate: number | null;
   profile_picture_url?: string;
+  verified?: boolean;
+  bio?: string;
+  avg_likes?: number;
+  avg_comments?: number;
+  avg_views?: number;
 }
 
 interface CampaignCreator {
   id: string;
   campaign_id: string;
-  creator_id: string;
+  creator_id: string | number;
   status: 'recommended' | 'approved' | 'rejected' | 'requested_more';
   recommended_by_admin: boolean;
   admin_notes?: string;
@@ -89,10 +95,13 @@ const BrandCampaignDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [responding, setResponding] = useState<string | null>(null);
   const [responses, setResponses] = useState<Record<string, { status: string; response: string }>>({});
+  const [selectionStatus, setSelectionStatus] = useState<any>(null);
+  const [initiatingPayment, setInitiatingPayment] = useState(false);
 
   useEffect(() => {
     if (id && brand?.id) {
       fetchCampaignDetails();
+      fetchSelectionStatus();
     }
   }, [id, brand?.id]);
 
@@ -122,7 +131,23 @@ const BrandCampaignDetail: React.FC = () => {
 
       if (data.success) {
         setCampaign(data.campaign);
-        setCampaignCreators(data.creators || []);
+        
+        // Fetch enriched creator data with clean formatting
+        try {
+          const enrichedUrl = getApiUrl(`api/campaigns/${id}/creators-enriched`);
+          const enrichedResponse = await fetch(enrichedUrl);
+          const enrichedData = await enrichedResponse.json();
+          
+          if (enrichedData.success) {
+            setCampaignCreators(enrichedData.creators || []);
+          } else {
+            // Fallback to regular data
+            setCampaignCreators(data.creators || []);
+          }
+        } catch (enrichError) {
+          setCampaignCreators(data.creators || []);
+        }
+        
         setContents(data.contents || []);
       } else {
         toast({
@@ -132,7 +157,6 @@ const BrandCampaignDetail: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching campaign:', error);
       toast({
         title: "Error",
         description: "Failed to load campaign details",
@@ -143,10 +167,85 @@ const BrandCampaignDetail: React.FC = () => {
     }
   };
 
-  const handleCreatorResponse = async (creatorId: string, status: 'approved' | 'rejected' | 'requested_more') => {
+  const fetchSelectionStatus = async () => {
     try {
-      setResponding(creatorId);
-      const responseData = responses[creatorId];
+      const url = getApiUrl(`api/campaigns/${id}/selection-status`);
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.success) {
+        setSelectionStatus(data);
+      }
+    } catch (error) {
+      // Silently fail - selection status is optional
+    }
+  };
+
+  const handleInitiatePayment = async () => {
+    try {
+      setInitiatingPayment(true);
+      
+      const selectedCreators = campaignCreators.filter(cc => cc.status === 'approved');
+      const totalCost = selectionStatus?.budget?.totalEstimatedCost || 0;
+      
+      const response = await fetch(
+        getApiUrl(`api/campaigns/${id}/initiate-payment`),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            totalCost,
+            selectedCreatorIds: selectedCreators.map(sc => sc.creator_id)
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "Payment Initiated",
+          description: `Payment process started for ${data.payment.selectedCount} creators`,
+        });
+        
+        // Refresh data
+        fetchCampaignDetails();
+        fetchSelectionStatus();
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to initiate payment",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error initiating payment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initiate payment process",
+        variant: "destructive",
+      });
+    } finally {
+      setInitiatingPayment(false);
+    }
+  };
+
+  const handleCreatorResponse = async (creatorId: string | number, status: 'approved' | 'rejected' | 'requested_more') => {
+    try {
+      setResponding(String(creatorId));
+      const responseData = responses[String(creatorId)];
+      
+      // Ensure brand is available
+      if (!brand?.id) {
+        toast({
+          title: "Error",
+          description: "Brand information is missing. Please refresh the page.",
+          variant: "destructive",
+        });
+        return;
+      }
       
       const response = await fetch(
         getApiUrl(`api/campaigns/${id}/creators/${creatorId}/respond`),
@@ -158,17 +257,22 @@ const BrandCampaignDetail: React.FC = () => {
           body: JSON.stringify({
             status,
             brand_response: responseData?.response || '',
-            brand_id: brand?.id
+            brand_id: brand.id
           }),
         }
       );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `HTTP ${response.status}: Failed to update creator status`);
+      }
 
       const data = await response.json();
 
       if (data.success) {
         toast({
           title: "Response Submitted",
-          description: `Creator ${status} successfully`,
+          description: `Creator ${status === 'approved' ? 'approved' : status === 'rejected' ? 'rejected' : 'request sent'} successfully`,
         });
         
         // Optimistically update the creator status without full page reload
@@ -192,6 +296,9 @@ const BrandCampaignDetail: React.FC = () => {
           return newResponses;
         });
 
+        // Refresh selection status after approval/rejection
+        fetchSelectionStatus();
+        
         // Check if we need to update campaign phase (only if approved and reached target)
         if (status === 'approved' && campaign) {
           const approvedCount = campaignCreators.filter(cc => 
@@ -227,10 +334,10 @@ const BrandCampaignDetail: React.FC = () => {
     }
   };
 
-  const updateResponse = (creatorId: string, status: string, response: string) => {
+  const updateResponse = (creatorId: string | number, status: string, response: string) => {
     setResponses(prev => ({
       ...prev,
-      [creatorId]: { status, response }
+      [String(creatorId)]: { status, response }
     }));
   };
 
@@ -368,6 +475,116 @@ const BrandCampaignDetail: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Budget-Based Creator Selection Status */}
+      {selectionStatus && campaign.phase === 'creator_selection' && (
+        <Card className="border-2 border-green-500 bg-green-50">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <Users className="h-6 w-6 text-green-600" />
+                    Creator Selection Progress
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectionStatus.selection.currentSelected} of {selectionStatus.selection.maxAllowed} creators selected
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-green-600">
+                    {selectionStatus.selection.percentage}%
+                  </div>
+                  <div className="text-xs text-gray-600">Complete</div>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div>
+                <Progress 
+                  value={selectionStatus.selection.percentage} 
+                  className="h-4 bg-gray-200"
+                />
+                <div className="flex justify-between mt-2 text-xs text-gray-600">
+                  <span>{selectionStatus.selection.currentSelected} selected</span>
+                  <span>{selectionStatus.selection.remaining} remaining</span>
+                </div>
+              </div>
+
+              {/* Budget Information */}
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="bg-white rounded-lg p-4 text-center">
+                  <DollarSign className="h-5 w-5 mx-auto mb-1 text-blue-600" />
+                  <div className="text-lg font-bold text-gray-900">
+                    ₹{formatNumber(selectionStatus.budget.totalEstimatedCost)}
+                  </div>
+                  <div className="text-xs text-gray-600">Estimated Cost</div>
+                </div>
+                <div className="bg-white rounded-lg p-4 text-center">
+                  <TrendingUp className="h-5 w-5 mx-auto mb-1 text-green-600" />
+                  <div className="text-lg font-bold text-gray-900">
+                    ₹{formatNumber(selectionStatus.budget.remainingBudget)}
+                  </div>
+                  <div className="text-xs text-gray-600">Remaining Budget</div>
+                </div>
+                <div className="bg-white rounded-lg p-4 text-center">
+                  <Users className="h-5 w-5 mx-auto mb-1 text-purple-600" />
+                  <div className="text-lg font-bold text-gray-900">
+                    ₹{formatNumber(selectionStatus.budget.costPerCreator)}
+                  </div>
+                  <div className="text-xs text-gray-600">Per Creator</div>
+                </div>
+              </div>
+
+              {/* Warning if limit reached */}
+              {selectionStatus.selection.limitReached && (
+                <div className="flex items-center gap-2 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0" />
+                  <p className="text-sm text-yellow-800">
+                    <strong>Selection limit reached!</strong> You've selected the maximum number of creators within your budget.
+                  </p>
+                </div>
+              )}
+
+              {/* Proceed to Payment Button */}
+              {selectionStatus.selection.canProceedToPayment && !selectionStatus.selection.paymentInitiated && (
+                <div className="mt-4 pt-4 border-t border-green-200">
+                  <Button
+                    onClick={handleInitiatePayment}
+                    disabled={initiatingPayment}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-6 text-lg"
+                    size="lg"
+                  >
+                    {initiatingPayment ? (
+                      <>
+                        <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-5 w-5 mr-2" />
+                        Proceed to Payment ({selectionStatus.selection.currentSelected} Creators)
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-center text-xs text-gray-600 mt-2">
+                    Total Amount: ₹{formatNumber(selectionStatus.budget.totalEstimatedCost)}
+                  </p>
+                </div>
+              )}
+
+              {selectionStatus.selection.paymentInitiated && (
+                <div className="flex items-center gap-2 p-3 bg-blue-100 border border-blue-300 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                  <p className="text-sm text-blue-800">
+                    Payment has been initiated. Please complete the payment process.
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Creator Selection Phase */}
       {campaign.phase === 'creator_selection' && campaignCreators.length > 0 && (
         <Card>
@@ -422,15 +639,32 @@ const BrandCampaignDetail: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               {campaignCreators.map((campaignCreator) => (
-                <div key={campaignCreator.id} className="border rounded-lg p-4">
+                <div key={campaignCreator.id} className="border rounded-lg p-6 hover:shadow-md transition-shadow bg-white">
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                        <Users className="h-6 w-6 text-gray-500" />
+                    <div className="flex items-center gap-4 flex-1">
+                      {/* Profile Picture */}
+                      <div className="relative flex-shrink-0">
+                        <img 
+                          src={campaignCreator.creators.profile_picture_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(campaignCreator.creators.name)}&size=200&background=random`}
+                          alt={campaignCreator.creators.name}
+                          className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(campaignCreator.creators.name)}&size=200&background=random`;
+                          }}
+                        />
+                        {campaignCreator.creators.verified && (
+                          <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-semibold">{campaignCreator.creators.name}</h4>
+
+                      {/* Creator Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-semibold text-lg text-gray-900">{campaignCreator.creators.name}</h4>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -440,15 +674,50 @@ const BrandCampaignDetail: React.FC = () => {
                             className="text-blue-600 hover:text-blue-800 px-2 py-1 h-auto"
                           >
                             <Eye className="h-3 w-3 mr-1" />
-                            View Profile
+                            View Full Profile
                           </Button>
                         </div>
-                        <p className="text-sm text-gray-600">@{campaignCreator.creators.ig_handle}</p>
-                        <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
-                          <span>{formatNumber(campaignCreator.creators.followers_count)} followers</span>
-                          <span>{formatPercentage(campaignCreator.creators.engagement_rate)} engagement</span>
-                          <Badge variant="outline">{campaignCreator.creators.category}</Badge>
+                        
+                        <p className="text-sm text-gray-600 mb-2">
+                          <a 
+                            href={`https://instagram.com/${campaignCreator.creators.ig_handle}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-purple-600 transition-colors"
+                          >
+                            @{campaignCreator.creators.ig_handle}
+                          </a>
+                        </p>
+
+                        {/* Bio */}
+                        {campaignCreator.creators.bio && (
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{campaignCreator.creators.bio}</p>
+                        )}
+                        
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-3 gap-4 text-center bg-gray-50 rounded-lg p-3">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Followers</p>
+                            <p className="font-bold text-gray-900">{formatNumber(campaignCreator.creators.followers_count)}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Engagement</p>
+                            <p className="font-bold text-purple-600">{formatPercentage(campaignCreator.creators.engagement_rate)}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Category</p>
+                            <Badge variant="outline" className="font-semibold">{campaignCreator.creators.category}</Badge>
+                          </div>
                         </div>
+
+                        {/* Subcategory */}
+                        {campaignCreator.creators.subcategory && (
+                          <div className="mt-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {campaignCreator.creators.subcategory}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
@@ -458,13 +727,6 @@ const BrandCampaignDetail: React.FC = () => {
                       </Badge>
                     </div>
                   </div>
-
-                  {campaignCreator.admin_notes && (
-                    <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                      <p className="text-sm font-medium text-blue-900 mb-1">Admin Notes:</p>
-                      <p className="text-sm text-blue-800">{campaignCreator.admin_notes}</p>
-                    </div>
-                  )}
 
                   {campaignCreator.status === 'recommended' && (
                     <div className="mt-4 space-y-3">
@@ -551,7 +813,7 @@ const BrandCampaignDetail: React.FC = () => {
                         <div className="mt-3">
                           <ConversationHistory
                             campaignId={id!}
-                            creatorId={campaignCreator.creator_id}
+                            creatorId={String(campaignCreator.creator_id)}
                             creatorName={campaignCreator.creators.name}
                             userType="brand"
                             currentStatus={campaignCreator.status}
@@ -567,7 +829,7 @@ const BrandCampaignDetail: React.FC = () => {
                     <div className="mt-3">
                       <ConversationHistory
                         campaignId={id!}
-                        creatorId={campaignCreator.creator_id}
+                        creatorId={String(campaignCreator.creator_id)}
                         creatorName={campaignCreator.creators.name}
                         userType="brand"
                         currentStatus={campaignCreator.status}

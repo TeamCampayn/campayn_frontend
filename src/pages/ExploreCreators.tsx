@@ -153,13 +153,11 @@ const ExploreCreators = () => {
   // Import sample data on first load
   const importSampleData = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('import-creators', {
+      const { error } = await supabase.functions.invoke('import-creators', {
         method: 'POST'
       });
       
       if (error) throw error;
-      
-      console.log('Sample data imported:', data);
     } catch (error) {
       console.error('Error importing sample data:', error);
     }

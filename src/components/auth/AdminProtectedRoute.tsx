@@ -28,13 +28,6 @@ const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) =
                          user.user_metadata?.is_admin === true ||
                          user.app_metadata?.is_admin === true;
 
-      console.log('AdminProtectedRoute check:', {
-        userEmail: user.email,
-        isAdmin: isAdminUser,
-        userMetadata: user.user_metadata,
-        appMetadata: user.app_metadata
-      });
-
       setIsAdmin(isAdminUser);
       setIsCheckingAdmin(false);
     };
@@ -59,7 +52,6 @@ const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) =
 
   // Redirect to dashboard if not admin
   if (!isAdmin) {
-    console.log('User is not admin, redirecting to brand dashboard');
     return <Navigate to="/dashboard" replace />;
   }
 

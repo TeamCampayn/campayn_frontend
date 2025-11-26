@@ -62,7 +62,6 @@ export function useRealtimeContent(campaignId: string | undefined) {
             filter: `campaign_id=eq.${campaignId}`
           },
           (payload) => {
-            console.log('📸 New content added:', payload);
             setContents(prev => [payload.new as ContentItem, ...prev]);
           }
         )
@@ -74,7 +73,6 @@ export function useRealtimeContent(campaignId: string | undefined) {
             filter: `campaign_id=eq.${campaignId}`
           },
           (payload) => {
-            console.log('📸 Content updated:', payload);
             setContents(prev =>
               prev.map(c => c.id === payload.new.id ? payload.new as ContentItem : c)
             );
@@ -88,13 +86,10 @@ export function useRealtimeContent(campaignId: string | undefined) {
             filter: `campaign_id=eq.${campaignId}`
           },
           (payload) => {
-            console.log('📸 Content deleted:', payload);
             setContents(prev => prev.filter(c => c.id !== payload.old.id));
           }
         )
-        .subscribe((status) => {
-          console.log(`📡 Content subscription status: ${status}`);
-        });
+        .subscribe();
     };
 
     setupSubscription();
