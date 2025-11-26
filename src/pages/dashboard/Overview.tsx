@@ -118,24 +118,24 @@ const Overview: React.FC = () => {
 
         // If no quotation reach data, estimate based on creators
         if (totalReach === 0) {
-          // Fetch creator IDs from campaign_creators
+          // Fetch ALL creator IDs from campaign_creators (no status filter)
           const { data: campaignCreatorData } = await supabase
             .from('campaign_creators')
-            .select('creator_id, status')
-            .in('campaign_id', campaignIds)
-            .in('status', ['approved', 'contracted', 'completed', 'recommended']);
+            .select('creator_id')
+            .in('campaign_id', campaignIds);
           
           if (campaignCreatorData && campaignCreatorData.length > 0) {
             // Fetch follower counts for these creators
-            const creatorIds = campaignCreatorData.map(cc => cc.creator_id);
+            const creatorIds = [...new Set(campaignCreatorData.map(cc => cc.creator_id))];
             const { data: creators } = await supabase
               .from('creators')
-              .select('id, followers_count')
+              .select('id, followers_count, ig_followers')
               .in('id', creatorIds);
             
             if (creators && creators.length > 0) {
               totalReach = creators.reduce((sum, c) => {
-                const followers = c.followers_count || 0;
+                // Use followers_count or ig_followers, whichever is available
+                const followers = c.followers_count || c.ig_followers || 0;
                 return sum + Math.round(followers * 0.15); // Estimate 15% reach
               }, 0);
             }
