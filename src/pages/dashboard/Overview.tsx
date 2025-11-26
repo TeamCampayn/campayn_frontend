@@ -75,7 +75,17 @@ const Overview: React.FC = () => {
       let totalSpend = 0;
       let totalReach = 0;
 
+      // Calculate total spend from campaign budgets (for live/completed campaigns)
+      const campaignList = campaigns || [];
+      const activeCampaigns = campaignList.filter(c => 
+        c.phase === 'campaign_active' || 
+        c.phase === 'content_creation' || 
+        c.phase === 'completed'
+      );
+      totalSpend = activeCampaigns.reduce((sum, c) => sum + (c.budget || 0), 0);
+
       if (campaignIds.length > 0) {
+        // Get all creators involved in campaigns (approved status)
         const { count: creatorsCount } = await supabase
           .from('campaign_creators')
           .select('*', { count: 'exact', head: true })
@@ -84,21 +94,45 @@ const Overview: React.FC = () => {
         
         activeCreators = creatorsCount || 0;
 
-        // Fetch quotations for total spend
+        // Try to get reach from quotations (any status)
         const { data: quotations } = await supabase
           .from('quotations')
-          .select('total_cost, estimated_reach')
-          .in('campaign_id', campaignIds)
-          .eq('status', 'approved');
+          .select('total_cost, estimated_reach, status')
+          .in('campaign_id', campaignIds);
         
-        if (quotations) {
-          totalSpend = quotations.reduce((sum, q) => sum + (q.total_cost || 0), 0);
-          totalReach = quotations.reduce((sum, q) => sum + (q.estimated_reach || 0), 0);
+        if (quotations && quotations.length > 0) {
+          // Use quotation data if available
+          const approvedQuotations = quotations.filter(q => 
+            q.status === 'approved' || q.status === 'accepted' || q.status === 'paid'
+          );
+          if (approvedQuotations.length > 0) {
+            totalSpend = approvedQuotations.reduce((sum, q) => sum + (q.total_cost || 0), 0);
+            totalReach = approvedQuotations.reduce((sum, q) => sum + (q.estimated_reach || 0), 0);
+          } else {
+            // Fall back to all quotations if none are approved
+            totalReach = quotations.reduce((sum, q) => sum + (q.estimated_reach || 0), 0);
+          }
+        }
+
+        // If no quotation reach data, estimate based on creators
+        if (totalReach === 0 && activeCreators > 0) {
+          // Fetch average follower count from approved creators
+          const { data: creatorData } = await supabase
+            .from('campaign_creators')
+            .select('creators(followers_count)')
+            .in('campaign_id', campaignIds)
+            .eq('status', 'approved');
+          
+          if (creatorData && creatorData.length > 0) {
+            totalReach = creatorData.reduce((sum, cc: any) => {
+              const followers = cc.creators?.followers_count || 0;
+              return sum + Math.round(followers * 0.15); // Estimate 15% reach
+            }, 0);
+          }
         }
       }
 
       // Calculate stats
-      const campaignList = campaigns || [];
       const calculatedStats: DashboardStats = {
         totalCampaigns: campaignList.length,
         draftCampaigns: campaignList.filter(c => c.status === 'draft' || c.phase === 'quotation_pending').length,
