@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { getApiUrl } from '@/lib/api';
 import { 
   Target, 
   Eye, 
@@ -60,115 +60,21 @@ const Overview: React.FC = () => {
     
     setLoading(true);
     try {
-      // Fetch all campaigns for this brand
-      const { data: campaigns, error: campaignsError } = await supabase
-        .from('campaigns')
-        .select('id, campaign_name, status, phase, created_at, budget')
-        .eq('brand_id', brand.id)
-        .order('created_at', { ascending: false });
-
-      if (campaignsError) throw campaignsError;
-
-      // Fetch active creators (approved in campaign_creators for this brand's campaigns)
-      const campaignIds = campaigns?.map(c => c.id) || [];
-      let activeCreators = 0;
-      let totalSpend = 0;
-      let totalReach = 0;
-
-      // Calculate total spend from campaign budgets (for live/completed campaigns)
-      const campaignList = campaigns || [];
-      const activeCampaigns = campaignList.filter(c => 
-        c.phase === 'campaign_active' || 
-        c.phase === 'content_creation' || 
-        c.phase === 'completed' ||
-        c.phase === 'campaign_complete' ||
-        c.status === 'completed'
-      );
-      totalSpend = activeCampaigns.reduce((sum, c) => sum + (c.budget || 0), 0);
-
-      if (campaignIds.length > 0) {
-        // Get all creators involved in campaigns (any active status)
-        const { count: creatorsCount } = await supabase
-          .from('campaign_creators')
-          .select('*', { count: 'exact', head: true })
-          .in('campaign_id', campaignIds)
-          .in('status', ['approved', 'contracted', 'completed', 'recommended']);
-        
-        activeCreators = creatorsCount || 0;
-
-        // Try to get reach from quotations (any status)
-        const { data: quotations } = await supabase
-          .from('quotations')
-          .select('total_cost, estimated_reach, status')
-          .in('campaign_id', campaignIds);
-        
-        if (quotations && quotations.length > 0) {
-          // Use quotation data if available
-          const approvedQuotations = quotations.filter(q => 
-            q.status === 'approved' || q.status === 'accepted' || q.status === 'paid'
-          );
-          if (approvedQuotations.length > 0) {
-            totalSpend = approvedQuotations.reduce((sum, q) => sum + (q.total_cost || 0), 0);
-            totalReach = approvedQuotations.reduce((sum, q) => sum + (q.estimated_reach || 0), 0);
-          } else {
-            // Fall back to all quotations if none are approved
-            totalReach = quotations.reduce((sum, q) => sum + (q.estimated_reach || 0), 0);
-          }
-        }
-
-        // If no quotation reach data, estimate based on creators
-        if (totalReach === 0) {
-          // Fetch ALL creator IDs from campaign_creators (no status filter)
-          const { data: campaignCreatorData } = await supabase
-            .from('campaign_creators')
-            .select('creator_id')
-            .in('campaign_id', campaignIds);
-          
-          if (campaignCreatorData && campaignCreatorData.length > 0) {
-            // Fetch follower counts for these creators
-            const creatorIds = [...new Set(campaignCreatorData.map(cc => cc.creator_id))];
-            const { data: creators } = await supabase
-              .from('creators')
-              .select('id, followers_count, ig_followers')
-              .in('id', creatorIds);
-            
-            if (creators && creators.length > 0) {
-              totalReach = creators.reduce((sum, c) => {
-                // Use followers_count or ig_followers, whichever is available
-                const followers = c.followers_count || c.ig_followers || 0;
-                return sum + Math.round(followers * 0.15); // Estimate 15% reach
-              }, 0);
-            }
-          }
-        }
+      // Use backend API to fetch dashboard stats (bypasses RLS for creators table)
+      const response = await fetch(getApiUrl(`api/dashboard/stats/${brand.id}`));
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard stats');
       }
-
-      // Calculate stats
-      const calculatedStats: DashboardStats = {
-        totalCampaigns: campaignList.length,
-        draftCampaigns: campaignList.filter(c => c.status === 'draft' || c.phase === 'quotation_pending').length,
-        quotingCampaigns: campaignList.filter(c => 
-          c.phase === 'quotation_sent' || 
-          c.phase === 'quotation_accepted' || 
-          c.phase === 'creator_selection'
-        ).length,
-        liveCampaigns: campaignList.filter(c => 
-          c.phase === 'campaign_active' || 
-          c.phase === 'content_creation' ||
-          c.phase === 'content_approval'
-        ).length,
-        completedCampaigns: campaignList.filter(c => 
-          c.phase === 'completed' || 
-          c.phase === 'campaign_complete' ||
-          c.status === 'completed'
-        ).length,
-        activeCreators,
-        totalSpend,
-        totalReach
-      };
-
-      setStats(calculatedStats);
-      setRecentCampaigns(campaignList.slice(0, 5));
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setStats(data.stats);
+        setRecentCampaigns(data.recentCampaigns || []);
+      } else {
+        throw new Error(data.error || 'Unknown error');
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       // Set default stats on error
