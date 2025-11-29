@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -12,6 +12,7 @@ import { getApiUrl } from '../../lib/api';
 interface Creator {
   id: string;
   name: string;
+  category: string;
   subcategory: string;
   ig_handle: string;
 }
@@ -20,26 +21,37 @@ const ExploreCreators: React.FC = () => {
   const [creators, setCreators] = useState<Creator[]>([]);
   const [filteredCreators, setFilteredCreators] = useState<Creator[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const navigate = useNavigate();
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const isInitialLoad = useRef(true);
 
   const ITEMS_PER_PAGE = 20;
 
   // Fetch creators from backend API
-  const fetchCreators = async (page: number = 1, search: string = '', category: string = 'all') => {
+  const fetchCreators = useCallback(async (page: number = 1, search: string = '', category: string = 'all', subcategory: string = 'all') => {
     try {
-      setLoading(true);
+      // Only show full loading spinner on initial load
+      if (isInitialLoad.current) {
+        setLoading(true);
+      } else {
+        setIsSearching(true);
+      }
       setError(null);
       
       const params = new URLSearchParams({
         page: page.toString(),
         limit: ITEMS_PER_PAGE.toString(),
         search: search,
-        category: category
+        category: category,
+        subcategory: subcategory
       });
 
       const url = getApiUrl(`api/creators?${params}`);
@@ -59,6 +71,7 @@ const ExploreCreators: React.FC = () => {
       setCreators(data.creators || []);
       setFilteredCreators(data.creators || []);
       setTotalCount(data.totalCount || 0);
+      isInitialLoad.current = false;
     } catch (error: any) {
       setError(error.message || 'Failed to load creators');
       setCreators([]);
@@ -66,11 +79,17 @@ const ExploreCreators: React.FC = () => {
       setTotalCount(0);
     } finally {
       setLoading(false);
+      setIsSearching(false);
     }
-  };
+  }, []);
 
-  // Get unique categories for filter
-  const [categories, setCategories] = useState<string[]>([]);
+  // Store categories with their subcategories
+  interface CategoryData {
+    name: string;
+    subcategories: string[];
+  }
+  const [categories, setCategories] = useState<CategoryData[]>([]);
+  
   const fetchCategories = async () => {
     try {
       const url = getApiUrl('api/creators/categories');
@@ -82,43 +101,79 @@ const ExploreCreators: React.FC = () => {
 
       const data = await response.json();
       
-      // Extract category names from the response
-      // API returns array of objects with {name, count, ...}
+      // Extract category names and subcategories from the response
       if (data.success && data.categories) {
-        const categoryNames = data.categories.map((cat: any) => 
-          typeof cat === 'string' ? cat : cat.name || cat.category
-        );
-        setCategories(categoryNames);
-      } else if (Array.isArray(data.categories)) {
-        // Fallback for simple string array
-        setCategories(data.categories);
+        const categoryData = data.categories.map((cat: any) => ({
+          name: typeof cat === 'string' ? cat : cat.name || cat.category,
+          subcategories: cat.subcategories || []
+        }));
+        setCategories(categoryData);
       } else {
         setCategories([]);
       }
     } catch (error) {
-      console.error('Error fetching categories:', error);
       setCategories([]);
     }
   };
 
   useEffect(() => {
-    fetchCreators(currentPage, searchTerm, selectedCategory);
-  }, [currentPage, searchTerm, selectedCategory]);
+    fetchCreators(currentPage, debouncedSearchTerm, selectedCategory, selectedSubcategory);
+  }, [currentPage, debouncedSearchTerm, selectedCategory, selectedSubcategory, fetchCreators]);
+
+  // Debounce search input
+  useEffect(() => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      if (searchTerm !== debouncedSearchTerm) {
+        setCurrentPage(1); // Reset to first page when search changes
+      }
+    }, 500); // 500ms debounce delay
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [searchTerm]);
 
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  // Handle search
+  // Handle search - just update the input, debounce handles API call
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    setCurrentPage(1); // Reset to first page when searching
   };
 
   // Handle category filter
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
+    setSelectedSubcategory('all'); // Reset subcategory when category changes
     setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Handle subcategory filter
+  const handleSubcategoryChange = (subcategory: string) => {
+    setSelectedSubcategory(subcategory);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Get subcategories for the selected category
+  const getAvailableSubcategories = (): string[] => {
+    if (selectedCategory === 'all') {
+      // Aggregate all subcategories when no specific category is selected
+      const allSubcategories = new Set<string>();
+      categories.forEach(cat => {
+        cat.subcategories.forEach(sub => allSubcategories.add(sub));
+      });
+      return Array.from(allSubcategories).sort();
+    }
+    const selectedCat = categories.find(cat => cat.name === selectedCategory);
+    return selectedCat?.subcategories || [];
   };
 
   // Handle creator profile view
@@ -146,7 +201,7 @@ const ExploreCreators: React.FC = () => {
   // Pagination
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
-  if (loading && currentPage === 1) {
+  if (loading && isInitialLoad.current) {
     return (
       <div className="p-6">
         <div className="flex items-center justify-center min-h-96">
@@ -186,6 +241,11 @@ const ExploreCreators: React.FC = () => {
               onChange={(e) => handleSearch(e.target.value)}
               className="pl-10"
             />
+            {isSearching && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+              </div>
+            )}
           </div>
           
           <div className="flex items-center gap-2">
@@ -196,9 +256,24 @@ const ExploreCreators: React.FC = () => {
               className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Categories</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
+              {categories.map((cat) => (
+                <option key={cat.name} value={cat.name}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+            
+            {/* Subcategory Filter */}
+            <select
+              value={selectedSubcategory}
+              onChange={(e) => handleSubcategoryChange(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={getAvailableSubcategories().length === 0}
+            >
+              <option value="all">All Subcategories</option>
+              {getAvailableSubcategories().map((subcategory) => (
+                <option key={subcategory} value={subcategory}>
+                  {subcategory}
                 </option>
               ))}
             </select>
