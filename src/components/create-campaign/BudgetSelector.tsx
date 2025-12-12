@@ -67,7 +67,7 @@ const BudgetSelector = () => {
       
       {/* Helper Note */}
       <div className="text-xs text-slate-500 bg-slate-50 rounded-lg px-4 py-3">
-        Campayn is a free platform—you only pay creators. Budget selection determines available packages.
+        Campayn is a free platform. You only pay creators. Budget selection determines available packages.
       </div>
 
       <style>{`

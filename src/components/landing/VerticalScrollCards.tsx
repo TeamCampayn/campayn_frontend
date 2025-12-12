@@ -46,10 +46,12 @@ export const VerticalScrollCards: React.FC = () => {
     // Clean up any existing ScrollTriggers
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
     
-    // Set initial state - all items except first start below viewport
+    // Set initial state - all items except first start below viewport and hidden
     items.forEach((item, idx) => {
       if (idx !== 0) {
-        gsap.set(item, { y: "100vh" });
+        gsap.set(item, { y: "100vh", visibility: "hidden", opacity: 0 });
+      } else {
+        gsap.set(item, { visibility: "visible", opacity: 1 });
       }
     });
 
@@ -66,7 +68,7 @@ export const VerticalScrollCards: React.FC = () => {
           const progress = self.progress;
           const activeIndex = Math.min(Math.floor(progress * items.length), items.length - 1);
           
-          // Add active class to current card
+          // Add active class to current card and manage visibility
           items.forEach((item, idx) => {
             if (idx === activeIndex) {
               item.classList.add('active');
@@ -83,11 +85,11 @@ export const VerticalScrollCards: React.FC = () => {
       // Scale down and move up current item slightly
       timeline.to(item, { scale: 0.95, y: -30 });
       
-      // Slide up next item from bottom
+      // Slide up next item from bottom with visibility
       if (items[idx + 1]) {
         timeline.to(
           items[idx + 1],
-          { y: 0 },
+          { y: 0, visibility: "visible", opacity: 1 },
           "<"
         );
       }
@@ -114,7 +116,7 @@ export const VerticalScrollCards: React.FC = () => {
       {/* Scrollable Cards Section */}
       <section 
         ref={sectionRef} 
-        className="relative w-full h-screen"
+        className="relative w-full h-screen overflow-hidden"
       >
         <div className="relative w-full h-screen flex items-center justify-center">
           {featuresData.map((card, index) => {
@@ -124,7 +126,9 @@ export const VerticalScrollCards: React.FC = () => {
                 className={`scroll-item absolute w-full flex items-center justify-center px-4 sm:px-6`}
                 style={{ 
                   height: '80vh',
-                  top: '10vh'
+                  top: '10vh',
+                  visibility: index === 0 ? 'visible' : 'hidden',
+                  opacity: index === 0 ? 1 : 0
                 }}
               >
                 <div className={`w-full max-w-7xl mx-auto ${card.bgColor} rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl h-full overflow-hidden`}>

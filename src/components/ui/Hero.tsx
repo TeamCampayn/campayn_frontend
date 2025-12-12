@@ -80,10 +80,10 @@ function Hero() {
   return (
     <div className="relative w-full overflow-hidden">
       <RetroGrid />
-      <div className="container mx-auto relative z-10">
-        <div className="flex gap-8 py-32 lg:py-40 items-center justify-center flex-col min-h-screen">
-          <div className="flex gap-4 flex-col">
-            <h1 className="text-5xl md:text-7xl max-w-2xl tracking-tighter text-center font-regular">
+      <div className="container mx-auto relative z-10 px-4 sm:px-6">
+        <div className="flex gap-6 sm:gap-8 py-24 sm:py-32 lg:py-40 items-center justify-center flex-col min-h-screen">
+          <div className="flex gap-3 sm:gap-4 flex-col">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl max-w-2xl tracking-tighter text-center font-regular">
               <span className="text-foreground">Campaigns that feel</span>
               <span className="relative flex w-full justify-center overflow-hidden text-center md:pb-4 md:pt-1">
                 &nbsp;
@@ -111,7 +111,7 @@ function Hero() {
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl leading-relaxed tracking-tight text-muted-foreground max-w-2xl text-center">
+            <p className="text-base sm:text-lg md:text-xl leading-relaxed tracking-tight text-muted-foreground max-w-2xl text-center px-2">
               Campayn helps you launch creator campaigns in minutes, not weeks.
               From AI-powered matchmaking to real-time performance tracking, we take care of the heavy lifting so you can focus on what matters: building meaningful influence and measurable results.
             </p>

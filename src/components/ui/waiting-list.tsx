@@ -288,7 +288,7 @@ const ManifestoContent: React.FC = () => {
               lineHeight: "1.6",
             }}
           >
-            Join our creator community today. Together, we'll build something extraordinary—authentic content that connects, partnerships that matter, and a platform that truly serves creators.
+            Join our creator community today. Together, we'll build something extraordinary: authentic content that connects, partnerships that matter, and a platform that truly serves creators.
           </p>
         </div>
       </div>

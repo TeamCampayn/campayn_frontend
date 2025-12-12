@@ -46,7 +46,7 @@ export const featuresData = [
   },
   {
     title: "Campaigns Starting at ₹500",
-    description: "Agencies ignore small-ticket campaigns—we empower them. Start your first campaign with as little as ₹500.",
+    description: "Agencies ignore small-ticket campaigns. We empower them. Start your first campaign with as little as ₹500.",
     icon: DollarSign,
     gradient: "from-indigo-500 to-pink-600",
     bgColor: "bg-gradient-to-br from-indigo-50 to-pink-50",
@@ -74,7 +74,7 @@ export const featuresData = [
   },
   {
     title: "The Platform for India's Next 500M",
-    description: "Campayn is built for small businesses, local creators, and India's rising digital economy—not just big D2C brands.",
+    description: "Campayn is built for small businesses, local creators, and India's rising digital economy. Not just big D2C brands.",
     icon: Users,
     gradient: "from-emerald-500 to-cyan-600",
     bgColor: "bg-gradient-to-br from-emerald-50 to-cyan-50",

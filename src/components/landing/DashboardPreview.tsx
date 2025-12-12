@@ -107,13 +107,13 @@ export const DashboardPreview = () => {
       <ContainerScroll
         titleComponent={
           <>
-            <h1 className="text-3xl md:text-5xl font-semibold text-black dark:text-white mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-semibold text-black dark:text-white mb-3 sm:mb-4 px-4">
               Experience the Power of <br />
-              <span className="text-4xl md:text-[5rem] font-bold mt-2 leading-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-3xl sm:text-4xl md:text-[5rem] font-bold mt-2 leading-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Campayn Dashboard
               </span>
             </h1>
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto px-4">
               Manage campaigns, track performance, and grow your business with our intuitive dashboard
             </p>
           </>

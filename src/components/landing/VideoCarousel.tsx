@@ -102,7 +102,7 @@ const VideoCardComponent: React.FC<VideoCardComponentProps> = ({ card, isHovered
 
   return (
     <div
-      className={`relative w-60 h-96 rounded-xl shadow-lg overflow-hidden bg-white transition-transform duration-300 flex-shrink-0 ${
+      className={`relative w-48 sm:w-60 h-72 sm:h-96 rounded-xl shadow-lg overflow-hidden bg-white transition-transform duration-300 flex-shrink-0 ${
         isHovered ? 'scale-105' : ''
       }`}
       onMouseEnter={onHover}
@@ -149,13 +149,13 @@ export const VideoCarousel: React.FC = () => {
   const duplicatedData = [...videoData, ...videoData];
 
   return (
-    <div className="py-20 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden">
+    <div className="py-12 sm:py-20 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden">
       <div className="w-full">
-        <div className="text-center mb-16 px-4">
-          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
+        <div className="text-center mb-10 sm:mb-16 px-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4 sm:mb-6">
             Creator Content in Action
           </h2>
-          <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-medium">
+          <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-medium">
             See how creators bring brands to life with authentic, engaging content across different categories
           </p>
         </div>

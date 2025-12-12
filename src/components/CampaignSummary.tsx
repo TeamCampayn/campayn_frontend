@@ -35,35 +35,35 @@ export const CampaignSummary = ({ data, currentStep }: CampaignSummaryProps) => 
         <div className="flex items-center justify-between py-3 border-b border-gray-100">
           <span className="text-gray-600">Budget</span>
           <span className="font-semibold text-gray-900">
-            {data.budget > 0 ? `₹${data.budget.toLocaleString()}` : '—'}
+            {data.budget > 0 ? `₹${data.budget.toLocaleString()}` : '-'}
           </span>
         </div>
 
         <div className="flex items-center justify-between py-3 border-b border-gray-100">
           <span className="text-gray-600">Estimated creators</span>
           <span className="font-semibold text-purple-600">
-            {data.budget > 0 ? getEstimatedCreators() : '—'}
+            {data.budget > 0 ? getEstimatedCreators() : '-'}
           </span>
         </div>
 
         <div className="flex items-center justify-between py-3 border-b border-gray-100">
           <span className="text-gray-600">Content types</span>
           <span className="font-semibold text-gray-900">
-            {data.contentTypes.length > 0 ? data.contentTypes.length : '—'}
+            {data.contentTypes.length > 0 ? data.contentTypes.length : '-'}
           </span>
         </div>
 
         <div className="flex items-center justify-between py-3 border-b border-gray-100">
           <span className="text-gray-600">Creator quality</span>
           <span className="font-semibold text-gray-900">
-            {data.creatorQuality ? getQualityLabel() : '—'}
+            {data.creatorQuality ? getQualityLabel() : '-'}
           </span>
         </div>
 
         <div className="flex items-center justify-between py-3 border-b border-gray-100">
           <span className="text-gray-600">Categories</span>
           <span className="font-semibold text-gray-900">
-            {data.creatorCategories.length > 0 ? data.creatorCategories.length : '—'}
+            {data.creatorCategories.length > 0 ? data.creatorCategories.length : '-'}
           </span>
         </div>
 

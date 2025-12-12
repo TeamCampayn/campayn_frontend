@@ -117,7 +117,7 @@ const formatNumber = (val: number | null | undefined) => {
 };
 
 const formatDisplayNumber = (val: number | null | undefined) => {
-  if (val === null || val === undefined || isNaN(val as number)) return '—';
+  if (val === null || val === undefined || isNaN(val as number)) return '-';
   const n = Number(val);
   if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
   if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1) + 'K';
@@ -125,7 +125,7 @@ const formatDisplayNumber = (val: number | null | undefined) => {
 };
 
 const pct = (val: number | null | undefined) => {
-  if (val === null || val === undefined || isNaN(val as number)) return '—';
+  if (val === null || val === undefined || isNaN(val as number)) return '-';
   return `${(Number(val)).toFixed(2)}%`;
 };
 
