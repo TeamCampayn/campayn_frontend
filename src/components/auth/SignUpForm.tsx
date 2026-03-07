@@ -94,10 +94,11 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess, onSwitchToSignIn }) 
         })
         onSuccess?.()
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Signup error:', error)
       toast({
         title: 'Sign up failed',
-        description: 'An unexpected error occurred',
+        description: error?.message || 'An unexpected error occurred',
         variant: 'destructive',
       })
     } finally {

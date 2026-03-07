@@ -25,7 +25,7 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<User>
-  signUp: (email: string, password: string, brandData?: any) => Promise<void>
+  signUp: (email: string, password: string, brandData?: any) => Promise<{ error: any }>
   signOut: () => Promise<void>
   createBrandProfile: (brandData: any) => Promise<void>
 }
@@ -144,16 +144,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return data.user
   }
 
-  const signUp = async (email: string, password: string, brandData?: any) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-    if (error) throw error
-    
-    // Store brand data in localStorage for later use
-    if (brandData) {
-      localStorage.setItem('pendingBrandData', JSON.stringify(brandData))
+  const signUp = async (email: string, password: string, brandData?: any): Promise<{ error: any }> => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      })
+      
+      if (error) {
+        return { error }
+      }
+      
+      // Store brand data in localStorage for later use (after email confirmation)
+      if (brandData) {
+        localStorage.setItem('pendingBrandData', JSON.stringify(brandData))
+      }
+      
+      return { error: null }
+    } catch (err) {
+      return { error: err }
     }
   }
 
