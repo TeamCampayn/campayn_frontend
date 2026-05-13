@@ -4,7 +4,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
-import { Avatar, AvatarFallback } from '../../components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '../../components/ui/avatar';
 import { Search, Filter, Users, Instagram, ExternalLink } from 'lucide-react';
 import LoadingSpinner from '../../components/ui/loading-spinner';
 import { getApiUrl } from '../../lib/api';
@@ -15,6 +15,7 @@ interface Creator {
   category: string;
   subcategory: string;
   ig_handle: string;
+  profile_picture_url?: string;
 }
 
 const ExploreCreators: React.FC = () => {
@@ -288,6 +289,9 @@ const ExploreCreators: React.FC = () => {
             <CardHeader className="pb-3">
               <div className="flex items-center space-x-3">
                 <Avatar className="h-12 w-12">
+                  {creator.profile_picture_url && (
+                    <AvatarImage src={creator.profile_picture_url} alt={creator.name} />
+                  )}
                   <AvatarFallback className="bg-gradient-to-r from-purple-400 to-pink-400 text-white font-semibold">
                     {getInitials(creator.name)}
                   </AvatarFallback>

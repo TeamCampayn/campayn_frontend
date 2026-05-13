@@ -152,14 +152,14 @@ const BrandCampaignDetail: React.FC = () => {
       } else {
         toast({
           title: "Error",
-          description: "Failed to load campaign details",
+          description: data.details ? `${data.error}: ${data.details}` : (data.error || "Failed to load campaign details"),
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to load campaign details",
+        description: error.message || "Failed to load campaign details",
         variant: "destructive",
       });
     } finally {

@@ -421,13 +421,17 @@ const CreatorProfile: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-gray-900">
-                      {analytics.metrics.avgViews && analytics.metrics.avgViews > 0 ? 
+                      {analytics?.metrics?.avgViews && analytics.metrics.avgViews > 0 ? 
                         formatNumber(analytics.metrics.avgViews) : 
+                        creatorData?.followers_count && creatorData?.engagement_rate ?
+                        `~${formatNumber((creatorData.followers_count * creatorData.engagement_rate / 100) * 10)}` :
                         <span className="text-gray-500 text-base">Limited Access</span>
                       }
                     </div>
-                    {analytics.metrics.avgViews && analytics.metrics.avgViews > 0 && (
-                      <p className="text-xs text-gray-500 mt-1">Per video/reel</p>
+                    {((analytics?.metrics?.avgViews && analytics.metrics.avgViews > 0) || (creatorData?.followers_count && creatorData?.engagement_rate)) && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {analytics?.metrics?.avgViews && analytics.metrics.avgViews > 0 ? "Per video/reel" : "Estimated (Based on Engagement)"}
+                      </p>
                     )}
                   </CardContent>
                 </Card>

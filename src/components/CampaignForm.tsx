@@ -33,12 +33,28 @@ interface CampaignFormData {
 
 const CampaignForm: React.FC = () => {
   const navigate = useNavigate();
-  const { user, brand } = useAuth();
+  const { user, brand, createBrandProfile, loading } = useAuth();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAIProcessing, setShowAIProcessing] = useState(false);
   const [aiProcessingStage, setAIProcessingStage] = useState(0);
+  
+  // State for brand profile creation
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const [brandFormData, setBrandFormData] = useState({
+    brand_name: '',
+    brand_website: '',
+    social_handles: '',
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading your profile...</p>
+      </div>
+    );
+  }
   
   const [formData, setFormData] = useState<CampaignFormData>({
     budget: '50000',
@@ -67,6 +83,40 @@ const CampaignForm: React.FC = () => {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleCreateProfile = async () => {
+    if (!brandFormData.brand_name || !brandFormData.brand_website) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please fill in brand name and website',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsCreatingProfile(true);
+    try {
+      await createBrandProfile({
+        brand_name: brandFormData.brand_name,
+        brand_website: brandFormData.brand_website,
+        social_handles: brandFormData.social_handles,
+        niches: [],
+      });
+
+      toast({
+        title: 'Success',
+        description: 'Brand profile created successfully!',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create brand profile',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingProfile(false);
+    }
   };
 
   // Helper function to format numbers
@@ -173,13 +223,48 @@ const CampaignForm: React.FC = () => {
         return;
       }
 
-      if (!brand) {
-        toast({
-          title: "Brand Profile Required",
-          description: "Please complete your brand profile first.",
-          variant: "destructive",
-        });
-        return;
+      let brandId = brand?.id;
+
+      if (!brandId) {
+        console.log("No brand profile found, attempting to create default profile...");
+        try {
+          const defaultName = user.email?.split('@')[0] || 'Brand';
+          const { data: createdBrand, error: insertErr } = await supabase
+            .from('brands')
+            .insert({
+              user_id: user.id,
+              brand_name: defaultName,
+              brand_website: 'https://example.com', // Provide a valid URL fallback
+              social_handles: '',
+              niches: [],
+              company_size: '1-10',
+              industry: 'other',
+              brand_description: '',
+              marketing_goals: [],
+              monthly_budget: 'under-5k',
+              experience_level: 'beginner',
+            })
+            .select('id')
+            .single();
+
+          if (insertErr) {
+            console.error('Failed to auto-create brand in form:', insertErr);
+            toast({
+              title: "Brand Profile Required",
+              description: `Failed to auto-create profile: ${insertErr.message}`,
+              variant: "destructive",
+            });
+            setIsSubmitting(false);
+            return;
+          }
+          
+          brandId = createdBrand.id;
+          console.log("Auto-created brand profile with ID:", brandId);
+        } catch (err) {
+          console.error('Exception creating brand in form:', err);
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       // Validate creatorTier is set
@@ -203,8 +288,10 @@ const CampaignForm: React.FC = () => {
       const { data: campaignData, error: campaignError } = await supabase
         .from('campaigns')
         .insert({
-          brand_id: brand.id,
+          brand_id: brandId,
           campaign_name: `${formData.productName || 'Untitled'} Campaign`,
+          campaign_type: formData.category || 'Instagram',
+          campaign_description: `Content: ${formData.contentType}, Creator: ${formData.creatorType}, Quality: ${formData.qualityLevel}. Product: ${formData.productName}${formData.productLink ? `. Link: ${formData.productLink}` : ''}`,
           description: `Content: ${formData.contentType}, Creator: ${formData.creatorType}, Quality: ${formData.qualityLevel}. Product: ${formData.productName}${formData.productLink ? `. Link: ${formData.productLink}` : ''}`,
           budget: parseInt(formData.budget) || 0,
           campaign_objectives: ['Brand Awareness', 'Product Marketing'],
@@ -235,7 +322,7 @@ const CampaignForm: React.FC = () => {
         .single();
 
       if (campaignError) {
-        throw new Error('Failed to create campaign');
+        throw new Error(`Failed to create campaign: ${campaignError.message}`);
       }
 
       // Log campaign activity for the new multi-phase system
@@ -328,10 +415,10 @@ const CampaignForm: React.FC = () => {
         navigate('/dashboard');
       }
       
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Submission Failed",
-        description: "There was a problem submitting your campaign. Please try again.",
+        description: `Error: ${error.message || 'There was a problem submitting your campaign.'}`,
         variant: "destructive",
         duration: 5000,
       });
@@ -1143,9 +1230,18 @@ const CampaignForm: React.FC = () => {
   };
 
   const getCampaignSummary = () => {
+    const budget = parseInt(formData.budget) || 0;
+    const tier = formData.creatorTier as CreatorTier;
+    
+    let estimatedCreators = 'Not selected';
+    if (formData.creatorType && formData.creatorTier) {
+      const recommendation = getRecommendedCreatorCount(budget, tier);
+      estimatedCreators = recommendation.optimal.toString();
+    }
+
     return {
       budget: formData.budget ? formatCurrency(formData.budget) : 'Not set',
-      estimatedCreators: formData.creatorType ? '1' : 'Not selected',
+      estimatedCreators: estimatedCreators,
       contentTypes: formData.contentType ? '1' : '0',
       creatorQuality: formData.qualityLevel || 'Not selected',
       categories: formData.category ? '1' : '0',
@@ -1195,38 +1291,101 @@ const CampaignForm: React.FC = () => {
           <div className="lg:col-span-2">
             <Card className="shadow-lg">
               <CardContent className="p-8">
-                {renderStep()}
-                
-                {/* Navigation Buttons */}
-                <div className="flex justify-between mt-8 pt-6 border-t">
-                  <Button
-                    variant="outline"
-                    onClick={prevStep}
-                    className="flex items-center"
-                  >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    {currentStep === 1 ? 'Back to Dashboard' : 'Back'}
-                  </Button>
+                {!brand ? (
+                  <div className="space-y-8">
+                    <div className="text-center">
+                      <h2 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Brand Profile</h2>
+                      <p className="text-gray-600 text-lg">Let's set up your brand information to get started with campaigns.</p>
+                    </div>
+                    
+                    <div className="space-y-6">
+                      <div>
+                        <Label htmlFor="brand_name" className="block text-sm font-medium text-gray-700 mb-2">
+                          Brand Name*
+                        </Label>
+                        <Input
+                          id="brand_name"
+                          type="text"
+                          placeholder="Enter your brand name"
+                          value={brandFormData.brand_name}
+                          onChange={(e) => setBrandFormData(prev => ({ ...prev, brand_name: e.target.value }))}
+                          className="w-full"
+                        />
+                      </div>
 
-                  {currentStep < 5 ? (
-                    <Button
-                      onClick={nextStep}
-                      disabled={!isStepValid(currentStep)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      Continue
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={isSubmitting}
-                      className="bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      {isSubmitting ? 'Submitting...' : 'Send quotations'}
-                    </Button>
-                  )}
-                </div>
+                      <div>
+                        <Label htmlFor="brand_website" className="block text-sm font-medium text-gray-700 mb-2">
+                          Brand Website*
+                        </Label>
+                        <Input
+                          id="brand_website"
+                          type="url"
+                          placeholder="https://yourbrand.com"
+                          value={brandFormData.brand_website}
+                          onChange={(e) => setBrandFormData(prev => ({ ...prev, brand_website: e.target.value }))}
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="social_handles" className="block text-sm font-medium text-gray-700 mb-2">
+                          Social Handles (Optional)
+                        </Label>
+                        <Input
+                          id="social_handles"
+                          type="text"
+                          placeholder="@yourbrand, @other_handle"
+                          value={brandFormData.social_handles}
+                          onChange={(e) => setBrandFormData(prev => ({ ...prev, social_handles: e.target.value }))}
+                          className="w-full"
+                        />
+                      </div>
+
+                      <Button 
+                        onClick={handleCreateProfile} 
+                        disabled={isCreatingProfile}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                      >
+                        {isCreatingProfile ? 'Creating Profile...' : 'Create Brand Profile'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {renderStep()}
+                    
+                    {/* Navigation Buttons */}
+                    <div className="flex justify-between mt-8 pt-6 border-t">
+                      <Button
+                        variant="outline"
+                        onClick={prevStep}
+                        className="flex items-center"
+                      >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        {currentStep === 1 ? 'Back to Dashboard' : 'Back'}
+                      </Button>
+
+                      {currentStep < 5 ? (
+                        <Button
+                          onClick={nextStep}
+                          disabled={!isStepValid(currentStep)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          Continue
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={handleSubmit}
+                          disabled={isSubmitting}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          {isSubmitting ? 'Submitting...' : 'Send quotations'}
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
