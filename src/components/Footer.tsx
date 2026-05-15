@@ -107,6 +107,11 @@ const Footer: React.FC = () => {
                   Cancellation & Refunds
                 </Link>
               </li>
+              <li>
+                <Link to="/data-deletion" className="hover:text-white transition-colors">
+                  Data Deletion
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -141,7 +146,7 @@ const Footer: React.FC = () => {
         <div className="border-t border-gray-800 mt-8 pt-8 text-sm text-center">
           <p>© {new Date().getFullYear()} Campayn India Pvt Ltd. All rights reserved.</p>
           <p className="mt-2 text-xs">
-            Made with ❤️ in India | Bangalore, Karnataka
+            Made with ❤️ in India | Delhi, India
           </p>
         </div>
       </div>
