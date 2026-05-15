@@ -207,8 +207,8 @@ const TermsAndConditions: React.FC = () => {
               </p>
               <ul className="list-none space-y-2">
                 <li><strong>Email:</strong> legal@campayn.com</li>
-                <li><strong>Address:</strong> Campayn India Pvt Ltd, Bangalore, India</li>
-                <li><strong>Phone:</strong> +91-XXX-XXX-XXXX</li>
+                <li><strong>Address:</strong> Campayn India Pvt Ltd, Delhi, India</li>
+                <li><strong>Phone:</strong> +91-9165043258</li>
               </ul>
             </section>
 
