@@ -22,6 +22,7 @@ export const Footer = () => {
       { name: 'Privacy Policy', href: '/privacy' },
       { name: 'Shipping Policy', href: '/shipping' },
       { name: 'Refund Policy', href: '/refunds' },
+      { name: 'Data Deletion', href: '/data-deletion' },
     ],
     support: [
       { name: 'Help Center', href: '/dashboard/support' },
@@ -191,6 +192,9 @@ export const Footer = () => {
                 </Link>
                 <Link to="/refunds" className="text-slate-500 hover:text-slate-700 transition-colors">
                   Refund Policy
+                </Link>
+                <Link to="/data-deletion" className="text-slate-500 hover:text-slate-700 transition-colors">
+                  Data Deletion
                 </Link>
               </div>
             </div>
