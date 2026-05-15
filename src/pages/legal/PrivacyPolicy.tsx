@@ -35,7 +35,7 @@ const PrivacyPolicy: React.FC = () => {
 
             <section>
               <h2 className="text-2xl font-semibold mb-4">2. Information We Collect</h2>
-              
+
               <h3 className="text-xl font-semibold mb-3">2.1 Personal Information</h3>
               <p className="mb-4">When you register or use our services, we collect:</p>
               <ul className="list-disc pl-6 space-y-2 mb-4">
@@ -75,7 +75,7 @@ const PrivacyPolicy: React.FC = () => {
 
             <section>
               <h2 className="text-2xl font-semibold mb-4">3. How We Use Your Information</h2>
-              
+
               <h3 className="text-xl font-semibold mb-3">3.1 To Provide Services</h3>
               <ul className="list-disc pl-6 space-y-2 mb-4">
                 <li>Create and manage your account</li>
@@ -113,7 +113,7 @@ const PrivacyPolicy: React.FC = () => {
 
             <section>
               <h2 className="text-2xl font-semibold mb-4">4. Information Sharing and Disclosure</h2>
-              
+
               <h3 className="text-xl font-semibold mb-3">4.1 With Other Users</h3>
               <ul className="list-disc pl-6 space-y-2 mb-4">
                 <li>Brands can view creator profiles and public Instagram data</li>
@@ -163,7 +163,7 @@ const PrivacyPolicy: React.FC = () => {
 
             <section>
               <h2 className="text-2xl font-semibold mb-4">6. Your Rights and Choices</h2>
-              
+
               <h3 className="text-xl font-semibold mb-3">6.1 Access and Update</h3>
               <p className="mb-4">
                 You can access and update your personal information through your account settings.
@@ -251,8 +251,8 @@ const PrivacyPolicy: React.FC = () => {
               <ul className="list-none space-y-2">
                 <li><strong>Email:</strong> privacy@campayn.com</li>
                 <li><strong>Data Protection Officer:</strong> dpo@campayn.com</li>
-                <li><strong>Address:</strong> Campayn India Pvt Ltd, Bangalore, India</li>
-                <li><strong>Phone:</strong> +91-XXX-XXX-XXXX</li>
+                <li><strong>Address:</strong> Campayn India Pvt Ltd, Delhi, India</li>
+                <li><strong>Phone:</strong> +91-9165043258</li>
               </ul>
             </section>
 
