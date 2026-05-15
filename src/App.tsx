@@ -44,6 +44,7 @@ import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import ShippingPolicy from './pages/legal/ShippingPolicy';
 import ContactUs from './pages/legal/ContactUs';
 import CancellationRefunds from './pages/legal/CancellationRefunds';
+import DataDeletion from './pages/legal/DataDeletion';
 
 // Razorpay Payment Link Pages
 import RazorpayPaymentLink from './pages/RazorpayPaymentLink';
@@ -176,6 +177,7 @@ function App() {
               <Route path="/shipping" element={<ShippingPolicy />} />
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/refunds" element={<CancellationRefunds />} />
+              <Route path="/data-deletion" element={<DataDeletion />} />
               
             </Routes>
           </Router>
