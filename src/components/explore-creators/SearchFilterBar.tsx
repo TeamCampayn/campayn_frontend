@@ -4,20 +4,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, X } from "lucide-react";
+import { Search, Filter, X, MapPin, Sparkles } from "lucide-react";
 
 interface SearchFilterBarProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   filters: {
-    niche: string[];
+    category: string;
+    city: string;
+    minScore: string;
     followerRange: string;
-    engagementRange: string,
-    ratingRange: string;
-    platform: string[];
-    location: string;
   };
-  onFilterChange: (filterType: string, value: string | string[]) => void;
+  onFilterChange: (filterType: string, value: string) => void;
   onClearFilters: () => void;
   sortBy: string;
   onSortChange: (value: string) => void;
@@ -32,116 +30,98 @@ const SearchFilterBar = ({
   sortBy,
   onSortChange
 }: SearchFilterBarProps) => {
-  const nicheOptions = ["Fashion", "Tech", "Beauty", "Food", "Fitness", "Travel", "Lifestyle", "Gaming"];
-  const followerRanges = ["0-10K", "10K-50K", "50K-100K", "100K-500K", "500K+"];
-  const engagementRanges = ["0-2%", "2-5%", "5-10%", "10%+"];
-  const ratingRanges = ["All", "4+ Stars", "4.5+ Stars"];
-  const platformOptions = ["Instagram", "YouTube", "TikTok"];
-  const locationOptions = ["New York", "Los Angeles", "London", "Paris", "Tokyo"];
+  const categories = ["Fashion", "Tech", "Beauty", "Food", "Fitness", "Travel", "Lifestyle", "Gaming"];
+  const cities = ["Indore", "Bhopal", "Mumbai", "Delhi", "Bangalore", "Pune", "Hyderabad"];
+  const scoreOptions = [
+    { value: "0", label: "Any Score" },
+    { value: "40", label: "40+ Points" },
+    { value: "70", label: "70+ Points" },
+    { value: "90", label: "90+ Elite" }
+  ];
+  
   const sortOptions = [
-    { value: "followers-desc", label: "Followers (High to Low)" },
-    { value: "followers-asc", label: "Followers (Low to High)" },
-    { value: "engagement-desc", label: "Engagement (High to Low)" },
-    { value: "rating-desc", label: "Rating (High to Low)" },
-    { value: "recent", label: "Recently Active" }
+    { value: "score-desc", label: "Highest Score" },
+    { value: "followers-desc", label: "Largest Audience" },
+    { value: "engagement-desc", label: "Highest Engagement" }
   ];
 
-  const activeFiltersCount = Object.values(filters).flat().filter(Boolean).length;
+  const activeFiltersCount = Object.values(filters).filter(f => f !== "" && f !== "0").length;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
+    <div className="bg-[#0a0a0a] rounded-[2rem] border border-white/5 p-6 md:p-8 space-y-6 shadow-2xl relative overflow-hidden group">
+      <div className="absolute inset-0 bg-gradient-to-br from-campayn-primary/5 to-transparent pointer-events-none" />
+      
       {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
-        <Input
-          placeholder="Search creators by name, handle, or keywords..."
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10 h-12 text-lg"
-        />
+      <div className="relative group/input">
+        <div className="absolute -inset-1 bg-gradient-to-r from-campayn-primary to-violet-600 rounded-2xl blur opacity-0 group-focus-within/input:opacity-10 transition duration-500"></div>
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-500 h-5 w-5" />
+          <Input
+            placeholder="Search by name, handle, or expertise..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-12 h-14 text-lg bg-white/5 border-white/10 text-white rounded-2xl focus:ring-campayn-primary/20 placeholder:text-slate-600"
+          />
+        </div>
       </div>
 
       {/* Filters Row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
         <Select
-          value={filters.niche[0] || "all-niches"}
-          onValueChange={(value) => onFilterChange("niche", value === "all-niches" ? [] : [value])}
+          value={filters.city || "all-cities"}
+          onValueChange={(value) => onFilterChange("city", value === "all-cities" ? "" : value)}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Niche" />
+          <SelectTrigger className="bg-white/5 border-white/10 text-white h-12 rounded-xl">
+            <div className="flex items-center gap-2">
+              <MapPin size={16} className="text-slate-500" />
+              <SelectValue placeholder="All Cities" />
+            </div>
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all-niches">All Niches</SelectItem>
-            {nicheOptions.map((niche) => (
-              <SelectItem key={niche} value={niche}>{niche}</SelectItem>
+          <SelectContent className="bg-[#0f0f0f] border-white/10 text-white">
+            <SelectItem value="all-cities">All Cities</SelectItem>
+            {cities.map((city) => (
+              <SelectItem key={city} value={city}>{city}</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <Select
-          value={filters.followerRange || "all-followers"}
-          onValueChange={(value) => onFilterChange("followerRange", value === "all-followers" ? "" : value)}
+          value={filters.category || "all-categories"}
+          onValueChange={(value) => onFilterChange("category", value === "all-categories" ? "" : value)}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Followers" />
+          <SelectTrigger className="bg-white/5 border-white/10 text-white h-12 rounded-xl">
+            <SelectValue placeholder="Category" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all-followers">All Ranges</SelectItem>
-            {followerRanges.map((range) => (
-              <SelectItem key={range} value={range}>{range}</SelectItem>
+          <SelectContent className="bg-[#0f0f0f] border-white/10 text-white">
+            <SelectItem value="all-categories">All Categories</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <Select
-          value={filters.engagementRange || "all-engagement"}
-          onValueChange={(value) => onFilterChange("engagementRange", value === "all-engagement" ? "" : value)}
+          value={filters.minScore || "0"}
+          onValueChange={(value) => onFilterChange("minScore", value)}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Engagement" />
+          <SelectTrigger className="bg-white/5 border-white/10 text-white h-12 rounded-xl">
+            <div className="flex items-center gap-2">
+              <Sparkles size={16} className="text-amber-400" />
+              <SelectValue placeholder="Min Score" />
+            </div>
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all-engagement">All Rates</SelectItem>
-            {engagementRanges.map((range) => (
-              <SelectItem key={range} value={range}>{range}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filters.ratingRange}
-          onValueChange={(value) => onFilterChange("ratingRange", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Rating" />
-          </SelectTrigger>
-          <SelectContent>
-            {ratingRanges.map((range) => (
-              <SelectItem key={range} value={range}>{range}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filters.platform[0] || "all-platforms"}
-          onValueChange={(value) => onFilterChange("platform", value === "all-platforms" ? [] : [value])}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Platform" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all-platforms">All Platforms</SelectItem>
-            {platformOptions.map((platform) => (
-              <SelectItem key={platform} value={platform}>{platform}</SelectItem>
+          <SelectContent className="bg-[#0f0f0f] border-white/10 text-white">
+            {scoreOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <Select value={sortBy} onValueChange={onSortChange}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-white/5 border-white/10 text-white h-12 rounded-xl">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[#0f0f0f] border-white/10 text-white">
             {sortOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
             ))}
@@ -151,17 +131,21 @@ const SearchFilterBar = ({
 
       {/* Active Filters & Clear */}
       {activeFiltersCount > 0 && (
-        <div className="flex items-center justify-between pt-2 border-t">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-slate-600">Active filters:</span>
-            <Badge variant="outline" className="bg-primary-50 text-primary-700">
-              <Filter className="h-3 w-3 mr-1" />
-              {activeFiltersCount} filter{activeFiltersCount > 1 ? 's' : ''}
+        <div className="flex items-center justify-between pt-4 border-t border-white/5">
+          <div className="flex items-center space-x-3">
+            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Active:</span>
+            <Badge variant="outline" className="bg-campayn-primary/10 text-campayn-primary border-campayn-primary/20 rounded-lg px-3 py-1">
+              {activeFiltersCount} Filter{activeFiltersCount > 1 ? 's' : ''}
             </Badge>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClearFilters}>
-            <X className="h-4 w-4 mr-1" />
-            Clear All
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onClearFilters}
+            className="text-slate-400 hover:text-white hover:bg-white/5"
+          >
+            <X className="h-4 w-4 mr-2" />
+            Reset Filters
           </Button>
         </div>
       )}
