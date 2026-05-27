@@ -21,6 +21,7 @@ interface Campaign {
   campaign_name: string;
   budget: number;
   status: string;
+  phase: string;
   created_at: string;
   platform: string;
   brands: {
@@ -115,7 +116,9 @@ const AdminDashboard: React.FC = () => {
       'approved': { label: 'Approved', variant: 'default' as const },
       'live': { label: 'Live', variant: 'default' as const },
       'completed': { label: 'Completed', variant: 'default' as const },
-      'rejected': { label: 'Rejected', variant: 'destructive' as const }
+      'rejected': { label: 'Rejected', variant: 'destructive' as const },
+      'pending_admin': { label: 'Review Pending', variant: 'outline' as const },
+      'active': { label: 'Active', variant: 'default' as const }
     };
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig['draft'];
@@ -174,6 +177,24 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
+  const handleApproveCampaign = async (campaignId: string) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/approve-campaign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignId, adminId: user?.id })
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: 'Campaign Approved', description: 'Brand can now fund the wallet.' });
+        // Refresh campaigns
+        window.location.reload();
+      }
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to approve campaign', variant: 'destructive' });
+    }
+  };
+
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -225,6 +246,51 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Review Pending Section */}
+        {campaigns.some(c => c.status === 'pending_admin') && (
+          <Card className="mb-8 border-orange-200 bg-orange-50/30">
+            <CardHeader>
+              <CardTitle className="text-orange-800 flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Awaiting Initial Review
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Campaign Name</TableHead>
+                    <TableHead>Brand</TableHead>
+                    <TableHead>Budget</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {campaigns.filter(c => c.status === 'pending_admin').map((campaign) => (
+                    <TableRow key={campaign.id}>
+                      <TableCell className="font-medium">{campaign.campaign_name}</TableCell>
+                      <TableCell>{campaign.brands.brand_name}</TableCell>
+                      <TableCell>{formatBudget(campaign.budget)}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => handleApproveCampaign(campaign.id)}
+                          >
+                            Approve Details
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => navigate(`/admin/campaigns/${campaign.id}`)}>View Details</Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
-import { LogOut, Plus, BarChart3, Users, Settings } from 'lucide-react'
+import { LogOut, Plus, BarChart3, Users, Settings, DollarSign } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Input } from '../components/ui/input'
 import { useToast } from '../hooks/use-toast'
@@ -17,6 +17,29 @@ const BrandDashboard: React.FC = () => {
     brand_website: '',
     social_handles: '',
   })
+
+  const [wallet, setWallet] = useState<{ balance: number; currency: string } | null>(null)
+  const [isWalletLoading, setIsWalletLoading] = useState(true)
+
+  // Fetch wallet balance
+  React.useEffect(() => {
+    const fetchWallet = async () => {
+      if (!brand?.id) return;
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/brand/wallet?brandId=${brand.id}`);
+        const data = await response.json();
+        if (data.success) {
+          setWallet(data.wallet);
+        }
+      } catch (error) {
+        console.error('Error fetching wallet:', error);
+      } finally {
+        setIsWalletLoading(false);
+      }
+    };
+
+    fetchWallet();
+  }, [brand?.id]);
 
   // Show loading debug if still loading
   if (loading) {
@@ -189,6 +212,21 @@ const BrandDashboard: React.FC = () => {
 
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card className="hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Wallet Balance</CardTitle>
+                <DollarSign className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {isWalletLoading ? '...' : `₹${wallet?.balance?.toLocaleString() || '0'}`}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Available for campaign funding
+                </p>
+              </CardContent>
+            </Card>
+
             <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleCreateCampaign}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Create Campaign</CardTitle>

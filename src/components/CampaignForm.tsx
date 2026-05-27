@@ -8,6 +8,7 @@ import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
+import { Badge } from './ui/badge';
 import { ArrowLeft, ArrowRight, Check, DollarSign, Video, Users, Package, FileText, Info, Play, Image, Zap, Star, X, Sparkles } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { supabase } from '../lib/supabase';
@@ -17,18 +18,28 @@ import { calculateAffordableCreators, getRecommendedCreatorCount, formatINR, CRE
 
 interface CampaignFormData {
   budget: string;
+  cpvRate: string;
+  minGuarantee: string;
+  maxPayout: string;
   contentType: string;
   creatorType: string;
   qualityLevel: string;
   productName: string;
   productLink: string;
   productValue: string;
+  productType: string;
   category: string;
   shippingRequired: boolean;
   budgetFlexible: boolean;
   targetCategory: string;
   targetSubcategory: string;
   creatorTier: string;
+  brief: string;
+  keyMessages: string;
+  dos: string;
+  donts: string;
+  requiredHashtags: string;
+  timelineDays: string;
 }
 
 const CampaignForm: React.FC = () => {
@@ -58,18 +69,28 @@ const CampaignForm: React.FC = () => {
   
   const [formData, setFormData] = useState<CampaignFormData>({
     budget: '50000',
+    cpvRate: '50',
+    minGuarantee: '1500',
+    maxPayout: '10000',
     contentType: '',
     creatorType: '',
     qualityLevel: '',
     productName: '',
     productLink: '',
     productValue: '',
+    productType: 'physical',
     category: '',
     shippingRequired: false,
     budgetFlexible: false,
     targetCategory: '',
     targetSubcategory: '',
     creatorTier: '',
+    brief: '',
+    keyMessages: '',
+    dos: '',
+    donts: '',
+    requiredHashtags: '',
+    timelineDays: '14',
   });
 
   // State for recommendation system
@@ -196,7 +217,7 @@ const CampaignForm: React.FC = () => {
   }, [formData.targetCategory, formData.targetSubcategory]);
 
   const nextStep = () => {
-    if (currentStep < 5) {
+    if (currentStep < 6) {
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -284,6 +305,11 @@ const CampaignForm: React.FC = () => {
         formData.creatorTier as CreatorTier
       );
       
+      // Calculate max affordable and optimal slots based on max payout cap
+      const minGuaranteeVal = parseInt(formData.minGuarantee) || 0;
+      const maxPayoutVal = parseInt(formData.maxPayout) || 10000;
+      const maxAffordableByCap = Math.floor(parseInt(formData.budget) / maxPayoutVal) || 1;
+      
       // Create campaign in database (updated for new multi-phase system)
       const { data: campaignData, error: campaignError } = await supabase
         .from('campaigns')
@@ -291,9 +317,12 @@ const CampaignForm: React.FC = () => {
           brand_id: brandId,
           campaign_name: `${formData.productName || 'Untitled'} Campaign`,
           campaign_type: formData.category || 'Instagram',
-          campaign_description: `Content: ${formData.contentType}, Creator: ${formData.creatorType}, Quality: ${formData.qualityLevel}. Product: ${formData.productName}${formData.productLink ? `. Link: ${formData.productLink}` : ''}`,
-          description: `Content: ${formData.contentType}, Creator: ${formData.creatorType}, Quality: ${formData.qualityLevel}. Product: ${formData.productName}${formData.productLink ? `. Link: ${formData.productLink}` : ''}`,
+          campaign_description: formData.brief || `Content: ${formData.contentType}, Creator: ${formData.creatorType}, Quality: ${formData.qualityLevel}. Product: ${formData.productName}${formData.productLink ? `. Link: ${formData.productLink}` : ''}`,
+          description: formData.brief || `Content: ${formData.contentType}, Creator: ${formData.creatorType}, Quality: ${formData.qualityLevel}. Product: ${formData.productName}${formData.productLink ? `. Link: ${formData.productLink}` : ''}`,
           budget: parseInt(formData.budget) || 0,
+          cpv_rate: 0.0,
+          min_guarantee_per_creator: minGuaranteeVal,
+          max_payout_per_creator: maxPayoutVal,
           campaign_objectives: ['Brand Awareness', 'Product Marketing'],
           requirements: `Content Type: ${formData.contentType}, Creator Type: ${formData.creatorType}, Quality Level: ${formData.qualityLevel}${formData.shippingRequired ? '. Shipping required.' : ''}`,
           deliverables: {
@@ -301,20 +330,23 @@ const CampaignForm: React.FC = () => {
             creator_type: formData.creatorType,
             quality_level: formData.qualityLevel,
             product_name: formData.productName,
+            product_link: formData.productLink,
+            product_type: formData.productType,
+            product_value: formData.productValue,
             shipping_required: formData.shippingRequired
           },
           // NEW: Automated recommendation fields with budget-based calculation
           target_category: formData.targetCategory,
           target_subcategory: formData.targetSubcategory || null,
           creator_type: formData.creatorTier,
-          target_creators_count: budgetRecommendation.optimal,
+          target_creators_count: maxAffordableByCap,
           // Pricing fields (separate columns)
-          estimated_cost_per_creator: budgetRecommendation.pricing.pricePerCreator,
-          max_affordable_creators: budgetRecommendation.max,
+          estimated_cost_per_creator: maxPayoutVal, // Since cap defines max cost per creator
+          max_affordable_creators: maxAffordableByCap,
           actual_creators_selected: 0,
           // END NEW
-          phase: 'creator_selection',
-          status: 'active',
+          phase: 'approval_pending',
+          status: 'pending_admin',
           start_date: new Date().toISOString().split('T')[0],
           end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 30 days from now
         })
@@ -323,6 +355,44 @@ const CampaignForm: React.FC = () => {
 
       if (campaignError) {
         throw new Error(`Failed to create campaign: ${campaignError.message}`);
+      }
+
+      // DUAL-SYNC INSERTION into legacy_campaigns
+      const parsedKeyMessages = formData.keyMessages.split('\n').map(m => m.trim()).filter(Boolean);
+      const parsedHashtags = formData.requiredHashtags.split(',').map(h => h.trim()).filter(Boolean);
+      const parsedDos = formData.dos.split('\n').map(d => d.trim()).filter(Boolean);
+      const parsedDonts = formData.donts.split('\n').map(d => d.trim()).filter(Boolean);
+
+      const { error: legacyError } = await supabase
+        .from('legacy_campaigns')
+        .insert({
+          id: campaignData.id, // SAME UUID!
+          brand_name: brand?.brand_name || 'Brand',
+          title: campaignData.campaign_name,
+          tagline: `Promote ${formData.productName}`,
+          brief: formData.brief,
+          deliverables: [formData.contentType || '30 seconds Reel'],
+          do_dont: { do: parsedDos, dont: parsedDonts },
+          platform: 'instagram',
+          target_niches: [formData.targetCategory],
+          target_tiers: formData.creatorTier === 'micro' ? ['nano'] : formData.creatorTier === 'macro' ? ['micro'] : ['mid', 'macro'],
+          cpv_paise: 0,
+          budget_inr: parseInt(formData.budget) || 0,
+          min_guarantee_per_creator: minGuaranteeVal,
+          max_payout_per_creator: maxPayoutVal,
+          slots_total: maxAffordableByCap,
+          slots_filled: 0,
+          requires_script: true, // Requires script approval before starting work
+          deadline: new Date(Date.now() + (parseInt(formData.timelineDays) || 14) * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'paused',
+          created_by: user.id,
+          payout_window_days: 7,
+          key_messages: parsedKeyMessages,
+          hashtags: parsedHashtags
+        });
+
+      if (legacyError) {
+        console.error('Failed to create legacy_campaign record:', legacyError);
       }
 
       // Log campaign activity for the new multi-phase system
@@ -346,74 +416,26 @@ const CampaignForm: React.FC = () => {
         // Don't throw error here, as campaign was created successfully
       }
 
-      // AUTO-GENERATE CREATOR RECOMMENDATIONS WITH AI ANIMATION
+      // Trigger recommendation generation in the background (fire and forget)
       if (formData.targetCategory) {
-        
-        // Show AI processing animation
-        setShowAIProcessing(true);
-        setAIProcessingStage(0);
-        
-        const stages = [
-          { stage: 0, text: "Analyzing campaign requirements...", duration: 800 },
-          { stage: 1, text: "Searching creator database...", duration: 1000 },
-          { stage: 2, text: "AI matching creators to your criteria...", duration: 1200 },
-          { stage: 3, text: "Calculating engagement scores...", duration: 1000 },
-          { stage: 4, text: "Finalizing recommendations...", duration: 800 }
-        ];
-        
-        // Animate through stages
-        for (let i = 0; i < stages.length; i++) {
-          await new Promise(resolve => setTimeout(() => {
-            setAIProcessingStage(stages[i].stage);
-            resolve(true);
-          }, stages[i].duration));
-        }
-        
-        try {
-          const recsResponse = await fetch(
-            getApiUrl(`/api/campaigns/${campaignData.id}/generate-recommendations`),
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ autoApprove: false })
-            }
-          );
-          
-          const recsData = await recsResponse.json();
-          
-          if (recsData.success) {
-            setAIProcessingStage(5); // Success stage
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Navigate to campaign detail page
-            navigate(`/dashboard/campaigns/${campaignData.id}`);
-          } else {
-            setShowAIProcessing(false);
-            toast({
-              title: "Campaign Created Successfully!",
-              description: "Your campaign has been created. We'll recommend creators shortly.",
-              duration: 5000,
-            });
-            navigate('/dashboard');
+        fetch(
+          getApiUrl(`/api/campaigns/${campaignData.id}/generate-recommendations`),
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ autoApprove: false })
           }
-        } catch (recError) {
-          setShowAIProcessing(false);
-          toast({
-            title: "Campaign Created Successfully!",
-            description: "Your campaign has been created. We'll recommend creators shortly.",
-            duration: 5000,
-          });
-          navigate('/dashboard');
-        }
-      } else {
-        // No category selected, fallback
-        toast({
-          title: "Campaign Created Successfully!",
-          description: "Your campaign has been created.",
-          duration: 5000,
-        });
-        navigate('/dashboard');
+        ).catch(err => console.error("Background recommendations gen failed:", err));
       }
+
+      toast({
+        title: "Campaign Created Successfully!",
+        description: "Your campaign has been launched directly and is now active.",
+        duration: 5000,
+      });
+
+      // Navigate to campaign detail page immediately
+      navigate(`/dashboard/campaigns/${campaignData.id}`);
       
     } catch (error: any) {
       toast({
@@ -430,14 +452,16 @@ const CampaignForm: React.FC = () => {
   const isStepValid = (step: number): boolean => {
     switch (step) {
       case 1:
-        return formData.budget !== '';
+        return formData.budget !== '' && formData.cpvRate !== '';
       case 2:
         return formData.contentType !== '';
       case 3:
         return formData.creatorType !== '' && formData.creatorTier !== '' && formData.qualityLevel !== '' && formData.targetCategory !== '';
       case 4:
-        return formData.productName !== '' && formData.productLink !== '' && formData.category !== '';
+        return formData.productName !== '' && formData.category !== '' && formData.productValue !== '';
       case 5:
+        return formData.brief !== '' && formData.keyMessages !== '' && formData.dos !== '' && formData.donts !== '' && formData.requiredHashtags !== '';
+      case 6:
         return true;
       default:
         return false;
@@ -477,8 +501,8 @@ const CampaignForm: React.FC = () => {
               <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-4">
                 <DollarSign className="h-6 w-6 text-blue-600" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Choose campaign budget</h2>
-              <p className="text-gray-600 text-lg">Set your investment for maximum impact</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Choose campaign budget & CPV</h2>
+              <p className="text-gray-600 text-lg">Set your investment and cost-per-view for maximum impact</p>
             </div>
 
             <div className="text-center">
@@ -539,11 +563,133 @@ const CampaignForm: React.FC = () => {
                   </div>
                   <div className="text-center mt-2">
                     <span className="text-sm text-gray-600">
-                      Current: {formatCurrency(formData.budget)}
+                      Current Budget: {formatCurrency(formData.budget)}
                     </span>
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* CPV Rate & Reach Information */}
+            <div className="border-t pt-6 space-y-4 max-w-md mx-auto">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 shadow-sm space-y-4 text-left">
+                <div className="flex items-start space-x-3">
+                  <Sparkles className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-bold text-blue-900 text-sm">Estimated Campaign Reach</h4>
+                    <p className="text-xs text-blue-700 mt-1">
+                      Based on a standard CPV of 50 Paise, your budget of <strong>{formatCurrency(formData.budget)}</strong> yields approximately:
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between items-center bg-white/60 rounded-lg p-3 border border-blue-100">
+                  <div>
+                    <span className="text-2xl font-black text-blue-900">
+                      {Math.round(parseInt(formData.budget) / 0.50).toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-xs text-blue-700 ml-1">Est. Views</span>
+                  </div>
+                  <Badge variant="outline" className="bg-blue-50 border-blue-200 text-[10px] text-blue-800 uppercase font-bold py-0.5 px-2">
+                    Subject to Admin Review
+                  </Badge>
+                </div>
+
+                <div className="flex items-start space-x-2 text-[10px] text-gray-500 leading-normal border-t border-blue-100 pt-3">
+                  <Info className="h-3.5 w-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <p>
+                    Your campaign will be sent to the Admin queue. The Admin will assign the exact CPV rate based on your budget, target category, and niche before publication.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Hybrid Payout Settings */}
+            <div className="border-t pt-6 space-y-6 max-w-md mx-auto">
+              <div className="text-left">
+                <h3 className="text-lg font-bold text-gray-900">Creator Payout Caps & Safety Guarantees</h3>
+                <p className="text-xs text-gray-500">Protect your budget while guaranteeing fair pay for creator production costs.</p>
+              </div>
+
+              {/* Minimum Guarantee */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="text-left">
+                    <Label htmlFor="minGuarantee" className="text-sm font-semibold text-gray-700">Minimum Guarantee per Creator</Label>
+                    <p className="text-[10px] text-gray-400">Fixed amount paid to creator regardless of views (covers raw creation/editing costs)</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-gray-900">₹{parseInt(formData.minGuarantee).toLocaleString()}</span>
+                  </div>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="10000"
+                  step="500"
+                  value={formData.minGuarantee}
+                  onChange={(e) => updateFormData('minGuarantee', e.target.value)}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                  <span>₹0 (No base fee)</span>
+                  <span>₹5K</span>
+                  <span>₹10K (Premium base)</span>
+                </div>
+              </div>
+
+              {/* Maximum Payout Cap */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="text-left">
+                    <Label htmlFor="maxPayout" className="text-sm font-semibold text-gray-700">Maximum Payout Cap per Creator*</Label>
+                    <p className="text-[10px] text-gray-400">Hard limit on what one creator can earn (limits brand risk if content goes viral)</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-blue-600">₹{parseInt(formData.maxPayout).toLocaleString()}</span>
+                  </div>
+                </div>
+                <input
+                  type="range"
+                  min="1000"
+                  max="50000"
+                  step="1000"
+                  value={formData.maxPayout}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    updateFormData('maxPayout', val);
+                    // Ensure minGuarantee <= maxPayout
+                    if (parseInt(formData.minGuarantee) > parseInt(val)) {
+                      updateFormData('minGuarantee', val);
+                    }
+                  }}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                  <span>₹1K</span>
+                  <span>₹25K</span>
+                  <span>₹50K (High ceiling)</span>
+                </div>
+              </div>
+
+              {/* Creator Limit Indicator */}
+              {formData.budget && formData.maxPayout && (
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 flex items-center justify-between shadow-sm animate-fadeIn">
+                  <div className="flex items-center space-x-3 text-left">
+                    <Users className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-green-900 text-sm">Max Onboarded Creators</p>
+                      <p className="text-[10px] text-green-700">Formula: Budget ÷ Max Payout per Creator</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-green-900">
+                      {Math.floor(parseInt(formData.budget) / (parseInt(formData.maxPayout) || 10000)) || 1}
+                    </p>
+                    <p className="text-[10px] text-green-700">Creators Max</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -554,7 +700,7 @@ const CampaignForm: React.FC = () => {
                   onCheckedChange={(checked) => updateFormData('budgetFlexible', checked as boolean)}
                   className="mt-1"
                 />
-                <div>
+                <div className="text-left">
                   <label htmlFor="budgetFlexible" className="text-sm font-medium text-gray-900 cursor-pointer">
                     My budget is slightly flexible (this will allow you to get more creators in your campaign)
                   </label>
@@ -565,7 +711,7 @@ const CampaignForm: React.FC = () => {
             <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
               <div className="flex items-start space-x-3">
                 <Zap className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div>
+                <div className="text-left">
                   <p className="font-semibold text-blue-900">Pro Tip: Higher budgets attract premium creators</p>
                   <p className="text-sm text-blue-700 mt-1">Campaign available for purchase with flexible payment options.</p>
                 </div>
@@ -1054,7 +1200,50 @@ const CampaignForm: React.FC = () => {
               <p className="text-gray-600 text-lg">Tell us about the product you want to promote</p>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 text-left">
+              <div>
+                <Label className="block text-sm font-medium text-gray-700 mb-3">
+                  Product Type*
+                </Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateFormData('productType', 'physical');
+                      updateFormData('shippingRequired', true);
+                    }}
+                    className={cn(
+                      "p-4 rounded-xl border-2 text-left transition-all duration-200",
+                      formData.productType === 'physical'
+                        ? "border-blue-500 bg-blue-50/50 shadow-md text-blue-900"
+                        : "border-gray-200 hover:border-blue-300 text-gray-700"
+                    )}
+                  >
+                    <Package className="h-6 w-6 mb-2 text-blue-600" />
+                    <div className="font-semibold text-sm">Physical Product</div>
+                    <p className="text-[10px] text-gray-500 mt-1">Requires physical shipping to creators (e.g. fashion, devices, cosmetics)</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateFormData('productType', 'digital');
+                      updateFormData('shippingRequired', false);
+                    }}
+                    className={cn(
+                      "p-4 rounded-xl border-2 text-left transition-all duration-200",
+                      formData.productType === 'digital'
+                        ? "border-blue-500 bg-blue-50/50 shadow-md text-blue-900"
+                        : "border-gray-200 hover:border-blue-300 text-gray-700"
+                    )}
+                  >
+                    <Sparkles className="h-6 w-6 mb-2 text-purple-600" />
+                    <div className="font-semibold text-sm">Software / Digital</div>
+                    <p className="text-[10px] text-gray-500 mt-1">Accessed via download link, access codes, or licenses</p>
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <Label htmlFor="productName" className="block text-sm font-medium text-gray-700 mb-2">
                   Product Name*
@@ -1071,7 +1260,7 @@ const CampaignForm: React.FC = () => {
 
               <div>
                 <Label htmlFor="productLink" className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Link*
+                  Product Link (Optional)
                 </Label>
                 <Input
                   id="productLink"
@@ -1095,7 +1284,7 @@ const CampaignForm: React.FC = () => {
                   onChange={(e) => updateFormData('productValue', e.target.value)}
                   className="w-full"
                 />
-                <p className="text-sm text-gray-500 mt-1">This is the retail value of your product</p>
+                <p className="text-xs text-gray-500 mt-1">This is the retail value of your product</p>
               </div>
 
               <div>
@@ -1120,57 +1309,69 @@ const CampaignForm: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-3">
-                  Shipping Details
-                </Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card
-                    className={cn(
-                      "cursor-pointer transition-all duration-200",
-                      formData.shippingRequired 
-                        ? "border-blue-500 bg-blue-50" 
-                        : "border-gray-200 hover:border-blue-300"
-                    )}
-                    onClick={() => updateFormData('shippingRequired', true)}
-                  >
-                    <CardContent className="p-6 text-center">
-                      <Package className={cn("h-8 w-8 mx-auto mb-3", formData.shippingRequired ? "text-blue-600" : "text-gray-400")} />
-                      <h3 className={cn("font-semibold mb-2", formData.shippingRequired ? "text-blue-900" : "text-gray-900")}>
-                        Shipping Required
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        You'll send physical products to creators for review and content creation.
-                      </p>
-                    </CardContent>
-                  </Card>
+              {formData.productType === 'physical' ? (
+                <div>
+                  <Label className="block text-sm font-medium text-gray-700 mb-3">
+                    Shipping Details
+                  </Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card
+                      className={cn(
+                        "cursor-pointer transition-all duration-200",
+                        formData.shippingRequired 
+                          ? "border-blue-500 bg-blue-50" 
+                          : "border-gray-200 hover:border-blue-300"
+                      )}
+                      onClick={() => updateFormData('shippingRequired', true)}
+                    >
+                      <CardContent className="p-6 text-center">
+                        <Package className={cn("h-8 w-8 mx-auto mb-3", formData.shippingRequired ? "text-blue-600" : "text-gray-400")} />
+                        <h3 className={cn("font-semibold mb-2 text-sm", formData.shippingRequired ? "text-blue-900" : "text-gray-900")}>
+                          Shipping Required
+                        </h3>
+                        <p className="text-xs text-gray-600">
+                          You will send physical products to creators for content creation.
+                        </p>
+                      </CardContent>
+                    </Card>
 
-                  <Card
-                    className={cn(
-                      "cursor-pointer transition-all duration-200",
-                      !formData.shippingRequired 
-                        ? "border-blue-500 bg-blue-50" 
-                        : "border-gray-200 hover:border-blue-300"
-                    )}
-                    onClick={() => updateFormData('shippingRequired', false)}
-                  >
-                    <CardContent className="p-6 text-center">
-                      <X className={cn("h-8 w-8 mx-auto mb-3", !formData.shippingRequired ? "text-blue-600" : "text-gray-400")} />
-                      <h3 className={cn("font-semibold mb-2", !formData.shippingRequired ? "text-blue-900" : "text-gray-900")}>
-                        No Shipping
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        Digital product or service that doesn't require physical shipping.
-                      </p>
-                    </CardContent>
-                  </Card>
+                    <Card
+                      className={cn(
+                        "cursor-pointer transition-all duration-200",
+                        !formData.shippingRequired 
+                          ? "border-blue-500 bg-blue-50" 
+                          : "border-gray-200 hover:border-blue-300"
+                      )}
+                      onClick={() => updateFormData('shippingRequired', false)}
+                    >
+                      <CardContent className="p-6 text-center">
+                        <X className={cn("h-8 w-8 mx-auto mb-3", !formData.shippingRequired ? "text-blue-600" : "text-gray-400")} />
+                        <h3 className={cn("font-semibold mb-2 text-sm", !formData.shippingRequired ? "text-blue-900" : "text-gray-900")}>
+                          No Shipping
+                        </h3>
+                        <p className="text-xs text-gray-600">
+                          Creators already own your physical product or buy it locally.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start space-x-3 text-left">
+                  <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-blue-950 text-sm">Digital Access Delivery</p>
+                    <p className="text-xs text-blue-800 mt-1">
+                      No physical shipping is required. Once you accept a creator, you can share SaaS links, credentials, or licenses on the dashboard.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-left">
               <p className="text-sm text-green-800 font-medium">
-                100% refund policy: Get a full refund if creators don't deliver or meet quality standards.
+                ✓ 100% refund policy: Get a full refund if creators don't deliver or meet quality standards.
               </p>
             </div>
           </div>
@@ -1180,44 +1381,171 @@ const CampaignForm: React.FC = () => {
         return (
           <div className="space-y-8">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Review & Submit Campaign</h2>
-              <p className="text-gray-600 text-lg">Review your campaign details and submit to receive quotations from creators.</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Creator Instructions</h2>
+              <p className="text-gray-600 text-lg">Define clear instructions and expectations to guide accepted creators</p>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-6 text-left">
+              <div>
+                <Label htmlFor="brief" className="block text-sm font-medium text-gray-700 mb-2">
+                  Campaign / Brand Brief*
+                </Label>
+                <textarea
+                  id="brief"
+                  rows={4}
+                  placeholder="Explain what your brand stands for, what this campaign is about, and the main story you want creators to tell..."
+                  value={formData.brief}
+                  onChange={(e) => updateFormData('brief', e.target.value)}
+                  className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="keyMessages" className="block text-sm font-medium text-gray-700 mb-2">
+                  Key Messages (One message per line)*
+                </Label>
+                <textarea
+                  id="keyMessages"
+                  rows={3}
+                  placeholder="e.g. 100% natural and vegan ingredients&#10;Use my promo code CAMPA15 for 15% discount&#10;Delivered in just 15 minutes in Indore"
+                  value={formData.keyMessages}
+                  onChange={(e) => updateFormData('keyMessages', e.target.value)}
+                  className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Budget</p>
-                  <p className="text-lg font-semibold">{formatCurrency(formData.budget)}</p>
+                  <Label htmlFor="dos" className="block text-sm font-medium text-green-700 mb-2 font-semibold">
+                    Do's (What to do)*
+                  </Label>
+                  <textarea
+                    id="dos"
+                    rows={4}
+                    placeholder="e.g. Show product texture clearly&#10;Show the onboarding process&#10;Keep background minimal and clean"
+                    value={formData.dos}
+                    onChange={(e) => updateFormData('dos', e.target.value)}
+                    className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                  />
                 </div>
+
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Content Types</p>
-                  <p className="text-lg font-semibold">{formData.contentType || '-'}</p>
+                  <Label htmlFor="donts" className="block text-sm font-medium text-red-700 mb-2 font-semibold">
+                    Don'ts (What to avoid)*
+                  </Label>
+                  <textarea
+                    id="donts"
+                    rows={4}
+                    placeholder="e.g. Don't show competitor logos&#10;Don't use low light/blurry video&#10;Don't forget the call-to-action link"
+                    value={formData.donts}
+                    onChange={(e) => updateFormData('donts', e.target.value)}
+                    className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                  />
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Creator Categories</p>
-                  <p className="text-lg font-semibold">{formData.creatorType || '-'}</p>
+              </div>
+
+              <div>
+                <Label htmlFor="requiredHashtags" className="block text-sm font-medium text-gray-700 mb-2">
+                  Required Hashtags (Comma separated)*
+                </Label>
+                <Input
+                  id="requiredHashtags"
+                  type="text"
+                  placeholder="#YourBrand, #Ad, #HealthyLifestyle"
+                  value={formData.requiredHashtags}
+                  onChange={(e) => updateFormData('requiredHashtags', e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="timelineDays" className="block text-sm font-medium text-gray-700 mb-2">
+                  Creator Timeline (Days allowed to post after script approval)*
+                </Label>
+                <Select
+                  value={formData.timelineDays}
+                  onValueChange={(value) => updateFormData('timelineDays', value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select delivery timeline" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">7 Days (Fast turnaround)</SelectItem>
+                    <SelectItem value="14">14 Days (Standard)</SelectItem>
+                    <SelectItem value="21">21 Days (Detailed product test)</SelectItem>
+                    <SelectItem value="30">30 Days (Flexible)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="space-y-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Review & Submit Campaign</h2>
+              <p className="text-gray-600 text-lg">Review your campaign details before submitting to match creators.</p>
+            </div>
+
+            <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6 text-left">
+              <div>
+                <h3 className="text-base font-bold text-gray-900 mb-3 border-b pb-2">1. Budget & Targeting</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-500">Budget:</span> <span className="font-semibold">{formatCurrency(formData.budget)}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Cost Per View (CPV):</span> <span className="font-semibold text-blue-600">Pending Review (Admin set)</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Niche Category:</span> <span className="font-semibold">{formData.targetCategory || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Creator Tier:</span> <span className="font-semibold text-capitalize">{formData.creatorTier || '-'} ({formData.creatorType})</span>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Creator Quality</p>
-                  <p className="text-lg font-semibold">{formData.qualityLevel || '-'}</p>
+              </div>
+
+              <div>
+                <h3 className="text-base font-bold text-gray-900 mb-3 border-b pb-2">2. Product Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-500">Product Name:</span> <span className="font-semibold">{formData.productName || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Product Type:</span> <span className="font-semibold text-capitalize">{formData.productType || '-'}</span>
+                  </div>
+                  {formData.productLink && (
+                    <div className="md:col-span-2">
+                      <span className="text-gray-500">Product Link:</span> <a href={formData.productLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline font-medium">{formData.productLink}</a>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-gray-500">Product Value:</span> <span className="font-semibold">₹{formData.productValue || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Shipping Required:</span> <span className="font-semibold">{formData.shippingRequired ? 'Yes' : 'No'}</span>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Product</p>
-                  <p className="text-lg font-semibold">{formData.productName || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Product Category</p>
-                  <p className="text-lg font-semibold">{formData.category || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Product Value</p>
-                  <p className="text-lg font-semibold">{formData.productValue ? `₹${formData.productValue}` : '-'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Shipping Required</p>
-                  <p className="text-lg font-semibold">{formData.shippingRequired ? 'Yes' : 'No'}</p>
+              </div>
+
+              <div>
+                <h3 className="text-base font-bold text-gray-900 mb-3 border-b pb-2">3. Creator Instructions & Timeline</h3>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <span className="text-gray-500 block font-semibold mb-1">Campaign Brief:</span>
+                    <p className="bg-gray-50 p-3 rounded text-gray-700 italic whitespace-pre-wrap">{formData.brief || '-'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block font-semibold mb-1">Required Hashtags:</span>
+                    <p className="bg-gray-50 p-2 rounded text-gray-700 font-mono">{formData.requiredHashtags || '-'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block font-semibold mb-1">Creator Timeline:</span>
+                    <p className="bg-gray-50 p-2 rounded text-gray-700 font-semibold">{formData.timelineDays} Days allowed after script approval</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1267,7 +1595,7 @@ const CampaignForm: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex space-x-1">
-                {Array.from({ length: 5 }).map((_, index) => (
+                {Array.from({ length: 6 }).map((_, index) => (
                   <div
                     key={index}
                     className={cn(
@@ -1365,7 +1693,7 @@ const CampaignForm: React.FC = () => {
                         {currentStep === 1 ? 'Back to Dashboard' : 'Back'}
                       </Button>
 
-                      {currentStep < 5 ? (
+                      {currentStep < 6 ? (
                         <Button
                           onClick={nextStep}
                           disabled={!isStepValid(currentStep)}
@@ -1380,7 +1708,7 @@ const CampaignForm: React.FC = () => {
                           disabled={isSubmitting}
                           className="bg-green-600 hover:bg-green-700 text-white"
                         >
-                          {isSubmitting ? 'Submitting...' : 'Send quotations'}
+                          {isSubmitting ? 'Submitting...' : 'Submit for Review'}
                         </Button>
                       )}
                     </div>

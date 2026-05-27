@@ -3,8 +3,9 @@ import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import SearchFilterBar from "@/components/explore-creators/SearchFilterBar";
 import CreatorCard from "@/components/explore-creators/CreatorCard";
-import { Compass, Users, Sparkles, TrendingUp, Loader2, Globe } from "lucide-react";
+import { Compass, Users, Sparkles, TrendingUp, Loader2, Globe, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import InviteModal from "@/components/explore-creators/InviteModal";
 
 const ExploreCreators = () => {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ const ExploreCreators = () => {
   const [creators, setCreators] = useState([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [selectedForInvite, setSelectedForInvite] = useState<any>(null);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [filters, setFilters] = useState({
     category: "",
     city: "",
@@ -76,6 +79,11 @@ const ExploreCreators = () => {
     // Or if they are on the same domain, use relative path
     const dashboardUrl = "https://campayn-creators.vercel.app";
     window.open(`${dashboardUrl}/media-kit/${creator.igHandle}`, '_blank');
+  };
+
+  const handleInviteClick = (creator: any) => {
+    setSelectedForInvite(creator);
+    setIsInviteOpen(true);
   };
 
   return (
@@ -164,11 +172,24 @@ const ExploreCreators = () => {
         ) : creators.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-20">
             {creators.map((creator) => (
-              <CreatorCard
-                key={creator.id}
-                creator={creator}
-                onViewProfile={handleViewProfile}
-              />
+              <div key={creator.id} className="relative group/card">
+                <CreatorCard
+                  creator={creator}
+                  onViewProfile={handleViewProfile}
+                />
+                <div className="absolute top-4 left-4 z-20 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleInviteClick(creator);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-campayn-primary text-white rounded-xl font-bold text-xs shadow-xl hover:scale-105 transition-transform"
+                  >
+                    <Send size={14} />
+                    Invite
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         ) : (
@@ -189,6 +210,12 @@ const ExploreCreators = () => {
           </div>
         )}
       </div>
+      {/* Creator Detail Modal / Invite Flow */}
+      <InviteModal 
+        creator={selectedForInvite}
+        isOpen={isInviteOpen}
+        onClose={() => setIsInviteOpen(false)}
+      />
     </div>
   );
 };

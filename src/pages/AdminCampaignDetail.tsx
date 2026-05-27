@@ -84,6 +84,10 @@ const AdminCampaignDetail: React.FC = () => {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [campaignCreators, setCampaignCreators] = useState<CampaignCreator[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCreators, setSelectedCreators] = useState<string[]>([]);
+  const [invitations, setInvitations] = useState<any[]>([]);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isSendingInvites, setIsSendingInvites] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -135,6 +139,42 @@ const AdminCampaignDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSendInvitations = async () => {
+    if (selectedCreators.length === 0) return;
+    
+    setIsSendingInvites(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/send-invitations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaignId: id,
+          creatorIds: selectedCreators,
+          adminId: user?.id
+        })
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setInvitations(data.invites);
+        setIsInviteDialogOpen(true);
+        toast({ title: "Invitations Generated", description: `${data.invites.length} links ready to share.` });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to generate invitations", variant: "destructive" });
+    } finally {
+      setIsSendingInvites(false);
+    }
+  };
+
+  const toggleCreatorSelection = (creatorId: string) => {
+    setSelectedCreators(prev => 
+      prev.includes(creatorId) 
+        ? prev.filter(id => id !== creatorId) 
+        : [...prev, creatorId]
+    );
   };
 
   const getStatusColor = (status: string) => {
@@ -317,10 +357,28 @@ const AdminCampaignDetail: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-sm text-gray-500">{selectedCreators.length} creators selected</p>
+                <Button 
+                  size="sm" 
+                  disabled={selectedCreators.length === 0 || isSendingInvites}
+                  onClick={handleSendInvitations}
+                  className="bg-violet-600 hover:bg-violet-700"
+                >
+                  {isSendingInvites ? 'Generating...' : 'Generate Invitation Links'}
+                </Button>
+              </div>
+
               {campaignCreators.map((campaignCreator) => (
-                <div key={campaignCreator.id} className="border rounded-lg p-4 bg-white">
+                <div key={campaignCreator.id} className={`border rounded-lg p-4 transition-colors ${selectedCreators.includes(campaignCreator.creator_id) ? 'border-violet-500 bg-violet-50/30' : 'bg-white'}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                        checked={selectedCreators.includes(campaignCreator.creator_id)}
+                        onChange={() => toggleCreatorSelection(campaignCreator.creator_id)}
+                      />
                       <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
                         <Users className="h-6 w-6 text-gray-500" />
                       </div>
@@ -525,6 +583,41 @@ const AdminCampaignDetail: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Invitation Links Dialog */}
+      <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Campaign Invitation Links</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-gray-600">Copy these messages and send them to creators on Instagram/WhatsApp.</p>
+            {invitations.map((invite, index) => (
+              <div key={index} className="p-4 bg-gray-50 rounded-lg border space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-sm">Creator ID: {invite.creatorId}</span>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(invite.teaserText);
+                      toast({ title: "Copied!", description: "Message copied to clipboard." });
+                    }}
+                  >
+                    Copy Message
+                  </Button>
+                </div>
+                <div className="p-2 bg-white border rounded text-xs font-mono break-all">
+                  {invite.teaserText}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => setIsInviteDialogOpen(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

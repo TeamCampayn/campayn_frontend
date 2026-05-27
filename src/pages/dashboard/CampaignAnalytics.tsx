@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,7 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import { 
+  AreaChart,
+  Area,
   BarChart, 
   Bar, 
   PieChart, 
@@ -18,7 +21,10 @@ import {
   CartesianGrid, 
   Tooltip, 
   Legend, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  ScatterChart,
+  Scatter,
+  ZAxis
 } from 'recharts';
 import { 
   ArrowLeft, 
@@ -34,11 +40,15 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  FileText,
   Instagram,
   Sparkles,
   Award,
-  Zap
+  Zap,
+  DollarSign,
+  Eye,
+  Flame,
+  ShieldCheck,
+  TrendingDown
 } from 'lucide-react';
 
 type Campaign = {
@@ -46,17 +56,11 @@ type Campaign = {
   campaign_name: string;
   brand_id: string;
   phase: string;
-};
-
-type Creator = {
-  id: string;
-  name: string;
-  ig_handle: string;
-  profile_picture_url?: string;
-  category?: string;
-  subcategory?: string;
-  followers_count?: number;
-  engagement_rate?: number;
+  status: string;
+  budget?: number;
+  cpv_rate?: number;
+  min_guarantee_per_creator?: number;
+  max_payout_per_creator?: number;
 };
 
 type CampaignCreator = {
@@ -66,21 +70,33 @@ type CampaignCreator = {
   status: string;
   recommended_by_admin?: boolean;
   admin_notes?: string;
-  creators: Creator;
+  creators: {
+    id: string;
+    name: string;
+    ig_handle: string;
+    profile_picture_url?: string;
+    category?: string;
+    subcategory?: string;
+    followers_count?: number;
+    engagement_rate?: number;
+  };
 };
 
 type Content = {
   id: string;
   campaign_id: string;
   creator_id: string;
-  content_type: 'photo' | 'video' | 'reel' | 'story' | string;
+  content_type: string;
   content_url: string | null;
   thumbnail_url: string | null;
-  approval_status: 'pending' | 'approved' | 'rejected' | 'needs_revision';
+  approval_status: string;
   post_url?: string | null;
   posted_at?: string | null;
-  performance_metrics?: any;
-  creators: Creator;
+  creators: {
+    id: string;
+    name: string;
+    ig_handle: string;
+  };
 };
 
 type CampaignDetailsResponse = {
@@ -88,76 +104,34 @@ type CampaignDetailsResponse = {
   campaign: Campaign;
   creators: CampaignCreator[];
   contents: Content[];
-};
-
-type InsightsResponse = {
-  profile: {
-    username: string | null;
-    followers_count: number | null;
-    category: string | null;
-    profile_picture_url: string | null;
-  };
-  metrics: {
-    engagementRate: number;
-    avgLikes: number;
-    avgComments: number;
-    avgViews: number;
-    growth: {
-      trend?: 'growing' | 'declining' | 'stable' | 'insufficient_data';
-      percentChange7d?: number | null;
-      percentChange30d?: number | null;
-      velocity?: number | null;
-    };
-    bestPostingWindow?: string;
-  };
-  recentMedia: Array<{
-    id: string | null;
-    media_type: string | null;
-    media_url: string | null;
-    thumbnail_url: string | null;
-    permalink: string | null;
-    timestamp: string | null;
-    caption: string | null;
-    like_count: number | null;
-    comments_count: number | null;
-  }>;
-};
-
-const formatNumber = (val: number | null | undefined) => {
-  if (val === null || val === undefined || isNaN(val as number)) return 0;
-  return Number(val);
+  applications?: any[];
 };
 
 const formatDisplayNumber = (val: number | null | undefined) => {
-  if (val === null || val === undefined || isNaN(val as number)) return '-';
+  if (val === null || val === undefined || isNaN(val as number)) return '0';
   const n = Number(val);
   if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
   if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1) + 'K';
   return n.toLocaleString();
 };
 
-const pct = (val: number | null | undefined) => {
-  if (val === null || val === undefined || isNaN(val as number)) return '-';
-  return `${(Number(val)).toFixed(2)}%`;
-};
-
-const getEngagementRate = (likes: number, comments: number, followers: number) => {
-  if (!followers || followers === 0) return 0;
-  return ((likes + comments) / followers) * 100;
+const formatCurrency = (amount: number | null | undefined) => {
+  if (amount === null || amount === undefined || isNaN(amount as number)) return '₹0';
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0
+  }).format(amount);
 };
 
 const COLORS = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4'];
-const GRADIENT_COLORS = {
-  primary: 'from-indigo-500 to-purple-600',
-  secondary: 'from-pink-500 to-rose-600',
-  success: 'from-emerald-500 to-teal-600',
-  warning: 'from-amber-500 to-orange-600',
-};
 
 const CampaignAnalytics: React.FC = () => {
   const { id: campaignId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
-  const { brand } = useAuth();
+  const { toast } = useToast();
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const { data: details, isLoading, isError, error, refetch } = useQuery<CampaignDetailsResponse>({
     queryKey: ['campaign-details', campaignId],
@@ -170,1074 +144,857 @@ const CampaignAnalytics: React.FC = () => {
     enabled: !!campaignId,
   });
 
-  const liveContents = React.useMemo(() => {
-    const all = details?.contents || [];
-    return all.filter((c) => !!c.post_url);
-  }, [details]);
+  const campaign = details?.campaign;
+  const applications = details?.applications || [];
+  const creators = details?.creators || [];
+  const contents = details?.contents || [];
 
-  const allCampaignCreators = React.useMemo(() => {
-    return details?.creators || [];
-  }, [details]);
+  // Filter posted creators
+  const postedApplications = React.useMemo(() => {
+    return applications.filter(app => app.status === 'posted' || !!app.post_url);
+  }, [applications]);
 
-  const pendingApprovalContent = React.useMemo(() => {
-    const all = details?.contents || [];
-    return all.filter((c) => c.approval_status === 'pending' || c.approval_status === 'needs_revision');
-  }, [details]);
+  // Aggregate Overall Metrics
+  const metrics = React.useMemo(() => {
+    let totalViews = 0;
+    let totalLikes = 0;
+    let totalComments = 0;
+    let totalFollowers = 0;
+    let totalPayout = 0;
+    let totalEngagementRate = 0;
 
-  const creatorPostStatus = React.useMemo(() => {
-    const statusMap = new Map<string, { hasPosted: boolean; postUrl?: string; contentId?: string }>();
-    const allContents = details?.contents || [];
-    
-    allCampaignCreators.forEach(cc => {
-      const creatorId = cc.creator_id;
-      const creatorContent = allContents.find(c => c.creator_id === creatorId && c.post_url);
-      statusMap.set(creatorId, {
-        hasPosted: !!creatorContent?.post_url,
-        postUrl: creatorContent?.post_url || undefined,
-        contentId: creatorContent?.id
+    postedApplications.forEach(app => {
+      const views = Number(app.verified_views || 0);
+      const likes = Number(app.likes || 0);
+      const comments = Number(app.comments || 0);
+      const followers = Number(app.creator?.followers_count || 1);
+      const payout = Number(app.final_earning_inr || 0);
+
+      totalViews += views;
+      totalLikes += likes;
+      totalComments += comments;
+      totalFollowers += followers;
+      totalPayout += payout;
+
+      const er = followers > 0 ? ((likes + comments) / followers) * 100 : 0;
+      totalEngagementRate += er;
+    });
+
+    const avgEngagement = postedApplications.length > 0 ? totalEngagementRate / postedApplications.length : 0;
+    const effectiveCPV = totalViews > 0 ? totalPayout / totalViews : 0;
+
+    return {
+      totalViews,
+      totalLikes,
+      totalComments,
+      totalFollowers,
+      totalPayout,
+      avgEngagement,
+      effectiveCPV,
+      postedCount: postedApplications.length
+    };
+  }, [postedApplications]);
+
+  // Single-creator inline manual refresh
+  const handleRefreshCreator = async (applicationId: string) => {
+    try {
+      toast({
+        title: "Syncing Insights",
+        description: "Connecting to Meta Graph API...",
+      });
+      const url = getApiUrl(`api/applications/${applicationId}/refresh-insights`);
+      const res = await fetch(url, { method: 'POST' });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        toast({
+          title: "Sync Complete",
+          description: "Verified stats updated successfully.",
+        });
+        refetch();
+      } else {
+        throw new Error(data.error || "Sync failed");
+      }
+    } catch (err: any) {
+      toast({
+        title: "Sync Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Sync all live posts in parallel
+  const handleRefreshAll = async () => {
+    if (postedApplications.length === 0) {
+      toast({
+        title: "No Live Content",
+        description: "There are no live posts submitted to refresh.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setRefreshing(true);
+      toast({
+        title: "Syncing Campaign Insights",
+        description: `Running real-time Instagram Graph API sync for ${postedApplications.length} active posts...`,
+      });
+
+      await Promise.all(
+        postedApplications.map(async (app) => {
+          const url = getApiUrl(`api/applications/${app.id}/refresh-insights`);
+          await fetch(url, { method: 'POST' }).catch(err => console.error("Error syncing app:", app.id, err));
+        })
+      );
+
+      toast({
+        title: "Campaign Synced",
+        description: "All live content metrics have been refreshed in real-time.",
+      });
+      refetch();
+    } catch (err: any) {
+      toast({
+        title: "Sync Failed",
+        description: "Could not sync all creator insights.",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // 1. Chart: Cumulative Views Progress Over Time
+  const snapshotChartData = React.useMemo(() => {
+    if (postedApplications.length === 0) return [];
+
+    const timestamps = new Set<string>();
+    postedApplications.forEach(app => {
+      const snaps = app.snapshots || [];
+      snaps.forEach((s: any) => {
+        timestamps.add(new Date(s.captured_at).toISOString());
       });
     });
-    
-    return statusMap;
-  }, [allCampaignCreators, details?.contents]);
 
-  const handles = React.useMemo(() => {
-    const s = new Set<string>();
-    for (const c of liveContents) {
-      if (c.creators?.ig_handle) s.add(c.creators.ig_handle.replace(/^@/, ''));
+    if (timestamps.size === 0) {
+      // Fallback: Create base point at zero and current values
+      return [
+        { time: 'Baseline', 'Total Campaign Views': 0 },
+        { time: 'Current', 'Total Campaign Views': metrics.totalViews }
+      ];
     }
-    return Array.from(s);
-  }, [liveContents]);
 
-  const postInsightsQueries = useQuery<{ [contentId: string]: any }>({
-    queryKey: ['post-insights', liveContents.map(c => c.id).sort().join(',')],
-    queryFn: async () => {
-      const entries = await Promise.all(liveContents.map(async (content) => {
-        if (!content.post_url || !content.creators?.ig_handle) {
-          return [content.id, null] as const;
-        }
+    const sortedTimes = Array.from(timestamps).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+    return sortedTimes.map(time => {
+      const formattedTime = new Date(time).toLocaleDateString('en-IN', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+      });
+
+      const dataPoint: any = { time: formattedTime };
+      let cumulativeViews = 0;
+
+      postedApplications.forEach(app => {
+        const snaps = app.snapshots || [];
+        const matchingSnap = snaps
+          .filter((s: any) => new Date(s.captured_at).getTime() <= new Date(time).getTime())
+          .sort((a: any, b: any) => new Date(b.captured_at).getTime() - new Date(a.captured_at).getTime())[0];
         
-        const handle = content.creators.ig_handle.replace(/^@/, '');
-        try {
-          const url = getApiUrl(`api/post-insights?postUrl=${encodeURIComponent(content.post_url)}&username=${encodeURIComponent(handle)}`);
-          const res = await fetch(url);
-          if (!res.ok) return [content.id, null] as const;
-          const data = await res.json();
-          return [content.id, data] as const;
-        } catch {
-          return [content.id, null] as const;
-        }
-      }));
-      return entries.reduce((acc, [contentId, data]) => {
-        if (data) acc[contentId] = data;
-        return acc;
-      }, {} as { [k: string]: any });
-    },
-    enabled: liveContents.length > 0,
-  });
+        const views = matchingSnap ? Number(matchingSnap.views || 0) : 0;
+        dataPoint[app.creator.name] = views;
+        cumulativeViews += views;
+      });
 
-  const insightsQueries = useQuery<{ [handle: string]: InsightsResponse }>({
-    queryKey: ['insights-by-handle', handles.sort().join(',')],
-    queryFn: async () => {
-      const entries = await Promise.all(handles.map(async (h) => {
-        const url = getApiUrl(`api/insights?username=${encodeURIComponent(h)}`);
-        const res = await fetch(url);
-        if (!res.ok) return [h, null] as const;
-        const data: InsightsResponse = await res.json();
-        return [h, data] as const;
-      }));
-      return entries.reduce((acc, [h, data]) => {
-        if (data) acc[h] = data;
-        return acc;
-      }, {} as { [k: string]: InsightsResponse });
-    },
-    enabled: handles.length > 0,
-  });
+      dataPoint['Total Campaign Views'] = cumulativeViews;
+      return dataPoint;
+    });
+  }, [postedApplications, metrics.totalViews]);
 
-  const insightsByHandle = insightsQueries.data || {};
-  const postInsightsByContentId = postInsightsQueries.data || {};
+  // 2. Chart: Engagement vs Views Scatter Plot
+  const scatterChartData = React.useMemo(() => {
+    return postedApplications.map(app => {
+      const views = Number(app.verified_views || 0);
+      const likes = Number(app.likes || 0);
+      const comments = Number(app.comments || 0);
+      const followers = Number(app.creator?.followers_count || 1);
+      const er = followers > 0 ? ((likes + comments) / followers) * 100 : 0;
 
-  const getPostDataForContent = (contentId: string) => {
-    const postData = postInsightsByContentId[contentId];
-    if (postData && postData.success && postData.post) {
       return {
-        ...postData.post,
-        creator_followers: postData.creator?.followers_count || 0,
-        creator_profile_picture: postData.creator?.profile_picture_url,
+        name: app.creator.name,
+        views,
+        engagementRate: er,
+        followers,
+        payout: app.final_earning_inr || 0
       };
+    });
+  }, [postedApplications]);
+
+  // 3. Chart: Creator Views Comparison (Average Historical vs Actual Reel)
+  const comparisonChartData = React.useMemo(() => {
+    return postedApplications.map(app => {
+      return {
+        name: app.creator.name.split(' ')[0],
+        'Reel Views': Number(app.verified_views || 0),
+        'Historical Avg Views': Number(app.creator.avg_views || 0)
+      };
+    });
+  }, [postedApplications]);
+
+  // 4. Chart: Engagement Distribution
+  const pieData = React.useMemo(() => {
+    if (postedApplications.length === 0) return [];
+    return [
+      { name: 'Likes', value: metrics.totalLikes, color: '#ec4899' },
+      { name: 'Comments', value: metrics.totalComments, color: '#6366f1' }
+    ].filter(item => item.value > 0);
+  }, [postedApplications, metrics.totalLikes, metrics.totalComments]);
+
+  // Custom tooltips
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-slate-900/95 backdrop-blur-md text-white border-0 p-4 shadow-2xl rounded-2xl text-left text-xs min-w-[200px]">
+          <p className="font-bold text-slate-200 mb-2 border-b border-white/10 pb-1.5">{label}</p>
+          {payload.map((pld: any) => (
+            <div key={pld.name} className="flex items-center justify-between gap-4 py-1 font-semibold">
+              <span className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: pld.color || pld.fill }} />
+                <span className="text-slate-300">{pld.name}</span>
+              </span>
+              <span className="text-white">
+                {pld.name.includes('Rate') || pld.name.includes('Engagement') 
+                  ? `${Number(pld.value).toFixed(2)}%` 
+                  : pld.name.includes('Payout') 
+                    ? formatCurrency(pld.value)
+                    : formatDisplayNumber(pld.value)}
+              </span>
+            </div>
+          ))}
+        </div>
+      );
     }
     return null;
   };
 
-  const refreshAll = () => {
-    refetch();
-    queryClient.invalidateQueries({ queryKey: ['insights-by-handle'] });
-    queryClient.invalidateQueries({ queryKey: ['post-insights'] });
-  };
-
-  const combinedMetrics = React.useMemo(() => {
-    if (liveContents.length === 0) return null;
-
-    let totalLikes = 0;
-    let totalComments = 0;
-    let totalFollowers = 0;
-    let totalEngagement = 0;
-    let validPosts = 0;
-
-    liveContents.forEach((c) => {
-      const handle = c.creators?.ig_handle?.replace(/^@/, '') || '';
-      const insights = insightsByHandle[handle];
-      const postData = getPostDataForContent(c.id);
-      
-      const likes = postData?.like_count ?? 0;
-      const comments = postData?.comments_count ?? 0;
-      const followers = postData?.creator_followers || formatNumber(insights?.profile?.followers_count) || 1;
-      const engagementRate = postData?.engagement_rate ?? getEngagementRate(likes, comments, followers);
-
-      if (postData) {
-        totalLikes += likes;
-        totalComments += comments;
-        totalFollowers += followers;
-        totalEngagement += engagementRate;
-        validPosts++;
-      }
-    });
-
-    return {
-      totalLikes,
-      totalComments,
-      totalFollowers,
-      avgEngagement: validPosts > 0 ? totalEngagement / validPosts : 0,
-      totalPosts: validPosts,
-      totalCreators: handles.length
-    };
-  }, [liveContents, insightsByHandle, handles.length]);
-
-  const chartData = React.useMemo(() => {
-    return liveContents.map((c, index) => {
-      const handle = c.creators?.ig_handle?.replace(/^@/, '') || '';
-      const insights = insightsByHandle[handle];
-      const postData = getPostDataForContent(c.id);
-      
-      const likes = postData?.like_count ?? 0;
-      const comments = postData?.comments_count ?? 0;
-      const followers = postData?.creator_followers || formatNumber(insights?.profile?.followers_count) || 1;
-      const engagementRate = postData?.engagement_rate ?? getEngagementRate(likes, comments, followers);
-      
-      return {
-        name: c.creators?.name?.split(' ')[0] || `Post ${index + 1}`,
-        likes,
-        comments,
-        engagement: engagementRate,
-        followers
-      };
-    });
-  }, [liveContents, insightsByHandle, postInsightsByContentId]);
-
-  const pieData = React.useMemo(() => {
-    if (!combinedMetrics) return [];
-    
-    return [
-      { name: 'Likes', value: combinedMetrics.totalLikes, color: '#ec4899' },
-      { name: 'Comments', value: combinedMetrics.totalComments, color: '#6366f1' }
-    ].filter(item => item.value > 0);
-  }, [combinedMetrics]);
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center min-h-96">
-            <div className="text-center">
-              <div className="relative">
-                <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-100 border-t-indigo-600 mx-auto"></div>
-                <Sparkles className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-indigo-600" />
-              </div>
-              <p className="text-slate-600 mt-6 font-medium">Loading campaign analytics...</p>
-            </div>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 text-white">
+        <div className="text-center space-y-6">
+          <div className="relative inline-block">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-500/20 border-t-indigo-500 mx-auto"></div>
+            <Sparkles className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-indigo-400" />
           </div>
+          <p className="text-slate-400 font-medium">Analyzing Campaign Ledger...</p>
         </div>
       </div>
     );
   }
 
-  if (isError || !details?.campaign) {
+  if (isError || !campaign) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 p-6">
-        <div className="max-w-7xl mx-auto">
-          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur">
-            <CardContent className="text-center py-16">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle className="h-8 w-8 text-red-600" />
-              </div>
-              <h1 className="text-2xl font-bold text-slate-900 mb-2">Campaign Analytics</h1>
-              <p className="text-red-600 mb-6">{(error as Error)?.message || 'Failed to load campaign'}</p>
-              <Button onClick={() => window.location.reload()} className="bg-indigo-600 hover:bg-indigo-700">
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 text-white">
+        <Card className="border-slate-800 bg-slate-900 max-w-md w-full">
+          <CardContent className="text-center py-12">
+            <div className="w-16 h-16 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+              <AlertTriangle className="h-8 w-8 text-red-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-100 mb-2">Sync Error</h2>
+            <p className="text-red-400 mb-6 font-medium">{(error as Error)?.message || 'Failed to load campaign'}</p>
+            <Button onClick={() => window.location.reload()} className="bg-indigo-600 hover:bg-indigo-700">
+              Retry Connection
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  const postedCount = Array.from(creatorPostStatus.values()).filter(s => s.hasPosted).length;
+  const budgetUsagePercent = campaign.budget && campaign.budget > 0 
+    ? (metrics.totalPayout / campaign.budget) * 100 
+    : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+    <div className="min-h-screen bg-slate-950 text-white selection:bg-indigo-500 selection:text-white pb-12">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        
+        {/* Breadcrumb Navigation & Real-time Pulsing Sync Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 border-b border-slate-800/80 pb-6">
           <div className="flex items-start gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => window.history.back()}
-              className="mt-1 hover:bg-indigo-100"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-900 bg-clip-text text-transparent">
-                {details.campaign.campaign_name}
-              </h1>
-              <div className="flex items-center gap-3 mt-2">
-                <Badge className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 shadow-sm">
-                  {details.campaign.phase.replace('_', ' ').toUpperCase()}
-                </Badge>
-                <span className="text-sm text-slate-500 flex items-center gap-1">
-                  <Activity className="h-3.5 w-3.5" />
-                  Analytics Dashboard
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Link to={`/dashboard/campaigns/${details.campaign.id}`}>
-              <Button variant="outline" size="sm" className="border-slate-200 hover:bg-slate-50">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Campaign
+            <Link to={`/dashboard/campaigns/${campaign.id}`}>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="hover:bg-slate-900 border border-slate-800/80 text-slate-400 hover:text-white"
+              >
+                <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <Button onClick={refreshAll} size="sm" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh Data
+            <div>
+              <div className="flex items-center gap-3">
+                <Badge className="bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 font-bold px-2.5 py-0.5 rounded-full text-xs">
+                  {campaign.phase.replace('_', ' ').toUpperCase()}
+                </Badge>
+                <div className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-bold">
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                  Meta API Sync Active
+                </div>
+              </div>
+              <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-indigo-300 bg-clip-text text-transparent mt-2">
+                {campaign.campaign_name}
+              </h1>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link to={`/dashboard/campaigns/${campaign.id}`}>
+              <Button variant="outline" className="border-slate-800 bg-slate-900/40 text-slate-300 hover:bg-slate-900 hover:text-white">
+                Manage Submissions
+              </Button>
+            </Link>
+            <Button 
+              onClick={handleRefreshAll} 
+              disabled={refreshing}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-600/20 gap-2 disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Sync Campaign
             </Button>
           </div>
         </div>
 
-        {liveContents.length === 0 && allCampaignCreators.length === 0 ? (
-          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur">
-            <CardContent className="text-center py-16">
-              <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Activity className="h-10 w-10 text-indigo-600" />
+        {postedApplications.length === 0 ? (
+          <Card className="border-slate-800 bg-slate-900/40 backdrop-blur-md">
+            <CardContent className="text-center py-20 space-y-6">
+              <div className="w-20 h-20 bg-indigo-500/10 rounded-3xl border border-indigo-500/25 flex items-center justify-center mx-auto shadow-2xl shadow-indigo-500/5">
+                <Flame className="h-10 w-10 text-indigo-400 animate-pulse" />
               </div>
-              <h2 className="text-2xl font-bold mb-3 text-slate-900">No Creators Yet</h2>
-              <p className="text-slate-600 max-w-md mx-auto">
-                Once creators are assigned to this campaign and they post content, you'll see comprehensive analytics here.
-              </p>
+              <div className="max-w-md mx-auto space-y-2">
+                <h3 className="text-2xl font-bold text-slate-100">Pending Live Content</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  Creator agreements are locked in. Historical profile averages will show here once content link verifications are approved and live tracking begins.
+                </p>
+              </div>
+              <div className="flex justify-center gap-3">
+                <Link to={`/dashboard/campaigns/${campaign.id}`}>
+                  <Button className="bg-indigo-600 hover:bg-indigo-700">Go to Script Planner</Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
-        ) : liveContents.length === 0 ? (
-          <>
-            {/* Summary Cards - No Live Posts Yet */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-                <CardContent className="p-6 relative">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-indigo-100">Total Creators</p>
-                      <p className="text-4xl font-bold mt-1">{allCampaignCreators.length}</p>
-                      <p className="text-xs text-indigo-200 mt-2">Assigned to campaign</p>
-                    </div>
-                    <div className="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur">
-                      <Users className="h-7 w-7" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-                <CardContent className="p-6 relative">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-emerald-100">Posted</p>
-                      <p className="text-4xl font-bold mt-1">{postedCount}</p>
-                      <p className="text-xs text-emerald-200 mt-2">Live content</p>
-                    </div>
-                    <div className="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur">
-                      <CheckCircle className="h-7 w-7" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-                <CardContent className="p-6 relative">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-amber-100">Pending</p>
-                      <p className="text-4xl font-bold mt-1">{pendingApprovalContent.length}</p>
-                      <p className="text-xs text-amber-200 mt-2">Awaiting review</p>
-                    </div>
-                    <div className="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur">
-                      <Clock className="h-7 w-7" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-pink-500 to-rose-600 text-white overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-                <CardContent className="p-6 relative">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-pink-100">Potential Reach</p>
-                      <p className="text-4xl font-bold mt-1">
-                        {formatDisplayNumber(allCampaignCreators.reduce((sum, cc) => sum + (cc.creators?.followers_count || 0), 0))}
-                      </p>
-                      <p className="text-xs text-pink-200 mt-2">Combined followers</p>
-                    </div>
-                    <div className="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur">
-                      <Target className="h-7 w-7" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Tabs for No Live Posts */}
-            <Tabs defaultValue="creators" className="space-y-6">
-              <TabsList className="bg-white/80 backdrop-blur border border-slate-200 p-1.5 rounded-xl shadow-sm">
-                <TabsTrigger value="creators" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg px-6">
-                  <Users className="h-4 w-4 mr-2" />
-                  Creators ({allCampaignCreators.length})
-                </TabsTrigger>
-                <TabsTrigger value="approval" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg px-6">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Approval
-                  {pendingApprovalContent.length > 0 && (
-                    <Badge className="ml-2 bg-rose-500 text-white border-0 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                      {pendingApprovalContent.length}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="creators" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {allCampaignCreators.map(cc => {
-                    const creator = cc.creators;
-                    const handle = creator?.ig_handle?.replace(/^@/, '') || '';
-                    const postStatus = creatorPostStatus.get(cc.creator_id);
-                    const hasPosted = postStatus?.hasPosted || false;
-
-                    return (
-                      <Card key={cc.id} className={`border-0 shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white ${hasPosted ? 'ring-2 ring-emerald-500 ring-offset-4' : ''}`}>
-                        <CardContent className="p-6">
-                          <div className="flex items-center gap-5">
-                            {creator?.profile_picture_url ? (
-                              <img 
-                                src={creator.profile_picture_url} 
-                                className="w-16 h-16 rounded-2xl object-cover shadow-lg ring-4 ring-white" 
-                                alt={creator?.name || handle}
-                              />
-                            ) : (
-                              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                                <span className="text-2xl font-bold text-white">
-                                  {(creator?.name || handle || 'U').charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <h3 className="font-bold text-lg text-slate-900 truncate">{creator?.name || 'Unknown'}</h3>
-                              <a 
-                                href={`https://instagram.com/${handle}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-sm text-indigo-600 hover:text-indigo-700 truncate block"
-                              >
-                                @{handle || 'unknown'}
-                              </a>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center justify-between mt-5 py-3 px-4 bg-slate-50 rounded-xl">
-                            <div className="text-center flex-1">
-                              <p className="text-lg font-bold text-slate-900">{formatDisplayNumber(creator?.followers_count)}</p>
-                              <p className="text-xs text-slate-500">Followers</p>
-                            </div>
-                            <div className="h-8 w-px bg-slate-200"></div>
-                            <div className="text-center flex-1">
-                              <p className="text-sm font-semibold text-slate-700">{creator?.category || '-'}</p>
-                              <p className="text-xs text-slate-500">Category</p>
-                            </div>
-                          </div>
-
-                          <div className={`flex items-center justify-center gap-2 mt-4 p-3.5 rounded-xl font-medium ${hasPosted ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/25' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
-                            {hasPosted ? (
-                              <>
-                                <CheckCircle className="h-5 w-5" />
-                                <span>Posted</span>
-                              </>
-                            ) : (
-                              <>
-                                <Clock className="h-5 w-5 text-slate-400" />
-                                <span>Awaiting Post</span>
-                              </>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="approval" className="space-y-6">
-                <Card className="border-0 shadow-lg">
-                  <CardContent className="p-6">
-                    {pendingApprovalContent.length === 0 ? (
-                      <div className="text-center py-12">
-                        <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <CheckCircle className="h-8 w-8 text-emerald-600" />
-                        </div>
-                        <p className="text-slate-600 font-medium">All caught up!</p>
-                        <p className="text-sm text-slate-500 mt-1">No content pending approval</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {pendingApprovalContent.map((content) => (
-                          <Card key={content.id} className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
-                            <CardContent className="p-5">
-                              <div className="flex items-center gap-3 mb-3">
-                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-                                  <Users className="h-6 w-6 text-amber-600" />
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-slate-900">{content.creators?.name || 'Unknown'}</div>
-                                  <div className="text-sm text-slate-500">@{content.creators?.ig_handle?.replace(/^@/, '')}</div>
-                                </div>
-                              </div>
-                              <Badge className={`${content.approval_status === 'pending' ? 'bg-amber-500' : 'bg-orange-500'} text-white border-0`}>
-                                {content.approval_status === 'pending' ? 'Pending Review' : 'Needs Revision'}
-                              </Badge>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </>
         ) : (
           <>
-            {/* Overview Cards - With Live Posts */}
-            {combinedMetrics && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-                  <CardContent className="p-6 relative">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-indigo-100">Total Engagement</p>
-                        <p className="text-4xl font-bold mt-1">
-                          {formatDisplayNumber(combinedMetrics.totalLikes + combinedMetrics.totalComments)}
-                        </p>
-                        <p className="text-xs text-indigo-200 mt-2 flex items-center gap-1">
-                          <TrendingUp className="h-3 w-3" />
-                          Avg: {pct(combinedMetrics.avgEngagement)}
-                        </p>
-                      </div>
-                      <div className="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur">
-                        <Zap className="h-7 w-7" />
-                      </div>
+            {/* KPI Metrics Dashboard Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              
+              {/* Total Verified Views */}
+              <Card className="border-slate-800/80 bg-slate-900/30 backdrop-blur-md hover:border-slate-700/80 transition-all duration-300 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full -translate-y-12 translate-x-12 group-hover:scale-110 transition-transform duration-300"></div>
+                <CardContent className="p-5 flex flex-col justify-between h-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-semibold tracking-wider uppercase text-indigo-300/80">Verified Views</span>
+                    <div className="h-8 w-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                      <Eye className="h-4.5 w-4.5 text-indigo-400" />
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <div>
+                    <h4 className="text-3xl font-extrabold text-white">{formatDisplayNumber(metrics.totalViews)}</h4>
+                    <div className="flex items-center gap-1.5 text-[11px] text-indigo-400/90 font-medium mt-1">
+                      <span>Live views tracked</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <Card className="border-0 shadow-lg bg-gradient-to-br from-pink-500 to-rose-600 text-white overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-                  <CardContent className="p-6 relative">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-pink-100">Total Likes</p>
-                        <p className="text-4xl font-bold mt-1">
-                          {formatDisplayNumber(combinedMetrics.totalLikes)}
-                        </p>
-                        <p className="text-xs text-pink-200 mt-2">
-                          Across {combinedMetrics.totalPosts} posts
-                        </p>
-                      </div>
-                      <div className="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur">
-                        <Heart className="h-7 w-7" />
-                      </div>
+              {/* Total Accrued Spend */}
+              <Card className="border-slate-800/80 bg-slate-900/30 backdrop-blur-md hover:border-slate-700/80 transition-all duration-300 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full -translate-y-12 translate-x-12 group-hover:scale-110 transition-transform duration-300"></div>
+                <CardContent className="p-5 flex flex-col justify-between h-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-semibold tracking-wider uppercase text-emerald-300/80">Accrued Spent</span>
+                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                      <DollarSign className="h-4.5 w-4.5 text-emerald-400" />
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <div>
+                    <h4 className="text-3xl font-extrabold text-white">{formatCurrency(metrics.totalPayout)}</h4>
+                    <div className="flex items-center gap-1.5 text-[11px] text-emerald-400/90 font-medium mt-1">
+                      <span>{budgetUsagePercent.toFixed(1)}% of budget utilized</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-cyan-600 text-white overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-                  <CardContent className="p-6 relative">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-blue-100">Total Comments</p>
-                        <p className="text-4xl font-bold mt-1">
-                          {formatDisplayNumber(combinedMetrics.totalComments)}
-                        </p>
-                        <p className="text-xs text-blue-200 mt-2">
-                          User conversations
-                        </p>
-                      </div>
-                      <div className="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur">
-                        <MessageCircle className="h-7 w-7" />
-                      </div>
+              {/* Effective CPV */}
+              <Card className="border-slate-800/80 bg-slate-900/30 backdrop-blur-md hover:border-slate-700/80 transition-all duration-300 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full -translate-y-12 translate-x-12 group-hover:scale-110 transition-transform duration-300"></div>
+                <CardContent className="p-5 flex flex-col justify-between h-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-semibold tracking-wider uppercase text-amber-300/80">Effective CPV</span>
+                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                      <ShieldCheck className="h-4.5 w-4.5 text-amber-400" />
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <div>
+                    <h4 className="text-3xl font-extrabold text-white">₹{metrics.effectiveCPV.toFixed(2)}</h4>
+                    <div className="flex items-center gap-1.5 text-[11px] text-amber-400/90 font-medium mt-1">
+                      <span>CPV rate: ₹{(campaign.cpv_rate || 0.6).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-                  <CardContent className="p-6 relative">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-emerald-100">Total Reach</p>
-                        <p className="text-4xl font-bold mt-1">
-                          {formatDisplayNumber(combinedMetrics.totalFollowers)}
-                        </p>
-                        <p className="text-xs text-emerald-200 mt-2">
-                          Creator followers
-                        </p>
-                      </div>
-                      <div className="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur">
-                        <Target className="h-7 w-7" />
-                      </div>
+              {/* Total Engagement */}
+              <Card className="border-slate-800/80 bg-slate-900/30 backdrop-blur-md hover:border-slate-700/80 transition-all duration-300 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-pink-500/5 rounded-full -translate-y-12 translate-x-12 group-hover:scale-110 transition-transform duration-300"></div>
+                <CardContent className="p-5 flex flex-col justify-between h-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-semibold tracking-wider uppercase text-pink-300/80">Engagement</span>
+                    <div className="h-8 w-8 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
+                      <Activity className="h-4.5 w-4.5 text-pink-400" />
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <div>
+                    <h4 className="text-3xl font-extrabold text-white">
+                      {formatDisplayNumber(metrics.totalLikes + metrics.totalComments)}
+                    </h4>
+                    <div className="flex items-center gap-1.5 text-[11px] text-pink-400/90 font-medium mt-1">
+                      <span>Avg Rate: {metrics.avgEngagement.toFixed(2)}%</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Total Audience Reach */}
+              <Card className="border-slate-800/80 bg-slate-900/30 backdrop-blur-md hover:border-slate-700/80 transition-all duration-300 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -translate-y-12 translate-x-12 group-hover:scale-110 transition-transform duration-300"></div>
+                <CardContent className="p-5 flex flex-col justify-between h-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-semibold tracking-wider uppercase text-blue-300/80">Audience Reach</span>
+                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                      <Users className="h-4.5 w-4.5 text-blue-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-3xl font-extrabold text-white">{formatDisplayNumber(metrics.totalFollowers)}</h4>
+                    <div className="flex items-center gap-1.5 text-[11px] text-blue-400/90 font-medium mt-1">
+                      <span>Across {metrics.postedCount} active creators</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+            </div>
+
+            {/* Main Tabs Navigation */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <TabsList className="bg-slate-900/60 border border-slate-800/60 p-1 rounded-xl">
+                  <TabsTrigger value="overview" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-lg px-5 py-2 font-bold text-xs text-slate-400">
+                    <BarChart3 className="h-3.5 w-3.5 mr-2" />
+                    Visual Analytics
+                  </TabsTrigger>
+                  <TabsTrigger value="creators" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-lg px-5 py-2 font-bold text-xs text-slate-400">
+                    <Users className="h-3.5 w-3.5 mr-2" />
+                    Creator Breakdown
+                  </TabsTrigger>
+                </TabsList>
+
+                <div className="text-xs text-slate-400 font-medium">
+                  Budget allocation: <span className="font-bold text-white">{formatCurrency(campaign.budget || 0)}</span>
+                </div>
               </div>
-            )}
 
-            {/* Analytics Tabs */}
-            <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="bg-white/80 backdrop-blur border border-slate-200 p-1.5 rounded-xl shadow-sm inline-flex">
-                <TabsTrigger value="overview" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg px-5">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger value="approval" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg px-5">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Approval
-                  {pendingApprovalContent.length > 0 && (
-                    <Badge className="ml-2 bg-rose-500 text-white border-0 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                      {pendingApprovalContent.length}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="creators" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg px-5">
-                  <Users className="h-4 w-4 mr-2" />
-                  Creators ({allCampaignCreators.length})
-                </TabsTrigger>
-                <TabsTrigger value="performance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg px-5">
-                  <Target className="h-4 w-4 mr-2" />
-                  Insights
-                </TabsTrigger>
-                <TabsTrigger value="posts" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg px-5">
-                  <Instagram className="h-4 w-4 mr-2" />
-                  Live Posts ({liveContents.length})
-                </TabsTrigger>
-              </TabsList>
-
-              {/* Overview Tab */}
+              {/* OVERVIEW TAB: Charts Page */}
               <TabsContent value="overview" className="space-y-6">
+                
+                {/* Visual Analytics Chart Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Engagement Chart */}
-                  <Card className="border-0 shadow-lg">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <div className="h-8 w-8 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center">
-                          <BarChart3 className="h-4 w-4 text-indigo-600" />
-                        </div>
-                        Engagement by Creator
+                  
+                  {/* Cumulative Campaign Views Growth */}
+                  <Card className="border-slate-800/80 bg-slate-900/20 backdrop-blur-md">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-sm font-bold tracking-wide uppercase text-slate-300">
+                        <TrendingUp className="h-4 w-4 text-indigo-400" />
+                        Views Tracker over Time
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {chartData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                      {snapshotChartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={320}>
+                          <AreaChart data={snapshotChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                             <defs>
-                              <linearGradient id="likesGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#ec4899" stopOpacity={1}/>
-                                <stop offset="100%" stopColor="#f472b6" stopOpacity={0.8}/>
-                              </linearGradient>
-                              <linearGradient id="commentsGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#6366f1" stopOpacity={1}/>
-                                <stop offset="100%" stopColor="#818cf8" stopOpacity={0.8}/>
+                              <linearGradient id="totalViewsGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                               </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                            <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={{ stroke: '#e2e8f0' }} />
-                            <YAxis tick={{ fill: '#64748b', fontSize: 12 }} axisLine={{ stroke: '#e2e8f0' }} />
-                            <Tooltip 
-                              contentStyle={{ 
-                                backgroundColor: 'white', 
-                                border: 'none', 
-                                borderRadius: '12px', 
-                                boxShadow: '0 10px 40px rgba(0,0,0,0.1)' 
-                              }}
+                            <CartesianGrid strokeDasharray="3 3" stroke="#334155/30" />
+                            <XAxis dataKey="time" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} />
+                            <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Area 
+                              type="monotone" 
+                              dataKey="Total Campaign Views" 
+                              stroke="#6366f1" 
+                              strokeWidth={3}
+                              fillOpacity={1} 
+                              fill="url(#totalViewsGrad)" 
                             />
-                            <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                            <Bar dataKey="likes" fill="url(#likesGradient)" name="Likes" radius={[8, 8, 0, 0]} />
-                            <Bar dataKey="comments" fill="url(#commentsGradient)" name="Comments" radius={[8, 8, 0, 0]} />
-                          </BarChart>
+                          </AreaChart>
                         </ResponsiveContainer>
                       ) : (
-                        <div className="h-300 flex items-center justify-center">
-                          <p className="text-slate-500">No data available</p>
+                        <div className="h-[320px] flex items-center justify-center text-slate-500">
+                          Waiting for more sync snapshots to plot growth trend...
                         </div>
                       )}
                     </CardContent>
                   </Card>
 
-                  {/* Distribution Pie Chart */}
-                  <Card className="border-0 shadow-lg">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <div className="h-8 w-8 bg-gradient-to-br from-pink-100 to-rose-100 rounded-lg flex items-center justify-center">
-                          <Award className="h-4 w-4 text-pink-600" />
+                  {/* Creator Performance Comparison */}
+                  <Card className="border-slate-800/80 bg-slate-900/20 backdrop-blur-md">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-sm font-bold tracking-wide uppercase text-slate-300">
+                        <Users className="h-4 w-4 text-emerald-400" />
+                        Views vs. Creator Historical Average
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {comparisonChartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={320}>
+                          <BarChart data={comparisonChartData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                            <defs>
+                              <linearGradient id="reelViewsGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#10b981" stopOpacity={1}/>
+                                <stop offset="100%" stopColor="#059669" stopOpacity={0.8}/>
+                              </linearGradient>
+                              <linearGradient id="histViewsGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#475569" stopOpacity={0.8}/>
+                                <stop offset="100%" stopColor="#334155" stopOpacity={0.5}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#334155/30" />
+                            <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} />
+                            <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
+                            <Bar dataKey="Reel Views" fill="url(#reelViewsGrad)" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="Historical Avg Views" fill="url(#histViewsGrad)" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="h-[320px] flex items-center justify-center text-slate-500">
+                          No performance values recorded.
                         </div>
-                        Engagement Distribution
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Engagement vs Views Scatter Plot */}
+                  <Card className="border-slate-800/80 bg-slate-900/20 backdrop-blur-md">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-sm font-bold tracking-wide uppercase text-slate-300">
+                        <Activity className="h-4 w-4 text-pink-400" />
+                        Engagement Rate vs. Views Matrix
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {scatterChartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={320}>
+                          <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: -20 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#334155/30" />
+                            <XAxis 
+                              type="number" 
+                              dataKey="views" 
+                              name="Views" 
+                              unit="" 
+                              tickFormatter={(v) => formatDisplayNumber(v)}
+                              tick={{ fill: '#94a3b8', fontSize: 10 }}
+                              label={{ value: 'Views', position: 'bottom', offset: 0, fill: '#94a3b8', fontSize: 11 }}
+                            />
+                            <YAxis 
+                              type="number" 
+                              dataKey="engagementRate" 
+                              name="Engagement Rate" 
+                              unit="%"
+                              tick={{ fill: '#94a3b8', fontSize: 10 }}
+                              label={{ value: 'Engagement Rate', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 11 }}
+                            />
+                            <ZAxis type="number" dataKey="followers" range={[60, 400]} name="Followers" />
+                            <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
+                            <Scatter name="Creators" data={scatterChartData} fill="#ec4899">
+                              {scatterChartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Scatter>
+                          </ScatterChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="h-[320px] flex items-center justify-center text-slate-500">
+                          Waiting for verified view counts...
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Likes vs Comments Distribution */}
+                  <Card className="border-slate-800/80 bg-slate-900/20 backdrop-blur-md">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-sm font-bold tracking-wide uppercase text-slate-300">
+                        <Award className="h-4 w-4 text-amber-400" />
+                        Engagement Split
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       {pieData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                          <PieChart>
-                            <Pie
-                              data={pieData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={70}
-                              outerRadius={110}
-                              paddingAngle={5}
-                              dataKey="value"
-                            >
-                              {pieData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <Tooltip 
-                              formatter={(value: number) => formatDisplayNumber(value)}
-                              contentStyle={{ 
-                                backgroundColor: 'white', 
-                                border: 'none', 
-                                borderRadius: '12px', 
-                                boxShadow: '0 10px 40px rgba(0,0,0,0.1)' 
-                              }}
-                            />
-                            <Legend 
-                              formatter={(value) => <span className="text-slate-600 font-medium">{value}</span>}
-                              wrapperStyle={{ paddingTop: '20px' }}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      ) : (
-                        <div className="h-300 flex items-center justify-center">
-                          <p className="text-slate-500">No data available</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Card className="border-0 shadow-md bg-white">
-                    <CardContent className="p-5 text-center">
-                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                        <Users className="h-6 w-6 text-indigo-600" />
-                      </div>
-                      <p className="text-2xl font-bold text-slate-900">{allCampaignCreators.length}</p>
-                      <p className="text-sm text-slate-500">Total Creators</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-0 shadow-md bg-white">
-                    <CardContent className="p-5 text-center">
-                      <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                        <CheckCircle className="h-6 w-6 text-emerald-600" />
-                      </div>
-                      <p className="text-2xl font-bold text-slate-900">{postedCount}</p>
-                      <p className="text-sm text-slate-500">Posted</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-0 shadow-md bg-white">
-                    <CardContent className="p-5 text-center">
-                      <div className="w-12 h-12 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                        <Clock className="h-6 w-6 text-amber-600" />
-                      </div>
-                      <p className="text-2xl font-bold text-slate-900">{allCampaignCreators.length - postedCount}</p>
-                      <p className="text-sm text-slate-500">Pending</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-0 shadow-md bg-white">
-                    <CardContent className="p-5 text-center">
-                      <div className="w-12 h-12 bg-gradient-to-br from-pink-100 to-rose-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                        <TrendingUp className="h-6 w-6 text-pink-600" />
-                      </div>
-                      <p className="text-2xl font-bold text-slate-900">{pct(combinedMetrics?.avgEngagement)}</p>
-                      <p className="text-sm text-slate-500">Avg Engagement</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              {/* Approval Tab */}
-              <TabsContent value="approval" className="space-y-6">
-                <Card className="border-0 shadow-lg">
-                  <CardContent className="p-6">
-                    {pendingApprovalContent.length === 0 ? (
-                      <div className="text-center py-12">
-                        <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <CheckCircle className="h-8 w-8 text-emerald-600" />
-                        </div>
-                        <p className="text-slate-600 font-medium">All caught up!</p>
-                        <p className="text-sm text-slate-500 mt-1">No content pending approval</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {pendingApprovalContent.map((content) => (
-                          <Card key={content.id} className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
-                            <CardContent className="p-5">
-                              <div className="flex items-center gap-3 mb-3">
-                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-                                  <Users className="h-6 w-6 text-amber-600" />
-                                </div>
+                        <div className="flex flex-col md:flex-row items-center justify-center gap-8 h-[320px]">
+                          <div className="w-[200px] h-[200px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={pieData}
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={60}
+                                  outerRadius={90}
+                                  paddingAngle={5}
+                                  dataKey="value"
+                                >
+                                  {pieData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                  ))}
+                                </Pie>
+                                <Tooltip formatter={(v: number) => formatDisplayNumber(v)} />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <div className="flex flex-col gap-3">
+                            {pieData.map(item => (
+                              <div key={item.name} className="flex items-center gap-3">
+                                <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: item.color }} />
                                 <div>
-                                  <div className="font-semibold text-slate-900">{content.creators?.name || 'Unknown'}</div>
-                                  <div className="text-sm text-slate-500">@{content.creators?.ig_handle?.replace(/^@/, '')}</div>
-                                </div>
-                              </div>
-                              <Badge className={`${content.approval_status === 'pending' ? 'bg-amber-500' : 'bg-orange-500'} text-white border-0`}>
-                                {content.approval_status === 'pending' ? 'Pending Review' : 'Needs Revision'}
-                              </Badge>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Creators Tab */}
-              <TabsContent value="creators" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {allCampaignCreators.map(cc => {
-                    const creator = cc.creators;
-                    const handle = creator?.ig_handle?.replace(/^@/, '') || '';
-                    const postStatus = creatorPostStatus.get(cc.creator_id);
-                    const hasPosted = postStatus?.hasPosted || false;
-
-                    return (
-                      <Card key={cc.id} className={`border-0 shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white ${hasPosted ? 'ring-2 ring-emerald-500 ring-offset-4' : ''}`}>
-                        <CardContent className="p-6">
-                          <div className="flex items-center gap-5">
-                            {creator?.profile_picture_url ? (
-                              <img 
-                                src={creator.profile_picture_url} 
-                                className="w-16 h-16 rounded-2xl object-cover shadow-lg ring-4 ring-white" 
-                                alt={creator?.name || handle}
-                              />
-                            ) : (
-                              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                                <span className="text-2xl font-bold text-white">
-                                  {(creator?.name || handle || 'U').charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <h3 className="font-bold text-lg text-slate-900 truncate">{creator?.name || 'Unknown'}</h3>
-                              <a 
-                                href={`https://instagram.com/${handle}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-sm text-indigo-600 hover:text-indigo-700 truncate block"
-                              >
-                                @{handle || 'unknown'}
-                              </a>
-                            </div>
-                          </div>
-
-                          <div className={`flex items-center justify-center gap-2 mt-5 p-3.5 rounded-xl font-medium ${hasPosted ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/25' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
-                            {hasPosted ? (
-                              <>
-                                <CheckCircle className="h-5 w-5" />
-                                <span>Posted</span>
-                              </>
-                            ) : (
-                              <>
-                                <Clock className="h-5 w-5 text-slate-400" />
-                                <span>Awaiting Post</span>
-                              </>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </TabsContent>
-
-              {/* Campaign Insights Tab */}
-              <TabsContent value="performance" className="space-y-6">
-                {/* Campaign Progress - Full Width */}
-                <Card className="border-0 shadow-lg">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <div className="h-8 w-8 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-lg flex items-center justify-center">
-                        <Target className="h-4 w-4 text-emerald-600" />
-                      </div>
-                      Campaign Progress
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      {/* Posting Progress */}
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-slate-700">Posting Progress</span>
-                          <span className="text-sm font-bold text-emerald-600">
-                            {postedCount} / {allCampaignCreators.length}
-                          </span>
-                        </div>
-                        <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
-                            style={{ width: `${allCampaignCreators.length > 0 ? (postedCount / allCampaignCreators.length) * 100 : 0}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {allCampaignCreators.length - postedCount} creators yet to post
-                        </p>
-                      </div>
-
-                      {/* Stats Grid */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl text-center">
-                          <p className="text-2xl font-bold text-indigo-600">{pct(combinedMetrics?.avgEngagement)}</p>
-                          <p className="text-xs text-slate-600 mt-1">Avg Engagement Rate</p>
-                        </div>
-                        <div className="p-4 bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl text-center">
-                          <p className="text-2xl font-bold text-pink-600">
-                            {formatDisplayNumber(combinedMetrics?.totalFollowers || 0)}
-                          </p>
-                          <p className="text-xs text-slate-600 mt-1">Posted Reach</p>
-                        </div>
-                        <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl text-center">
-                          <p className="text-2xl font-bold text-amber-600">{liveContents.length}</p>
-                          <p className="text-xs text-slate-600 mt-1">Live Posts</p>
-                        </div>
-                        <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl text-center">
-                          <p className="text-2xl font-bold text-emerald-600">
-                            {formatDisplayNumber((combinedMetrics?.totalLikes || 0) + (combinedMetrics?.totalComments || 0))}
-                          </p>
-                          <p className="text-xs text-slate-600 mt-1">Total Interactions</p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Reach by Posted Creators */}
-                {liveContents.length > 0 && (
-                  <Card className="border-0 shadow-lg">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <div className="h-8 w-8 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg flex items-center justify-center">
-                          <BarChart3 className="h-4 w-4 text-blue-600" />
-                        </div>
-                        Reach by Posted Creators
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {(() => {
-                        // Get creators who have posted with their reach data
-                        const postedCreatorsData = liveContents.map(c => {
-                          const handle = c.creators?.ig_handle?.replace(/^@/, '') || '';
-                          const insights = insightsByHandle[handle];
-                          const postData = getPostDataForContent(c.id);
-                          const followers = postData?.creator_followers || formatNumber(insights?.profile?.followers_count) || 0;
-                          
-                          return {
-                            id: c.id,
-                            name: c.creators?.name || 'Unknown',
-                            handle,
-                            followers,
-                            profilePic: postData?.creator_profile_picture || insights?.profile?.profile_picture_url || c.creators?.profile_picture_url
-                          };
-                        }).sort((a, b) => b.followers - a.followers);
-                        
-                        const maxFollowers = postedCreatorsData[0]?.followers || 1;
-                        
-                        if (postedCreatorsData.length === 0) {
-                          return (
-                            <div className="text-center py-8">
-                              <p className="text-slate-500">No posted creators yet</p>
-                            </div>
-                          );
-                        }
-                        
-                        return (
-                          <div className="space-y-4 mt-2">
-                            {postedCreatorsData.map((creator, idx) => (
-                              <div key={creator.id} className="flex items-center gap-4">
-                                <span className="text-sm font-bold text-slate-400 w-6">#{idx + 1}</span>
-                                {creator.profilePic ? (
-                                  <img 
-                                    src={creator.profilePic} 
-                                    alt={creator.name}
-                                    className="w-10 h-10 rounded-xl object-cover shadow"
-                                  />
-                                ) : (
-                                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow">
-                                    {creator.name.charAt(0).toUpperCase()}
-                                  </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex justify-between items-center mb-1">
-                                    <p className="text-sm font-medium text-slate-900 truncate">{creator.name}</p>
-                                    <span className="text-sm font-bold text-indigo-600">{formatDisplayNumber(creator.followers)}</span>
-                                  </div>
-                                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                    <div 
-                                      className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
-                                      style={{ width: `${(creator.followers / maxFollowers) * 100}%` }}
-                                    />
-                                  </div>
+                                  <p className="text-xs text-slate-400 font-semibold">{item.name}</p>
+                                  <p className="text-lg font-bold text-white">{formatDisplayNumber(item.value)}</p>
                                 </div>
                               </div>
                             ))}
                           </div>
-                        );
-                      })()}
+                        </div>
+                      ) : (
+                        <div className="h-[320px] flex items-center justify-center text-slate-500">
+                          No engagement metrics submitted yet.
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
-                )}
+
+                </div>
               </TabsContent>
 
-              {/* Live Posts Tab */}
-              <TabsContent value="posts" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {liveContents.map((c) => {
-                    const handle = c.creators?.ig_handle || '';
-                    const clean = handle.replace(/^@/, '');
-                    const insights = insightsByHandle[clean];
-                    const postData = getPostDataForContent(c.id);
-                    const pp = postData?.creator_profile_picture || insights?.profile?.profile_picture_url || c.creators?.profile_picture_url;
-                    const thumb = postData?.thumbnail_url || postData?.media_url || c.thumbnail_url;
+              {/* CREATOR BREAKDOWN TAB */}
+              <TabsContent value="creators" className="space-y-6">
+                
+                {/* Creator Performance Ledger Grid */}
+                <div className="space-y-6">
+                  {applications.map(app => {
+                    const creator = app.creator || {};
+                    const postUrl = app.post_url;
                     
-                    const likes = postData?.like_count ?? 0;
-                    const comments = postData?.comments_count ?? 0;
-                    const followers = postData?.creator_followers || formatNumber(insights?.profile?.followers_count) || 1;
-                    const engagementRate = postData?.engagement_rate ?? getEngagementRate(likes, comments, followers);
+                    const views = Number(app.verified_views || 0);
+                    const likes = Number(app.likes || 0);
+                    const comments = Number(app.comments || 0);
+                    const followers = Number(creator.followers_count || 1);
+                    const er = followers > 0 ? ((likes + comments) / followers) * 100 : 0;
+                    
+                    const cpv = campaign.cpv_rate || 0.6;
+                    const minGuarantee = campaign.min_guarantee_per_creator || 0;
+                    const maxPayout = campaign.max_payout_per_creator || 0;
+                    
+                    // Financial payout logic
+                    const viewEarning = views * cpv;
+                    const payout = app.final_earning_inr || 0;
+                    const isMinGuaranteeBoosted = payout === minGuarantee && viewEarning < minGuarantee && minGuarantee > 0;
+                    const isMaxPayoutCapped = payout === maxPayout && viewEarning > maxPayout && maxPayout > 0;
 
                     return (
-                      <Card key={c.id} className="border-0 shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300">
-                        {thumb ? (
-                          <div className="relative aspect-square">
-                            <img 
-                              src={thumb} 
-                              alt={c.creators?.name || 'Post'} 
-                              className="w-full h-full object-cover" 
-                            />
-                            <div className="absolute top-3 right-3">
-                              <Badge className="bg-black/70 text-white backdrop-blur border-0">
-                                {c.content_type?.toUpperCase() || 'POST'}
-                              </Badge>
-                            </div>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
-                              <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-1.5">
-                                  <Heart className="h-4 w-4" />
-                                  <span className="font-semibold">{formatDisplayNumber(likes)}</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                  <MessageCircle className="h-4 w-4" />
-                                  <span className="font-semibold">{formatDisplayNumber(comments)}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-                            <Activity className="h-12 w-12 text-slate-400" />
-                          </div>
-                        )}
-                        
-                        <CardContent className="p-5">
-                          <div className="flex items-center gap-3 mb-4">
-                            {pp ? (
-                              <img src={pp} className="w-11 h-11 rounded-xl object-cover shadow" alt={c.creators?.name} />
-                            ) : (
-                              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
-                                <Users className="h-5 w-5 text-indigo-600" />
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <div className="font-semibold text-slate-900 truncate">{c.creators?.name}</div>
-                              <div className="text-sm text-slate-500 truncate">@{clean}</div>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3 mb-4">
-                            <div className="text-center p-3 bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl border border-pink-100">
-                              <Heart className="h-4 w-4 mx-auto mb-1 text-pink-600" />
-                              <div className="font-bold text-pink-600">{formatDisplayNumber(likes)}</div>
-                              <div className="text-xs text-slate-500">Likes</div>
-                            </div>
-                            <div className="text-center p-3 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
-                              <MessageCircle className="h-4 w-4 mx-auto mb-1 text-indigo-600" />
-                              <div className="font-bold text-indigo-600">{formatDisplayNumber(comments)}</div>
-                              <div className="text-xs text-slate-500">Comments</div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-100">
-                            <div className="flex items-center gap-2">
-                              <TrendingUp className="h-4 w-4 text-emerald-600" />
-                              <span className="text-sm font-medium text-emerald-700">Engagement</span>
-                            </div>
-                            <span className="font-bold text-emerald-600">{pct(engagementRate)}</span>
-                          </div>
-
-                          {!postData && likes === 0 && comments === 0 && (
-                            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                              <div className="flex items-start gap-2">
-                                <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                                <p className="text-xs text-amber-700">Could not fetch live metrics for this post</p>
-                              </div>
-                            </div>
-                          )}
+                      <Card key={app.id} className="border-slate-800 bg-slate-900/40 backdrop-blur-md overflow-hidden hover:border-slate-700 transition-all duration-300">
+                        <div className="p-6">
                           
-                          {c.post_url && (
-                            <a 
-                              href={c.post_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="mt-4 flex items-center justify-center gap-2 w-full p-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all font-medium shadow-lg shadow-indigo-500/25"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              View on Instagram
-                            </a>
-                          )}
-                        </CardContent>
+                          {/* Creator Header Panel */}
+                          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-slate-800/60">
+                            
+                            <div className="flex items-center gap-4">
+                              <img 
+                                src={creator.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&background=random`} 
+                                alt={creator.name}
+                                className="w-14 h-14 rounded-2xl object-cover border border-slate-700/50 shadow-xl"
+                              />
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-bold text-lg text-white">{creator.name}</h3>
+                                  <Badge className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-extrabold rounded-full px-2">
+                                    Score: {creator.campayn_score || 0}
+                                  </Badge>
+                                </div>
+                                <a 
+                                  href={`https://instagram.com/${creator.ig_handle}`} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold block mt-0.5"
+                                >
+                                  @{creator.ig_handle}
+                                </a>
+                              </div>
+                            </div>
+
+                            {/* Post Status & Manual Sync Actions */}
+                            <div className="flex items-center gap-3 w-full lg:w-auto justify-end">
+                              {postUrl ? (
+                                <>
+                                  <a 
+                                    href={postUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-850 bg-slate-950 text-xs text-slate-300 hover:bg-slate-900 hover:text-white font-semibold transition-colors"
+                                  >
+                                    <Instagram className="h-3.5 w-3.5 text-pink-500" />
+                                    View Reel
+                                    <ExternalLink className="h-3 w-3 text-slate-500" />
+                                  </a>
+                                  <Button 
+                                    onClick={() => handleRefreshCreator(app.id)}
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-slate-800 bg-slate-900 text-xs hover:bg-slate-800 hover:text-white gap-1.5 font-bold"
+                                  >
+                                    <RefreshCw className="h-3 w-3" />
+                                    Sync Insights
+                                  </Button>
+                                </>
+                              ) : (
+                                <span className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-850 font-bold">
+                                  <Clock className="h-3.5 w-3.5 text-slate-500" />
+                                  Awaiting post submission
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Detail Grid */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-6">
+                            
+                            {/* Panel 1: Profile Metrics */}
+                            <div className="space-y-4">
+                              <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400/80">Historical Profile</h5>
+                              <div className="space-y-2.5">
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="text-slate-400">Total Followers:</span>
+                                  <span className="font-bold text-white">{formatDisplayNumber(followers)}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="text-slate-400">Avg Views Benchmark:</span>
+                                  <span className="font-bold text-white">{formatDisplayNumber(creator.avg_views)}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="text-slate-400">Historical ER:</span>
+                                  <span className="font-bold text-white">{Number(creator.engagement_rate || 0).toFixed(2)}%</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Panel 2: Synced Metrics */}
+                            <div className="space-y-4">
+                              <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400/80">Verified Post Metrics</h5>
+                              {postUrl ? (
+                                <div className="space-y-2.5">
+                                  <div className="flex justify-between items-center text-xs">
+                                    <span className="text-slate-400">Verified Views:</span>
+                                    <span className="font-bold text-indigo-400">{formatDisplayNumber(views)}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-xs">
+                                    <span className="text-slate-400">Likes:</span>
+                                    <span className="font-bold text-white">{formatDisplayNumber(likes)}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-xs">
+                                    <span className="text-slate-400">Comments:</span>
+                                    <span className="font-bold text-white">{formatDisplayNumber(comments)}</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-slate-500 italic py-2">No stats recorded yet.</p>
+                              )}
+                            </div>
+
+                            {/* Panel 3: Performance Comparison */}
+                            <div className="space-y-4">
+                              <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400/80">Efficiency & ROI</h5>
+                              {postUrl ? (
+                                <div className="space-y-2.5">
+                                  <div className="flex justify-between items-center text-xs">
+                                    <span className="text-slate-400">Post Engagement Rate:</span>
+                                    <span className="font-bold text-pink-400">{er.toFixed(2)}%</span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-xs">
+                                    <span className="text-slate-400">Reach Multiplier:</span>
+                                    <span className="font-bold text-white">{(views / followers).toFixed(2)}x</span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-xs">
+                                    <span className="text-slate-400">Performance Index:</span>
+                                    {creator.avg_views && creator.avg_views > 0 ? (
+                                      <span className={`font-bold flex items-center gap-1 ${views >= creator.avg_views ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                        {views >= creator.avg_views ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                                        {((views / creator.avg_views) * 100).toFixed(0)}%
+                                      </span>
+                                    ) : (
+                                      <span className="font-bold text-white">-</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-slate-500 italic py-2">No post link verified.</p>
+                              )}
+                            </div>
+
+                            {/* Panel 4: Payout Ledger & Contract Options */}
+                            <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-850/80 flex flex-col justify-between">
+                              <div className="space-y-1.5">
+                                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                  <span>Final Earning</span>
+                                  {isMinGuaranteeBoosted && (
+                                    <Badge className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[9px] font-extrabold px-1 rounded">
+                                      Min Boosted
+                                    </Badge>
+                                  )}
+                                  {isMaxPayoutCapped && (
+                                    <Badge className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[9px] font-extrabold px-1 rounded">
+                                      Cap Reached
+                                    </Badge>
+                                  )}
+                                </div>
+                                <h4 className="text-2xl font-black text-white">{formatCurrency(payout)}</h4>
+                              </div>
+                              
+                              <div className="border-t border-slate-900 pt-2 mt-2 space-y-1 text-[10px] text-slate-500 font-semibold">
+                                <div className="flex justify-between">
+                                  <span>Base CPV Earning:</span>
+                                  <span>{formatCurrency(viewEarning)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Guaranteed Min:</span>
+                                  <span>{formatCurrency(minGuarantee)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Max Cap limit:</span>
+                                  <span>{formatCurrency(maxPayout)}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+
+                        </div>
                       </Card>
                     );
                   })}

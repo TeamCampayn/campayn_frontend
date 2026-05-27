@@ -168,53 +168,52 @@ const Overview: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+    <div className="bg-transparent">
+      <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
         {/* Welcome Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
-                {greeting()}, {brand?.brand_name || 'there'}! 👋
+              <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-gray-800">
+                {greeting()}, <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{brand?.brand_name || 'there'}</span>! 👋
               </h1>
-              <p className="text-gray-500 mt-2 text-lg">
+              <p className="text-sm text-gray-500 mt-1">
                 Here's what's happening with your influencer campaigns
               </p>
             </div>
             <Button 
               onClick={() => navigate('/create-campaign')}
-              className="hidden md:flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/30"
-              size="lg"
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm transition-all duration-200 rounded-xl px-5 py-2 h-auto text-sm font-medium border-0"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
               New Campaign
             </Button>
           </div>
         </div>
 
         {/* Key Metrics Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Total Campaigns */}
-          <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-bl-full" />
+          <Card className="relative overflow-hidden bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all duration-300 rounded-2xl backdrop-blur-sm">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/5 to-transparent rounded-bl-full" />
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Total Campaigns</p>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Total Campaigns</p>
                   {loading ? (
-                    <Skeleton className="h-9 w-16" />
+                    <Skeleton className="h-8 w-16" />
                   ) : (
-                    <p className="text-3xl font-bold text-gray-900">{stats?.totalCampaigns || 0}</p>
+                    <p className="text-2xl font-bold text-gray-800">{stats?.totalCampaigns || 0}</p>
                   )}
                 </div>
-                <div className="p-3 bg-blue-100 rounded-xl">
-                  <Target className="h-6 w-6 text-blue-600" />
+                <div className="p-2.5 bg-blue-50/80 border border-blue-100/50 rounded-xl text-blue-600 shadow-sm">
+                  <Target className="h-5 w-5" />
                 </div>
               </div>
               {!loading && stats && stats.totalCampaigns > 0 && (
-                <div className="mt-4 flex items-center text-sm text-gray-500">
-                  <span className="inline-flex items-center text-blue-600 font-medium">
-                    <ArrowUpRight className="h-4 w-4 mr-1" />
+                <div className="mt-4 flex items-center text-xs text-gray-500">
+                  <span className="inline-flex items-center text-blue-600 font-semibold cursor-pointer hover:underline" onClick={() => navigate('/campaigns')}>
+                    <ArrowUpRight className="h-3.5 w-3.5 mr-1" />
                     View all
                   </span>
                 </div>
@@ -223,30 +222,30 @@ const Overview: React.FC = () => {
           </Card>
 
           {/* In Progress */}
-          <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-transparent rounded-bl-full" />
+          <Card className="relative overflow-hidden bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all duration-300 rounded-2xl backdrop-blur-sm">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/5 to-transparent rounded-bl-full" />
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">In Progress</p>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">In Progress</p>
                   {loading ? (
-                    <Skeleton className="h-9 w-16" />
+                    <Skeleton className="h-8 w-16" />
                   ) : (
-                    <p className="text-3xl font-bold text-gray-900">
+                    <p className="text-2xl font-bold text-gray-800">
                       {(stats?.quotingCampaigns || 0) + (stats?.draftCampaigns || 0)}
                     </p>
                   )}
                 </div>
-                <div className="p-3 bg-amber-100 rounded-xl">
-                  <Clock className="h-6 w-6 text-amber-600" />
+                <div className="p-2.5 bg-amber-50/80 border border-amber-100/50 rounded-xl text-amber-600 shadow-sm">
+                  <Clock className="h-5 w-5" />
                 </div>
               </div>
               {!loading && stats && (
-                <div className="mt-4 flex items-center gap-3 text-xs">
-                  <span className="px-2 py-1 bg-gray-100 rounded-full text-gray-600">
+                <div className="mt-4 flex items-center gap-2 text-[10px]">
+                  <span className="px-2 py-0.5 bg-gray-100/60 border border-gray-200/30 rounded-full text-gray-500 font-medium">
                     {stats.draftCampaigns} draft
                   </span>
-                  <span className="px-2 py-1 bg-amber-100 rounded-full text-amber-700">
+                  <span className="px-2 py-0.5 bg-amber-50 border border-amber-100/30 rounded-full text-amber-700 font-medium">
                     {stats.quotingCampaigns} quoting
                   </span>
                 </div>
@@ -255,30 +254,30 @@ const Overview: React.FC = () => {
           </Card>
 
           {/* Live Campaigns */}
-          <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-transparent rounded-bl-full" />
+          <Card className="relative overflow-hidden bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all duration-300 rounded-2xl backdrop-blur-sm">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-500/5 to-transparent rounded-bl-full" />
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Live Campaigns</p>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Live Campaigns</p>
                   {loading ? (
-                    <Skeleton className="h-9 w-16" />
+                    <Skeleton className="h-8 w-16" />
                   ) : (
-                    <p className="text-3xl font-bold text-gray-900">{stats?.liveCampaigns || 0}</p>
+                    <p className="text-2xl font-bold text-gray-800">{stats?.liveCampaigns || 0}</p>
                   )}
                 </div>
-                <div className="p-3 bg-green-100 rounded-xl">
-                  <Rocket className="h-6 w-6 text-green-600" />
+                <div className="p-2.5 bg-green-50/80 border border-green-100/50 rounded-xl text-green-600 shadow-sm">
+                  <Rocket className="h-5 w-5" />
                 </div>
               </div>
               {!loading && stats && stats.liveCampaigns > 0 && (
                 <div className="mt-4">
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                     </span>
-                    <span className="text-sm text-green-600 font-medium ml-1">Active now</span>
+                    <span className="text-[11px] text-green-600 font-semibold uppercase tracking-wider ml-0.5">Active now</span>
                   </div>
                 </div>
               )}
@@ -286,25 +285,25 @@ const Overview: React.FC = () => {
           </Card>
 
           {/* Active Creators */}
-          <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-transparent rounded-bl-full" />
+          <Card className="relative overflow-hidden bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all duration-300 rounded-2xl backdrop-blur-sm">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-500/5 to-transparent rounded-bl-full" />
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Active Creators</p>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Active Creators</p>
                   {loading ? (
-                    <Skeleton className="h-9 w-16" />
+                    <Skeleton className="h-8 w-16" />
                   ) : (
-                    <p className="text-3xl font-bold text-gray-900">{stats?.activeCreators || 0}</p>
+                    <p className="text-2xl font-bold text-gray-800">{stats?.activeCreators || 0}</p>
                   )}
                 </div>
-                <div className="p-3 bg-purple-100 rounded-xl">
-                  <Users className="h-6 w-6 text-purple-600" />
+                <div className="p-2.5 bg-purple-50/80 border border-purple-100/50 rounded-xl text-purple-600 shadow-sm">
+                  <Users className="h-5 w-5" />
                 </div>
               </div>
               {!loading && stats && stats.completedCampaigns > 0 && (
-                <div className="mt-4 flex items-center text-sm text-gray-500">
-                  <CheckCircle2 className="h-4 w-4 mr-1 text-purple-500" />
+                <div className="mt-4 flex items-center text-xs text-gray-500">
+                  <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-purple-500" />
                   <span>{stats.completedCampaigns} completed</span>
                 </div>
               )}
@@ -313,53 +312,53 @@ const Overview: React.FC = () => {
         </div>
 
         {/* Secondary Stats & Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Performance Overview */}
-          <Card className="lg:col-span-1 border-0 shadow-lg bg-gradient-to-br from-indigo-600 to-blue-700 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold text-white/90 flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
+          <Card className="lg:col-span-1 border border-indigo-100/20 shadow-[0_4px_20px_rgba(0,0,0,0.01)] bg-gradient-to-br from-white/90 to-slate-50/60 rounded-2xl backdrop-blur-sm">
+            <CardHeader className="pb-3 border-b border-gray-100">
+              <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-indigo-500" />
                 Performance Snapshot
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-white/20">
+            <CardContent className="space-y-4 pt-4">
+              <div className="flex items-center justify-between py-2.5 border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-lg">
+                  <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
                     <IndianRupee className="h-4 w-4" />
                   </div>
-                  <span className="text-white/80">Total Investment</span>
+                  <span className="text-xs font-medium text-gray-500">Total Investment</span>
                 </div>
                 {loading ? (
-                  <Skeleton className="h-6 w-20 bg-white/20" />
+                  <Skeleton className="h-5 w-20" />
                 ) : (
-                  <span className="font-bold text-lg">{formatCurrency(stats?.totalSpend || 0)}</span>
+                  <span className="font-bold text-sm text-gray-800">{formatCurrency(stats?.totalSpend || 0)}</span>
                 )}
               </div>
-              <div className="flex items-center justify-between py-3 border-b border-white/20">
+              <div className="flex items-center justify-between py-2.5 border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-lg">
+                  <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
                     <Eye className="h-4 w-4" />
                   </div>
-                  <span className="text-white/80">Est. Reach</span>
+                  <span className="text-xs font-medium text-gray-500">Est. Reach</span>
                 </div>
                 {loading ? (
-                  <Skeleton className="h-6 w-20 bg-white/20" />
+                  <Skeleton className="h-5 w-20" />
                 ) : (
-                  <span className="font-bold text-lg">{formatNumber(stats?.totalReach || 0)}</span>
+                  <span className="font-bold text-sm text-gray-800">{formatNumber(stats?.totalReach || 0)}</span>
                 )}
               </div>
-              <div className="flex items-center justify-between py-3">
+              <div className="flex items-center justify-between py-2.5">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-lg">
+                  <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
                     <TrendingUp className="h-4 w-4" />
                   </div>
-                  <span className="text-white/80">Completion Rate</span>
+                  <span className="text-xs font-medium text-gray-500">Completion Rate</span>
                 </div>
                 {loading ? (
-                  <Skeleton className="h-6 w-16 bg-white/20" />
+                  <Skeleton className="h-5 w-16" />
                 ) : (
-                  <span className="font-bold text-lg">
+                  <span className="font-bold text-sm text-gray-800">
                     {stats && stats.totalCampaigns > 0 
                       ? Math.round((stats.completedCampaigns / stats.totalCampaigns) * 100) 
                       : 0}%
@@ -370,27 +369,27 @@ const Overview: React.FC = () => {
           </Card>
 
           {/* Recent Campaigns */}
-          <Card className="lg:col-span-2 border-0 shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-gray-500" />
+          <Card className="lg:col-span-2 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] bg-white/80 rounded-2xl backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-gray-100">
+              <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-gray-400" />
                 Recent Campaigns
               </CardTitle>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => navigate('/campaigns')}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50/50 p-1.5 h-auto rounded-lg"
               >
                 View all
-                <ArrowUpRight className="h-4 w-4 ml-1" />
+                <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               {loading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map(i => (
-                    <Skeleton key={i} className="h-16 w-full" />
+                    <Skeleton key={i} className="h-16 w-full rounded-xl" />
                   ))}
                 </div>
               ) : recentCampaigns.length > 0 ? (
@@ -399,17 +398,17 @@ const Overview: React.FC = () => {
                     <div 
                       key={campaign.id}
                       onClick={() => navigate(`/campaigns/${campaign.id}`)}
-                      className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors group"
+                      className="flex items-center justify-between p-3.5 rounded-xl border border-gray-100 bg-white/60 hover:bg-slate-50/80 cursor-pointer transition-all duration-200 group"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                      <div className="flex items-center gap-3.5">
+                        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-indigo-100/30 flex items-center justify-center text-indigo-600 font-bold text-sm">
                           {campaign.campaign_name?.charAt(0)?.toUpperCase() || 'C'}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                          <p className="text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
                             {campaign.campaign_name}
                           </p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-xs text-gray-400 mt-0.5">
                             {new Date(campaign.created_at).toLocaleDateString('en-IN', { 
                               month: 'short', 
                               day: 'numeric',
@@ -419,26 +418,26 @@ const Overview: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Badge className={`${getPhaseColor(campaign.phase)} border-0`}>
+                        <Badge className={`${getPhaseColor(campaign.phase)} border-0 text-[10px] py-0.5 px-2 rounded-full font-medium shadow-none`}>
                           {getPhaseLabel(campaign.phase)}
                         </Badge>
-                        <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                        <ArrowUpRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-blue-600 transition-colors" />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <Sparkles className="h-8 w-8 text-gray-400" />
+                  <div className="mx-auto w-12 h-12 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mb-3">
+                    <Sparkles className="h-6 w-6 text-gray-400" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No campaigns yet</h3>
-                  <p className="text-gray-500 mb-4">Create your first influencer campaign to get started</p>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-1">No campaigns yet</h3>
+                  <p className="text-xs text-gray-400 mb-4">Create your first influencer campaign to get started</p>
                   <Button 
                     onClick={() => navigate('/create-campaign')}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs rounded-xl h-auto py-2 px-4 border-0"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />
                     Create Campaign
                   </Button>
                 </div>
@@ -448,27 +447,27 @@ const Overview: React.FC = () => {
         </div>
 
         {/* Quick Actions */}
-        <Card className="border-0 shadow-lg bg-gradient-to-r from-gray-900 to-gray-800">
+        <Card className="border border-indigo-100/20 bg-gradient-to-r from-blue-600/5 to-purple-600/5 backdrop-blur-sm rounded-2xl shadow-sm">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="text-center md:text-left">
-                <h3 className="text-xl font-semibold text-white mb-1">Ready to scale your brand?</h3>
-                <p className="text-gray-400">Launch a new influencer campaign and reach millions of engaged audiences</p>
+                <h3 className="text-base font-semibold text-slate-800 mb-1">Ready to scale your brand?</h3>
+                <p className="text-xs text-slate-500">Launch a new influencer campaign and reach millions of engaged audiences</p>
               </div>
               <div className="flex gap-3">
                 <Button 
                   onClick={() => navigate('/campaigns')}
                   variant="outline"
-                  className="border-gray-600 text-gray-900 hover:bg-gray-700 hover:text-white bg-white"
+                  className="border-gray-200/80 hover:bg-gray-50 text-gray-600 text-xs px-4 py-2 h-auto rounded-xl"
                 >
-                  <Target className="h-4 w-4 mr-2" />
+                  <Target className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
                   My Campaigns
                 </Button>
                 <Button 
                   onClick={() => navigate('/create-campaign')}
-                  className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-lg"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs px-4 py-2 h-auto border-0 shadow-sm rounded-xl"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
                   New Campaign
                 </Button>
               </div>
