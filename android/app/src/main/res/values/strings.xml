@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Campayn Brand</string>
+    <string name="title_activity_main">Campayn Brand</string>
+    <string name="package_name">com.campayn.brand</string>
+    <string name="custom_url_scheme">com.campayn.brand</string>
+</resources>

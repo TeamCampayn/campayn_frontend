@@ -365,7 +365,7 @@ const BrandCampaignManagement: React.FC = () => {
                             {formatPhaseLabel(campaign.phase)}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3 justify-between sm:justify-end w-full sm:w-auto pt-2 sm:pt-0 border-t border-gray-100/60 sm:border-t-0">
                           <span className="text-xs font-semibold text-gray-600">
                             Budget: ₹{formatNumber(campaign.budget)}
                           </span>
