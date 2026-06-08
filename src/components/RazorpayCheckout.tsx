@@ -146,6 +146,34 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
       // Create order
       const order = await createOrder();
 
+      if (order.id.startsWith('order_mock_')) {
+        toast({
+          title: 'Sandbox Simulation Mode',
+          description: `Processing mock UPI transaction for ₹${amount.toLocaleString('en-IN')}...`,
+        });
+        
+        // Wait 1.5 seconds to simulate payment processing
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Verify mock payment
+        await verifyPayment({
+          razorpay_order_id: order.id,
+          razorpay_payment_id: `pay_mock_${Date.now()}`,
+          razorpay_signature: 'mock_signature',
+        });
+
+        setPaymentStatus('paid');
+        
+        toast({
+          title: 'Payment Successful! 🎉',
+          description: `Payment of ₹${amount.toLocaleString('en-IN')} completed successfully (Sandbox)`,
+        });
+
+        onSuccess?.();
+        setLoading(false);
+        return;
+      }
+
       // Razorpay options
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,

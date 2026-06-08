@@ -24,7 +24,8 @@ import {
   ArrowDownRight,
   FileText,
   Share2,
-  Zap
+  Zap,
+  SlidersHorizontal
 } from 'lucide-react';
 import {
   LineChart,
@@ -84,6 +85,135 @@ interface CreatorPerformance {
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
+const getBrandDemographics = (brandName: string | undefined) => {
+  const name = (brandName || '').toLowerCase();
+  
+  if (name.includes('tata')) {
+    return {
+      age: [
+        { name: '13-17', value: 3 },
+        { name: '18-24', value: 18 },
+        { name: '25-34', value: 48 },
+        { name: '35-44', value: 22 },
+        { name: '45+', value: 9 }
+      ],
+      gender: [
+        { name: 'Male', value: 72 },
+        { name: 'Female', value: 24 },
+        { name: 'Non-Binary', value: 4 }
+      ],
+      cities: [
+        { name: 'Indore', value: 38 },
+        { name: 'Bhopal', value: 27 },
+        { name: 'Jabalpur', value: 15 },
+        { name: 'Gwalior', value: 12 },
+        { name: 'Ujjain', value: 8 }
+      ],
+      countries: [
+        { name: 'India', value: 96, flag: '🇮🇳' },
+        { name: 'UAE', value: 2, flag: '🇦🇪' },
+        { name: 'Nepal', value: 1, flag: '🇳🇵' },
+        { name: 'Others', value: 1, flag: '🌍' }
+      ],
+      niches: [
+        { name: 'EVs & Tech', value: 55 },
+        { name: 'Automotive', value: 25 },
+        { name: 'Travel & Vlog', value: 12 },
+        { name: 'Lifestyle', value: 8 }
+      ],
+      sentiment: [
+        { name: 'Positive', value: 78, color: '#10b981' },
+        { name: 'Neutral', value: 16, color: '#64748b' },
+        { name: 'Negative', value: 6, color: '#ef4444' }
+      ],
+      keywords: ['charging', 'silent', 'range', 'acceleration', 'clean energy', 'Indore', 'Lake road', 'EV India'],
+      cpc_clicks: 1.6
+    };
+  } else if (name.includes('nykaa')) {
+    return {
+      age: [
+        { name: '13-17', value: 12 },
+        { name: '18-24', value: 54 },
+        { name: '25-34', value: 26 },
+        { name: '35-44', value: 6 },
+        { name: '45+', value: 2 }
+      ],
+      gender: [
+        { name: 'Female', value: 86 },
+        { name: 'Male', value: 10 },
+        { name: 'Non-Binary', value: 4 }
+      ],
+      cities: [
+        { name: 'Indore', value: 32 },
+        { name: 'Mumbai', value: 25 },
+        { name: 'Delhi', value: 22 },
+        { name: 'Bhopal', value: 13 },
+        { name: 'Pune', value: 8 }
+      ],
+      countries: [
+        { name: 'India', value: 94, flag: '🇮🇳' },
+        { name: 'Bangladesh', value: 3, flag: '🇧🇩' },
+        { name: 'Nepal', value: 2, flag: '🇳🇵' },
+        { name: 'Others', value: 1, flag: '🌍' }
+      ],
+      niches: [
+        { name: 'Beauty', value: 65 },
+        { name: 'Makeup & Skin', value: 20 },
+        { name: 'Fashion', value: 10 },
+        { name: 'Lifestyle', value: 5 }
+      ],
+      sentiment: [
+        { name: 'Positive', value: 82, color: '#10b981' },
+        { name: 'Neutral', value: 14, color: '#64748b' },
+        { name: 'Negative', value: 4, color: '#ef4444' }
+      ],
+      keywords: ['matte', 'pigment', 'shades', 'affordable', 'long-lasting', 'glam', 'festive', 'lipsticks'],
+      cpc_clicks: 2.2
+    };
+  } else {
+    return {
+      age: [
+        { name: '13-17', value: 15 },
+        { name: '18-24', value: 45 },
+        { name: '25-34', value: 28 },
+        { name: '35-44', value: 9 },
+        { name: '45+', value: 3 }
+      ],
+      gender: [
+        { name: 'Male', value: 58 },
+        { name: 'Female', value: 38 },
+        { name: 'Non-Binary', value: 4 }
+      ],
+      cities: [
+        { name: 'Mumbai', value: 30 },
+        { name: 'Delhi', value: 24 },
+        { name: 'Indore', value: 20 },
+        { name: 'Bangalore', value: 16 },
+        { name: 'Kolkata', value: 10 }
+      ],
+      countries: [
+        { name: 'India', value: 92, flag: '🇮🇳' },
+        { name: 'US', value: 4, flag: '🇺🇸' },
+        { name: 'UK', value: 2, flag: '🇬🇧' },
+        { name: 'Others', value: 2, flag: '🌍' }
+      ],
+      niches: [
+        { name: 'Sports & Run', value: 50 },
+        { name: 'Fitness', value: 30 },
+        { name: 'Sneakers', value: 15 },
+        { name: 'Fashion', value: 5 }
+      ],
+      sentiment: [
+        { name: 'Positive', value: 75, color: '#10b981' },
+        { name: 'Neutral', value: 18, color: '#64748b' },
+        { name: 'Negative', value: 7, color: '#ef4444' }
+      ],
+      keywords: ['shoes', 'running', 'comfort', 'monsoon run', 'premium', 'durable', 'sole', 'Indore run'],
+      cpc_clicks: 1.8
+    };
+  }
+};
+
 const BrandAnalytics: React.FC = () => {
   const { brand, loading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -92,6 +222,16 @@ const BrandAnalytics: React.FC = () => {
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [creatorPerformance, setCreatorPerformance] = useState<CreatorPerformance[]>([]);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+  const [widgetConfig, setWidgetConfig] = useState<{ [key: string]: boolean }>({
+    campaigns: true,
+    reach: true,
+    engagement: true,
+    spend: true,
+    cpe: true,
+    cpm: true,
+    cpc: true,
+  });
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
 
   useEffect(() => {
     if (brand?.id) {
@@ -313,12 +453,23 @@ const BrandAnalytics: React.FC = () => {
       };
     });
 
+  const demoData = getBrandDemographics(brand?.brand_name);
+  const clickCount = Math.round(analytics.totalReach * (demoData.cpc_clicks / 100));
+  const cpmVal = analytics.totalReach > 0 ? (analytics.totalBudgetSpent / analytics.totalReach) * 1000 : 0;
+  const cpcVal = clickCount > 0 ? analytics.totalBudgetSpent / clickCount : 0;
+  const cpeVal = analytics.totalEngagement > 0 ? analytics.totalBudgetSpent / analytics.totalEngagement : 0;
+
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-800">Analytics & Reports</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-800 flex items-center gap-2">
+            Analytics & Reports
+            <span className="text-xs bg-indigo-50 border border-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-normal">
+              {brand?.brand_name || 'Standard'} Demo
+            </span>
+          </h1>
           <p className="text-xs text-gray-500 mt-1">Comprehensive overview of your campaign performance</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -372,6 +523,14 @@ const BrandAnalytics: React.FC = () => {
               All
             </Button>
           </div>
+          <Button
+            variant="outline"
+            onClick={() => setIsConfigOpen(!isConfigOpen)}
+            className="border-gray-200/80 text-gray-600 text-xs px-3 py-2 h-auto shadow-sm rounded-xl font-medium flex items-center gap-1.5 hover:bg-slate-50"
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            Customize Widgets
+          </Button>
           <Button 
             onClick={handleDownloadReport} 
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs px-4 py-2 h-auto border-0 shadow-sm rounded-xl font-medium"
@@ -382,71 +541,153 @@ const BrandAnalytics: React.FC = () => {
         </div>
       </div>
 
+      {/* Widget Layout Customizer Dropdown */}
+      {isConfigOpen && (
+        <Card className="p-4 bg-white/95 border border-gray-200 shadow-md rounded-2xl max-w-md animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-md">
+          <div className="flex items-center justify-between mb-3 border-b border-gray-100 pb-2">
+            <h3 className="text-xs font-semibold text-gray-700">Toggle Dashboard Columns</h3>
+            <span className="text-[10px] text-gray-400">Select which widgets to show</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {Object.keys(widgetConfig).map((key) => (
+              <label key={key} className="flex items-center space-x-2 text-xs font-medium text-gray-600 hover:text-gray-900 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={widgetConfig[key]}
+                  onChange={(e) => setWidgetConfig(prev => ({ ...prev, [key]: e.target.checked }))}
+                  className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5"
+                />
+                <span className="capitalize">{key === 'cpm' ? 'CPM (Mille)' : key === 'cpc' ? 'CPC (Clicks)' : key === 'cpe' ? 'CPE (Engagement)' : key}</span>
+              </label>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Total Campaigns</p>
-              <div className="text-xl font-bold text-gray-800">{analytics.totalCampaigns}</div>
-              <div className="flex items-center mt-1.5 gap-1.5 text-[10px]">
-                <Badge variant="outline" className="bg-blue-50/50 border-blue-100 text-blue-600 py-0 px-1 rounded font-medium shadow-none">{analytics.activeCampaigns} Active</Badge>
-                <span className="text-gray-400 font-medium">{analytics.completedCampaigns} Done</span>
+        {widgetConfig.campaigns && (
+          <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Total Campaigns</p>
+                <div className="text-xl font-bold text-gray-800">{analytics.totalCampaigns}</div>
+                <div className="flex items-center mt-1.5 gap-1.5 text-[10px]">
+                  <Badge variant="outline" className="bg-blue-50/50 border-blue-100 text-blue-600 py-0 px-1 rounded font-medium shadow-none">{analytics.activeCampaigns} Active</Badge>
+                  <span className="text-gray-400 font-medium">{analytics.completedCampaigns} Done</span>
+                </div>
               </div>
-            </div>
-            <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-xl text-blue-600">
-              <Target className="h-4 w-4" />
-            </div>
-          </CardContent>
-        </Card>
+              <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-xl text-blue-600">
+                <Target className="h-4 w-4" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Total Reach</p>
-              <div className="text-xl font-bold text-gray-800">{formatNumber(analytics.totalReach)}</div>
-              <div className="flex items-center mt-1.5 text-[10px] text-green-600 font-medium">
-                <ArrowUpRight className="h-3 w-3 mr-0.5" />
-                <span>+12.5% vs last period</span>
+        {widgetConfig.reach && (
+          <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Total Reach</p>
+                <div className="text-xl font-bold text-gray-800">{formatNumber(analytics.totalReach)}</div>
+                <div className="flex items-center mt-1.5 text-[10px] text-green-600 font-medium">
+                  <ArrowUpRight className="h-3 w-3 mr-0.5" />
+                  <span>+12.5% vs last period</span>
+                </div>
               </div>
-            </div>
-            <div className="p-2.5 bg-green-50 border border-green-100 rounded-xl text-green-600">
-              <Eye className="h-4 w-4" />
-            </div>
-          </CardContent>
-        </Card>
+              <div className="p-2.5 bg-green-50 border border-green-100 rounded-xl text-green-600">
+                <Eye className="h-4 w-4" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Total Engagement</p>
-              <div className="text-xl font-bold text-gray-800">{formatNumber(analytics.totalEngagement)}</div>
-              <div className="flex items-center mt-1.5 text-[10px] text-purple-600 font-semibold uppercase tracking-wider">
-                <Heart className="h-3 w-3 mr-0.5" />
-                <span>{analytics.avgEngagementRate.toFixed(2)}% avg rate</span>
+        {widgetConfig.engagement && (
+          <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Total Engagement</p>
+                <div className="text-xl font-bold text-gray-800">{formatNumber(analytics.totalEngagement)}</div>
+                <div className="flex items-center mt-1.5 text-[10px] text-purple-600 font-semibold uppercase tracking-wider">
+                  <Heart className="h-3 w-3 mr-0.5" />
+                  <span>{analytics.avgEngagementRate.toFixed(2)}% avg rate</span>
+                </div>
               </div>
-            </div>
-            <div className="p-2.5 bg-purple-50 border border-purple-100 rounded-xl text-purple-600">
-              <TrendingUp className="h-4 w-4" />
-            </div>
-          </CardContent>
-        </Card>
+              <div className="p-2.5 bg-purple-50 border border-purple-100 rounded-xl text-purple-600">
+                <TrendingUp className="h-4 w-4" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Budget Spent</p>
-              <div className="text-xl font-bold text-gray-800">{formatCurrency(analytics.totalBudgetSpent)}</div>
-              <div className="flex items-center mt-1.5 text-[10px] text-orange-600 font-semibold uppercase tracking-wider">
-                <Zap className="h-3 w-3 mr-0.5" />
-                <span>{analytics.roi.toFixed(1)}% ROI</span>
+        {widgetConfig.spend && (
+          <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Budget Spent</p>
+                <div className="text-xl font-bold text-gray-800">{formatCurrency(analytics.totalBudgetSpent)}</div>
+                <div className="flex items-center mt-1.5 text-[10px] text-orange-600 font-semibold uppercase tracking-wider">
+                  <Zap className="h-3 w-3 mr-0.5" />
+                  <span>{analytics.roi.toFixed(1)}% ROI</span>
+                </div>
               </div>
-            </div>
-            <div className="p-2.5 bg-orange-50 border border-orange-100 rounded-xl text-orange-600">
-              <DollarSign className="h-4 w-4" />
-            </div>
-          </CardContent>
-        </Card>
+              <div className="p-2.5 bg-orange-50 border border-orange-100 rounded-xl text-orange-600">
+                <DollarSign className="h-4 w-4" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {widgetConfig.cpe && (
+          <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Cost Per Engagement (CPE)</p>
+                <div className="text-xl font-bold text-gray-800">{formatCurrency(cpeVal)}</div>
+                <div className="flex items-center mt-1.5 text-[10px] text-indigo-600 font-medium">
+                  <span>Based on likes/comments</span>
+                </div>
+              </div>
+              <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-600">
+                <Activity className="h-4 w-4" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {widgetConfig.cpm && (
+          <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">CPM (Per 1,000 Views)</p>
+                <div className="text-xl font-bold text-gray-800">{formatCurrency(cpmVal)}</div>
+                <div className="flex items-center mt-1.5 text-[10px] text-teal-600 font-medium">
+                  <span>View efficiency cost</span>
+                </div>
+              </div>
+              <div className="p-2.5 bg-teal-50 border border-teal-100 rounded-xl text-teal-600">
+                <Eye className="h-4 w-4" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {widgetConfig.cpc && (
+          <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">CPC (Est. Cost Per Click)</p>
+                <div className="text-xl font-bold text-gray-800">{formatCurrency(cpcVal)}</div>
+                <div className="flex items-center mt-1.5 text-[10px] text-rose-600 font-medium">
+                  <span>{formatNumber(clickCount)} estimated link clicks</span>
+                </div>
+              </div>
+              <div className="p-2.5 bg-rose-50 border border-rose-100 rounded-xl text-rose-600">
+                <ArrowUpRight className="h-4 w-4" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Additional Metrics */}
@@ -484,11 +725,13 @@ const BrandAnalytics: React.FC = () => {
 
       {/* Charts Section */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-gray-100/50 border border-gray-200/30 p-1 rounded-xl h-auto flex gap-1 w-full max-w-md">
+        <TabsList className="bg-gray-100/50 border border-gray-200/30 p-1 rounded-xl h-auto flex flex-wrap gap-1 w-full max-w-2xl">
           <TabsTrigger value="overview" className="rounded-lg text-xs py-1.5 px-3 flex-1">Overview</TabsTrigger>
           <TabsTrigger value="campaigns" className="rounded-lg text-xs py-1.5 px-3 flex-1">Campaigns</TabsTrigger>
           <TabsTrigger value="creators" className="rounded-lg text-xs py-1.5 px-3 flex-1">Creators</TabsTrigger>
           <TabsTrigger value="performance" className="rounded-lg text-xs py-1.5 px-3 flex-1">Performance</TabsTrigger>
+          <TabsTrigger value="demographics" className="rounded-lg text-xs py-1.5 px-3 flex-1">Audience Demographics</TabsTrigger>
+          <TabsTrigger value="advanced" className="rounded-lg text-xs py-1.5 px-3 flex-1">Advanced Insights & ROI</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 focus-visible:outline-none">
@@ -711,6 +954,227 @@ const BrandAnalytics: React.FC = () => {
                         ? formatCurrency(analytics.totalBudgetSpent / analytics.totalEngagement)
                         : formatCurrency(0)}
                     </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="demographics" className="space-y-6 focus-visible:outline-none">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-3 duration-350">
+            {/* Age Distribution */}
+            <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm lg:col-span-2">
+              <CardHeader className="pb-3 border-b border-gray-100/60">
+                <CardTitle className="text-sm font-semibold text-gray-700 flex items-center">
+                  <Users className="h-4 w-4 mr-2 text-blue-500" />
+                  Audience Age Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={demoData.age} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                      <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                      <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} unit="%" />
+                      <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} />
+                      <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={40}>
+                        {demoData.age.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={index === 2 ? '#4f46e5' : '#3b82f6'} fillOpacity={0.85} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Gender Split */}
+            <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+              <CardHeader className="pb-3 border-b border-gray-100/60">
+                <CardTitle className="text-sm font-semibold text-gray-700 flex items-center">
+                  <Activity className="h-4 w-4 mr-2 text-indigo-500" />
+                  Gender Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 flex flex-col justify-between h-[280px]">
+                <div className="space-y-5">
+                  {demoData.gender.map((item) => (
+                    <div key={item.name} className="space-y-2">
+                      <div className="flex justify-between text-xs font-semibold text-gray-600">
+                        <span>{item.name}</span>
+                        <span className="text-indigo-600">{item.value}%</span>
+                      </div>
+                      <Progress value={item.value} className="h-2 rounded-full" />
+                    </div>
+                  ))}
+                </div>
+                <div className="text-[10px] text-gray-400 mt-4 text-center">
+                  Aggregated statistics from all active campaign creator audiences
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Top Cities */}
+            <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+              <CardHeader className="pb-3 border-b border-gray-100/60">
+                <CardTitle className="text-sm font-semibold text-gray-700">Top Cities</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-4">
+                {demoData.cities.map((city, idx) => (
+                  <div key={city.name} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-xs font-semibold text-gray-700">
+                      <span className="text-gray-400 w-4 font-normal">#{idx + 1}</span>
+                      <span>{city.name}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 w-1/2 justify-end">
+                      <Progress value={city.value * 2} className="h-1.5 w-24" />
+                      <span className="text-xs font-bold text-gray-600 min-w-8 text-right">{city.value}%</span>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Top Countries */}
+            <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+              <CardHeader className="pb-3 border-b border-gray-100/60">
+                <CardTitle className="text-sm font-semibold text-gray-700">Top Countries</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-4">
+                {demoData.countries.map((country, idx) => (
+                  <div key={country.name} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2.5 text-xs font-semibold text-gray-700">
+                      <span className="text-lg">{country.flag}</span>
+                      <span>{country.name}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 w-1/2 justify-end">
+                      <Progress value={country.value} className="h-1.5 w-24" />
+                      <span className="text-xs font-bold text-gray-600 min-w-8 text-right">{country.value}%</span>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Audience Niches */}
+            <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+              <CardHeader className="pb-3 border-b border-gray-100/60">
+                <CardTitle className="text-sm font-semibold text-gray-700">Audience Niche Focus</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="h-[200px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={demoData.niches}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={75}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {demoData.niches.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v) => `${v}%`} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-2">
+                  {demoData.niches.map((niche, idx) => (
+                    <div key={niche.name} className="flex items-center space-x-1.5 text-[10px] font-semibold text-gray-500">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                      <span>{niche.name} ({niche.value}%)</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="advanced" className="space-y-6 focus-visible:outline-none">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-3 duration-350">
+            {/* Comment Sentiment Donut */}
+            <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+              <CardHeader className="pb-3 border-b border-gray-100/60">
+                <CardTitle className="text-sm font-semibold text-gray-700 flex items-center">
+                  <TrendingUp className="h-4 w-4 mr-2 text-emerald-500" />
+                  Audience Feedback & Sentiment Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 flex flex-col md:flex-row items-center justify-around">
+                <div className="h-[220px] w-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={demoData.sentiment}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={85}
+                        dataKey="value"
+                      >
+                        {demoData.sentiment.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v) => `${v}%`} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-4 min-w-[150px]">
+                  {demoData.sentiment.map((s) => (
+                    <div key={s.name} className="flex items-center justify-between border-b border-gray-50 pb-2">
+                      <div className="flex items-center space-x-2 text-xs font-semibold text-gray-600">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+                        <span>{s.name}</span>
+                      </div>
+                      <span className="text-xs font-bold text-gray-700">{s.value}%</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Keyword tags / cloud & Deep Stats */}
+            <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm flex flex-col justify-between">
+              <CardHeader className="pb-3 border-b border-gray-100/60">
+                <CardTitle className="text-sm font-semibold text-gray-700">Most Frequently Mentioned in Comments</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-6 flex-1">
+                <div className="flex flex-wrap gap-2">
+                  {demoData.keywords.map((kw, idx) => (
+                    <Badge
+                      key={kw}
+                      variant="outline"
+                      className="bg-slate-50 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all duration-200 cursor-default text-xs py-1 px-2.5 rounded-lg shadow-none font-medium"
+                    >
+                      #{kw}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="border-t border-gray-100 pt-5 space-y-4">
+                  <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Advanced Cost Efficiency Metrics</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-50/50 border border-slate-100 p-3 rounded-xl">
+                      <p className="text-[10px] font-semibold text-gray-400">CPM (Cost/1k Views)</p>
+                      <p className="text-sm font-bold text-gray-800 mt-1">{formatCurrency(cpmVal)}</p>
+                    </div>
+                    <div className="bg-slate-50/50 border border-slate-100 p-3 rounded-xl">
+                      <p className="text-[10px] font-semibold text-gray-400">CPE (Cost/Engagement)</p>
+                      <p className="text-sm font-bold text-gray-800 mt-1">{formatCurrency(cpeVal)}</p>
+                    </div>
+                    <div className="bg-slate-50/50 border border-slate-100 p-3 rounded-xl col-span-2">
+                      <p className="text-[10px] font-semibold text-gray-400">CPC (Est. Cost/Click)</p>
+                      <p className="text-sm font-bold text-gray-800 mt-1">{formatCurrency(cpcVal)} <span className="text-[10px] text-gray-400 font-normal">({formatNumber(clickCount)} clicks)</span></p>
+                    </div>
                   </div>
                 </div>
               </CardContent>
