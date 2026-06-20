@@ -176,7 +176,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
 
       // Razorpay options
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_T3kVFyGMu3jhtP',
         amount: order.amount,
         currency: order.currency,
         name: 'Campayn',
