@@ -106,9 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               niches: [],
               company_size: '1-10',
               industry: 'other',
-              brand_description: '',
-              marketing_goals: [],
-              monthly_budget: 'under-5k',
+              description: '',
               experience_level: 'beginner',
             })
             .select('*')

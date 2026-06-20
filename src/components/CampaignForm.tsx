@@ -252,19 +252,17 @@ const CampaignForm: React.FC = () => {
           const defaultName = user.email?.split('@')[0] || 'Brand';
           const { data: createdBrand, error: insertErr } = await supabase
             .from('brands')
-            .insert({
-              user_id: user.id,
-              brand_name: defaultName,
-              brand_website: 'https://example.com', // Provide a valid URL fallback
-              social_handles: '',
-              niches: [],
-              company_size: '1-10',
-              industry: 'other',
-              brand_description: '',
-              marketing_goals: [],
-              monthly_budget: 'under-5k',
-              experience_level: 'beginner',
-            })
+              .insert({
+                user_id: user.id,
+                brand_name: defaultName,
+                brand_website: 'https://example.com', // Provide a valid URL fallback
+                social_handles: '',
+                niches: [],
+                company_size: '1-10',
+                industry: 'other',
+                description: '',
+                experience_level: 'beginner',
+              })
             .select('id')
             .single();
 

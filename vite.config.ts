@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 // https://vitejs.dev/config/
+// Trigger Reload: Environment Variables Updated for Razorpay Integration
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",

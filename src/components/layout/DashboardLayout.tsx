@@ -11,7 +11,8 @@ import {
   Users,
   BarChart3,
   Menu,
-  X
+  X,
+  Wallet
 } from 'lucide-react';
 
 const DashboardLayout: React.FC = () => {
@@ -25,6 +26,7 @@ const DashboardLayout: React.FC = () => {
     { icon: Target, label: "My Campaigns", path: "/dashboard/campaigns" },
     { icon: Users, label: "Explore Creators", path: "/dashboard/explore-creators" },
     { icon: BarChart3, label: "Analytics & Reports", path: "/dashboard/analytics" },
+    { icon: Wallet, label: "My Wallet", path: "/dashboard/wallet" },
     { icon: HelpCircle, label: "Support", path: "/dashboard/support" },
   ];
 
