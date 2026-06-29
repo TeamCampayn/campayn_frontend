@@ -86,44 +86,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const fetchBrandData = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      const { data: brands, error } = await supabase
         .from('brands')
         .select('*')
         .eq('user_id', userId)
-        .single()
 
       if (error) {
-        if (error.code === 'PGRST116') { // No rows returned
-          // Create a minimal brand profile
-          const defaultName = (user?.email?.split('@')[0] || 'Brand') as string
-          const { data: created, error: insertErr } = await supabase
-            .from('brands')
-            .insert({
-              user_id: userId,
-              brand_name: defaultName,
-              brand_website: '',
-              social_handles: '',
-              niches: [],
-              company_size: '1-10',
-              industry: 'other',
-              description: '',
-              experience_level: 'beginner',
-            })
-            .select('*')
-            .single()
+        console.error('Error fetching brand data:', error)
+        setBrand(null)
+        return
+      }
 
-          if (insertErr) {
-            console.error('Auto-create brand failed:', insertErr)
-            setBrand(null)
-          } else {
-            setBrand(created)
-          }
-        } else {
-          console.error('Error fetching brand data:', error)
+      if (!brands || brands.length === 0) {
+        // Create a minimal brand profile
+        const defaultName = (user?.email?.split('@')[0] || 'Brand') as string
+        const { data: created, error: insertErr } = await supabase
+          .from('brands')
+          .insert({
+            user_id: userId,
+            brand_name: defaultName,
+            brand_website: '',
+            social_handles: '',
+            niches: [],
+            company_size: '1-10',
+            industry: 'other',
+            description: '',
+            experience_level: 'beginner',
+          })
+          .select('*')
+          .single()
+
+        if (insertErr) {
+          console.error('Auto-create brand failed:', insertErr)
           setBrand(null)
+        } else {
+          setBrand(created)
         }
       } else {
-        setBrand(data)
+        // If multiple profiles exist (due to past DB bugs), select the oldest/first one to ensure consistency
+        setBrand(brands[0])
       }
     } catch (error) {
       console.error('Error in fetchBrandData:', error)
