@@ -95,7 +95,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
         throw new Error(`[${code}] ${detail}`);
       }
 
-      return data.order;
+      return data;
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -143,8 +143,9 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
     try {
       setLoading(true);
 
-      // Create order
-      const order = await createOrder();
+      const orderData = await createOrder();
+      const order = orderData.order;
+      const razorpayKeyId = orderData.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_T3kVFyGMu3jhtP';
 
       if (order.id.startsWith('order_mock_')) {
         toast({
@@ -176,7 +177,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
 
       // Razorpay options
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_T3kVFyGMu3jhtP',
+        key: razorpayKeyId,
         amount: order.amount,
         currency: order.currency,
         name: 'Campayn',

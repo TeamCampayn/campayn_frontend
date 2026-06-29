@@ -221,6 +221,7 @@ const BrandDashboard: React.FC = () => {
       }
 
       const order = orderData.order;
+      const razorpayKeyId = orderData.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_T3kVFyGMu3jhtP';
 
       // 2. If it's a Sandbox Mock Order, simulate success
       if (order.id.startsWith('order_mock_')) {
@@ -262,7 +263,7 @@ const BrandDashboard: React.FC = () => {
 
       // 3. Otherwise, open the real Razorpay checkout modal
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_T3kVFyGMu3jhtP',
+        key: razorpayKeyId,
         amount: order.amount,
         currency: order.currency,
         name: 'Campayn Wallet',
