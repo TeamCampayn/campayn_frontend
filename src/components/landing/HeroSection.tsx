@@ -11,14 +11,14 @@ export const HeroSection = () => {
       <div className="grain relative overflow-hidden rounded-[2rem] bg-panel px-5 pb-16 pt-14 md:px-12 md:pb-24 md:pt-20">
         <div className="mx-auto max-w-6xl">
           <h1 className="font-display text-[10vw] sm:text-[9vw] md:text-[6.5rem] leading-[0.92]">
-            <LineReveal mount>CAMPAYN AGENCY YOUR</LineReveal>
+            <LineReveal mount>YOUR BRAND DESERVES</LineReveal>
             <LineReveal mount delay={0.08}>
-              BRAND&apos;S VOICE ON EVERY
+              BETTER THAN AN AGENCY.
             </LineReveal>
             <div className="flex items-center gap-4 flex-wrap md:flex-nowrap">
               <ScrollToggle />
               <LineReveal mount delay={0.16} className="text-blue">
-                SOCIAL PLATFORM
+                IT DESERVES CAMPAYN
               </LineReveal>
             </div>
           </h1>

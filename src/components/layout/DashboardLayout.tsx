@@ -13,7 +13,8 @@ import {
   Menu,
   X,
   Wallet,
-  Film
+  Film,
+  Sparkle
 } from 'lucide-react';
 
 const DashboardLayout: React.FC = () => {
@@ -50,16 +51,9 @@ const DashboardLayout: React.FC = () => {
   const renderSidebarContent = () => (
     <>
       <div className="p-6 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-black">
-            <span className="text-white font-space font-bold text-base leading-none">+</span>
-          </div>
-          <div>
-            <span className="text-xl font-bold font-space text-black tracking-tight">
-              Campayn<span className="text-[#d2fc15] font-sans font-bold ml-0.5">+</span>
-            </span>
-            <div className="text-[10px] text-zinc-400 font-space uppercase tracking-wider">Influencer Portal</div>
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="font-display text-2xl tracking-tight text-foreground">Campayn</span>
+          <Sparkle className="size-4 fill-[#1ea0ff] text-[#1ea0ff]" />
         </div>
         
         {/* Mobile Close Button */}

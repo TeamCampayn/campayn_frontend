@@ -27,6 +27,7 @@ interface AuthContextType {
   loading: boolean
   signIn: (email: string, password: string) => Promise<User>
   signUp: (email: string, password: string, brandData?: any) => Promise<{ error: any }>
+  signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   createBrandProfile: (brandData: any) => Promise<void>
 }
@@ -168,6 +169,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`
+      }
+    })
+    if (error) throw error
+  }
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
     if (error) throw error
@@ -201,6 +212,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         loading,
         signIn,
         signUp,
+        signInWithGoogle,
         signOut,
         createBrandProfile,
       }}
