@@ -56,6 +56,7 @@ interface CampaignDetailsResponse {
     creators: Creator;
   }>;
   contents: ContentItem[];
+  applications?: any[];
 }
 
 interface ContentReviewProps {
@@ -79,6 +80,7 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
   const [showChat, setShowChat] = useState(false);
   const [finalizeRequestedAt, setFinalizeRequestedAt] = useState<string | null>(null);
   const [finalizeConfirmedAt, setFinalizeConfirmedAt] = useState<string | null>(null);
+  const [applications, setApplications] = useState<any[]>([]);
 
   // Admin upload form state
   const [selectedCreatorId, setSelectedCreatorId] = useState('');
@@ -104,6 +106,7 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
       setCampaignName(data.campaign.campaign_name);
       setCampaignPhase(data.campaign.phase);
       setContents(data.contents || []);
+      setApplications(data.applications || []);
       // Only allow approved creators when available, else list all creator entries
       const uniqueCreators: Record<string, Creator> = {};
       (data.creators || [])
@@ -345,32 +348,35 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
 
   if (!resolvedCampaignId) {
     return (
-      <div className="p-6">
-        <p className="text-red-600">Invalid campaign id.</p>
+      <div className="p-6 font-space uppercase tracking-wider text-xs text-red-600">
+        Invalid campaign id.
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse h-6 w-48 bg-gray-200 rounded mb-4" />
-        <div className="animate-pulse h-4 w-96 bg-gray-100 rounded" />
+      <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-4">
+        <div className="animate-pulse h-6 w-48 bg-zinc-200 rounded-lg mb-4" />
+        <div className="animate-pulse h-4 w-96 bg-zinc-150 rounded-lg" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-300">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Content Review</h1>
-          <p className="text-gray-500">Campaign: {campaignName} · Phase: {campaignPhase}</p>
+          <h1 className="text-2xl font-bold font-space tracking-tight text-neutral-900 uppercase">Content Review</h1>
+          <p className="text-xs font-space uppercase tracking-wider text-zinc-500 mt-1">
+            Campaign: {campaignName} · Phase: <span className="text-neutral-900 font-bold">{campaignPhase.replace('_', ' ')}</span>
+          </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {userType === 'admin' && campaignPhase === 'content_approval' && (
             <button
-              className="px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="btn-primary-pill text-xs py-2 px-5 h-9 flex items-center"
               onClick={handleFinalizeRequest}
               disabled={finalizeBusy || !!finalizeRequestedAt}
             >
@@ -379,7 +385,7 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
           )}
           {userType === 'brand' && campaignPhase === 'content_approval' && finalizeRequestedAt && !finalizeConfirmedAt && (
             <button
-              className="px-3 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="btn-primary-pill text-xs py-2 px-5 h-9 flex items-center"
               onClick={handleFinalizeConfirm}
               disabled={finalizeBusy}
             >
@@ -388,136 +394,239 @@ const ContentReview: React.FC<ContentReviewProps> = ({ campaignId, userType }) =
           )}
           {userType === 'brand' && (
             <button
-              className="px-3 py-2 rounded border border-gray-300 hover:bg-gray-50"
+              className="btn-secondary-pill text-xs py-2 px-5 h-9 flex items-center"
               onClick={() => navigate(-1)}
             >
               Back
             </button>
           )}
           <button
-            className="px-3 py-2 rounded border border-gray-300 hover:bg-gray-50"
+            className="btn-secondary-pill text-xs py-2 px-5 h-9 flex items-center"
             onClick={() => setShowChat(v => !v)}
           >
-            {showChat ? 'Hide chat' : 'Open chat'}
+            {showChat ? 'Hide Chat' : 'Open Chat'}
           </button>
         </div>
       </div>
 
       {(finalizeRequestedAt || finalizeConfirmedAt) && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 rounded">
-          {finalizeConfirmedAt
-            ? `Finalization confirmed on ${new Date(finalizeConfirmedAt).toLocaleString()}`
-            : `Finalization requested on ${new Date(finalizeRequestedAt as string).toLocaleString()} (awaiting brand confirmation)`}
+        <div className="bg-zinc-50 border border-zinc-200 text-neutral-800 px-4 py-3 rounded-2xl flex items-center gap-2 text-[10px] font-space uppercase tracking-wider">
+          <AlertCircle className="h-4 w-4 text-black flex-shrink-0" />
+          <span>
+            {finalizeConfirmedAt
+              ? `Finalization confirmed on ${new Date(finalizeConfirmedAt).toLocaleString()}`
+              : `Finalization requested on ${new Date(finalizeRequestedAt as string).toLocaleString()} (awaiting brand confirmation)`}
+          </span>
         </div>
       )}
 
       {canUpload && (
-        <div className="bg-white border rounded-lg p-4 space-y-4">
-          <h2 className="font-medium">Attach content for review</h2>
-          <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Creator</label>
-              <select
-                className="w-full border rounded px-3 py-2"
-                value={selectedCreatorId}
-                onChange={(e) => setSelectedCreatorId(e.target.value)}
-                required
-              >
-                <option value="">Select creator</option>
-                {approvedCreators.map(cr => (
-                  <option key={cr.id} value={cr.id}>{cr.name} (@{cr.ig_handle})</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Content type</label>
-              <select className="w-full border rounded px-3 py-2" value={contentType} onChange={(e) => setContentType(e.target.value as any)}>
-                <option value="reel">Reel</option>
-                <option value="post">Post</option>
-                <option value="story">Story</option>
-                <option value="igtv">IGTV</option>
-                <option value="carousel">Carousel</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Upload {contentType === 'reel' || contentType === 'igtv' ? 'video' : 'image'}</label>
-              <input
-                className="w-full border rounded px-3 py-2"
-                type="file"
-                accept={contentType === 'reel' || contentType === 'igtv' ? 'video/*' : 'image/*'}
-                onChange={(e) => setContentFile(e.target.files?.[0] || null)}
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">Max 100MB. Supported: {contentType === 'reel' || contentType === 'igtv' ? 'MP4, MOV' : 'JPG, PNG, WEBP'}.</p>
-            </div>
-            {(contentType === 'reel' || contentType === 'igtv') && (
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">Optional thumbnail (image)</label>
+        <Card className="bg-white border border-zinc-200 shadow-none rounded-2xl overflow-hidden">
+          <CardHeader className="pb-3 border-b border-zinc-150">
+            <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800">
+              Attach Content for Review
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Creator</label>
+                <select
+                  className="w-full bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-3.5 py-2.5 text-xs font-space uppercase tracking-wider outline-none transition-colors"
+                  value={selectedCreatorId}
+                  onChange={(e) => setSelectedCreatorId(e.target.value)}
+                  required
+                >
+                  <option value="">Select creator</option>
+                  {approvedCreators.map(cr => (
+                    <option key={cr.id} value={cr.id}>{cr.name} (@{cr.ig_handle})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Content type</label>
+                <select 
+                  className="w-full bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-3.5 py-2.5 text-xs font-space uppercase tracking-wider outline-none transition-colors" 
+                  value={contentType} 
+                  onChange={(e) => setContentType(e.target.value as any)}
+                >
+                  <option value="reel">Reel</option>
+                  <option value="post">Post</option>
+                  <option value="story">Story</option>
+                  <option value="igtv">IGTV</option>
+                  <option value="carousel">Carousel</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Upload {contentType === 'reel' || contentType === 'igtv' ? 'video' : 'image'}</label>
                 <input
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-3.5 py-2 text-xs font-space uppercase tracking-wider outline-none transition-colors file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200"
                   type="file"
-                  accept="image/*"
-                  onChange={(e) => setThumbFile(e.target.files?.[0] || null)}
+                  accept={contentType === 'reel' || contentType === 'igtv' ? 'video/*' : 'image/*'}
+                  onChange={(e) => setContentFile(e.target.files?.[0] || null)}
+                  required
+                />
+                <p className="text-[9px] text-zinc-400 font-space uppercase tracking-wider">Max 100MB. Supported: {contentType === 'reel' || contentType === 'igtv' ? 'MP4, MOV' : 'JPG, PNG, WEBP'}.</p>
+              </div>
+              {(contentType === 'reel' || contentType === 'igtv') && (
+                <div className="space-y-1.5">
+                  <label className="block text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Optional thumbnail (image)</label>
+                  <input
+                    className="w-full bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-3.5 py-2 text-xs font-space uppercase tracking-wider outline-none transition-colors file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setThumbFile(e.target.files?.[0] || null)}
+                  />
+                </div>
+              )}
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="block text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Caption</label>
+                <textarea 
+                  className="w-full bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-3.5 py-2.5 text-xs font-space uppercase tracking-wider outline-none transition-colors resize-none" 
+                  rows={3} 
+                  placeholder="Optional caption..." 
+                  value={caption} 
+                  onChange={(e) => setCaption(e.target.value)} 
                 />
               </div>
-            )}
-            <div className="md:col-span-2">
-              <label className="block text-sm text-gray-600 mb-1">Caption</label>
-              <textarea className="w-full border rounded px-3 py-2" rows={3} placeholder="Optional caption..." value={caption} onChange={(e) => setCaption(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Hashtags (comma separated)</label>
-              <input className="w-full border rounded px-3 py-2" placeholder="#brand, #launch" value={hashtags} onChange={(e) => setHashtags(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Schedule (optional)</label>
-              <input type="datetime-local" className="w-full border rounded px-3 py-2" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} />
-            </div>
-            <div className="md:col-span-2 flex gap-3">
-              <button type="submit" disabled={uploading} className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50">
-                {uploading ? 'Uploading...' : 'Send for review'}
-              </button>
-            </div>
-          </form>
-        </div>
+              <div className="space-y-1.5">
+                <label className="block text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Hashtags (comma separated)</label>
+                <input 
+                  className="w-full bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-3.5 py-2.5 text-xs font-space uppercase tracking-wider outline-none transition-colors" 
+                  placeholder="E.g., brand, launch" 
+                  value={hashtags} 
+                  onChange={(e) => setHashtags(e.target.value)} 
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Schedule (optional)</label>
+                <input 
+                  type="datetime-local" 
+                  className="w-full bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-3.5 py-2.5 text-xs font-space uppercase tracking-wider outline-none transition-colors text-zinc-600" 
+                  value={scheduledAt} 
+                  onChange={(e) => setScheduledAt(e.target.value)} 
+                />
+              </div>
+              <div className="md:col-span-2 pt-2">
+                <button 
+                  type="submit" 
+                  disabled={uploading} 
+                  className="btn-primary-pill text-xs py-2.5 px-6 h-10 w-full md:w-auto"
+                >
+                  {uploading ? 'Uploading...' : 'Send for review'}
+                </button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="bg-white border rounded-lg">
-        <div className="px-4 py-3 border-b font-medium">Submitted content</div>
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {contents.length === 0 && (
-            <div className="text-gray-500">No content submitted yet.</div>
+      <Card className="bg-white border border-zinc-200 shadow-none rounded-2xl overflow-hidden">
+        <CardHeader className="pb-3 border-b border-zinc-150">
+          <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800">
+            Submitted Content
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          {contents.length === 0 ? (
+            <div className="text-[10px] font-space uppercase tracking-wider text-zinc-400 py-4">
+              No content submitted yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {contents.map((c) => (
+                <ContentCard
+                  key={c.id}
+                  item={c}
+                  onReview={handleReview}
+                  busy={actionBusyId === c.id}
+                  userType={userType}
+                  formatDateTime={formatDateTime}
+                  campaignId={resolvedCampaignId}
+                  onPosted={() => fetchCampaign()}
+                />
+              ))}
+            </div>
           )}
-          {contents.map((c) => (
-            <ContentCard
-              key={c.id}
-              item={c}
-              onReview={handleReview}
-              busy={actionBusyId === c.id}
-              userType={userType}
-              formatDateTime={formatDateTime}
-              campaignId={resolvedCampaignId}
-              onPosted={() => fetchCampaign()}
-            />
-          ))}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
+
+      {/* Live Published Content (Direct from Creator App submissions) */}
+      {applications.filter(app => app.post_url).length > 0 && (
+        <Card className="bg-white border border-zinc-200 shadow-none rounded-2xl overflow-hidden">
+          <CardHeader className="pb-3 border-b border-zinc-150 flex flex-row items-center justify-between">
+            <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800">
+              Live Published Content
+            </CardTitle>
+            <span className="text-[9px] font-bold font-space uppercase tracking-wider bg-zinc-950 text-white px-2.5 py-1 rounded-full">
+              Active Monitoring
+            </span>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {applications.filter(app => app.post_url).map((app) => (
+                <div key={app.id} className="border border-zinc-200 rounded-2xl p-4 space-y-4 bg-zinc-50/50 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-[10px] font-bold font-space uppercase tracking-wider text-neutral-900">
+                        {app.creator?.name || 'Creator'}
+                      </div>
+                      <a 
+                        href={`https://instagram.com/${app.creator?.ig_handle || ''}`} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="text-[9px] font-bold font-space uppercase tracking-wider text-neutral-900 underline hover:no-underline"
+                      >
+                        @{app.creator?.ig_handle || 'instagram'}
+                      </a>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[10px] font-space uppercase tracking-wider text-zinc-500">
+                        <span className="font-bold text-neutral-800">Views:</span> {app.verified_views?.toLocaleString() || 0}
+                      </div>
+                      <div className="text-[10px] font-space uppercase tracking-wider text-zinc-500">
+                        <span className="font-bold text-neutral-800">Posted at:</span> {formatDateTime(app.posted_at)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <a 
+                      href={app.post_url} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="btn-primary-pill w-full text-[10px] py-2 h-8 flex items-center justify-center"
+                    >
+                      Watch Instagram Reel ↗
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {showChat && (
-        <div className="bg-white border rounded-lg p-4">
-          <h3 className="font-medium mb-2">Campaign chat</h3>
-          <QuotationChat campaignId={resolvedCampaignId} campaignName={campaignName} />
-        </div>
+        <Card className="bg-white border border-zinc-200 shadow-none rounded-2xl overflow-hidden">
+          <CardHeader className="pb-3 border-b border-zinc-150">
+            <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800">
+              Campaign Chat
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <QuotationChat campaignId={resolvedCampaignId} campaignName={campaignName} />
+          </CardContent>
+        </Card>
       )}
     </div>
   );
 };
 
 const statusColors: Record<ContentItem['approval_status'], string> = {
-  pending: 'bg-amber-100 text-amber-700',
-  approved: 'bg-emerald-100 text-emerald-700',
-  rejected: 'bg-rose-100 text-rose-700',
-  needs_revision: 'bg-blue-100 text-blue-700',
+  pending: 'bg-zinc-100 text-zinc-700 border-zinc-200',
+  approved: 'bg-zinc-950 text-white border-zinc-950',
+  rejected: 'bg-zinc-50 text-zinc-400 border-zinc-200 line-through',
+  needs_revision: 'bg-zinc-50 text-zinc-650 border-zinc-200 underline decoration-dotted decoration-zinc-400',
 };
 
 const ContentCard: React.FC<{
@@ -549,164 +658,242 @@ const ContentCard: React.FC<{
   const isVideo = !!item.content_url && (item.content_url.endsWith('.mp4') || item.content_type === 'reel' || item.content_type === 'igtv');
 
   return (
-    <div className="border rounded-lg overflow-hidden">
-      {previewThumb && (
-        <div className="aspect-video bg-gray-100 overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={previewThumb} alt={item.caption || 'thumbnail'} className="w-full h-full object-cover" />
-        </div>
-      )}
-      {!previewThumb && isVideo && item.content_url && (
-        <div className="aspect-video bg-black">
-          <video src={item.content_url} className="w-full h-full" controls />
-        </div>
-      )}
-      <div className="p-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">{item.creators?.name} (@{item.creators?.ig_handle})</div>
-          <span className={`text-xs px-2 py-1 rounded ${statusColors[item.approval_status]}`}>{item.approval_status.replace('_', ' ')}</span>
-        </div>
-        <div className="text-sm">
-          <div className="text-gray-700"><span className="text-gray-500">Type:</span> {item.content_type}</div>
-          {item.caption && <div className="text-gray-700 line-clamp-2">{item.caption}</div>}
-          {item.hashtags && item.hashtags.length > 0 && (
-            <div className="text-xs text-gray-500">{item.hashtags.map(h => `#${h}`).join(' ')}</div>
-          )}
-          {item.content_url && (
-            <a href={item.content_url} target="_blank" rel="noreferrer" className="text-indigo-600 text-sm underline">Open content</a>
-          )}
-          {item.post_url && (
-            <div className="mt-1 text-sm">
-              <span className="text-gray-500">Live link: </span>
-              <a href={item.post_url} target="_blank" rel="noreferrer" className="text-emerald-600 underline">{item.post_url}</a>
-            </div>
-          )}
-          <div className="text-xs text-gray-500">Submitted: {formatDateTime(item.created_at)}</div>
-          {item.posted_at && <div className="text-xs text-gray-500">Posted: {formatDateTime(item.posted_at)}</div>}
-        </div>
-
-        {userType === 'brand' && (
-          <div className="pt-2 space-y-2">
-            <textarea
-              className="w-full border rounded px-2 py-2 text-sm"
-              placeholder="Optional feedback (required for reject/revision)"
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-            />
-            <div className="flex items-center gap-2">
-              <button
-                disabled={busy}
-                onClick={() => onReview(item.id, 'approved', feedback)}
-                className="px-3 py-1.5 rounded bg-emerald-600 text-white text-sm hover:bg-emerald-700 disabled:opacity-50"
-              >Approve</button>
-              <button
-                disabled={busy || !feedback.trim()}
-                onClick={() => onReview(item.id, 'needs_revision', feedback)}
-                className="px-3 py-1.5 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
-              >Request revision</button>
-              <button
-                disabled={busy || !feedback.trim()}
-                onClick={() => onReview(item.id, 'rejected', feedback)}
-                className="px-3 py-1.5 rounded bg-rose-600 text-white text-sm hover:bg-rose-700 disabled:opacity-50"
-              >Reject</button>
-            </div>
+    <div className="border border-zinc-200 rounded-2xl overflow-hidden flex flex-col justify-between bg-white">
+      <div>
+        {previewThumb && (
+          <div className="aspect-video bg-zinc-50 overflow-hidden border-b border-zinc-150">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={previewThumb} alt={item.caption || 'thumbnail'} className="w-full h-full object-cover" />
           </div>
         )}
-
-        {userType === 'admin' && item.brand_feedback && (
-          <div className="mt-2 bg-gray-50 border rounded p-2 text-sm">
-            <div className="text-gray-600 font-medium">Brand feedback</div>
-            <div className="text-gray-700">{item.brand_feedback}</div>
+        {!previewThumb && isVideo && item.content_url && (
+          <div className="aspect-video bg-black overflow-hidden border-b border-zinc-150">
+            <video src={item.content_url} className="w-full h-full" controls />
           </div>
         )}
-
-        {/* Admin: Add live link once approved */}
-        {userType === 'admin' && item.approval_status === 'approved' && !item.post_url && (
-          <div className="mt-3 border-t pt-3">
-            <div className="text-sm font-medium mb-1">Add live post link</div>
-            <div className="flex gap-2">
-              <input
-                className="flex-1 border rounded px-2 py-1 text-sm"
-                placeholder="https://instagram.com/p/..."
-                value={postUrl}
-                onChange={(e) => setPostUrl(e.target.value)}
-              />
-              <button
-                disabled={posting || !postUrl.trim()}
-                className="px-3 py-1.5 rounded bg-indigo-600 text-white text-sm disabled:opacity-50"
-                onClick={async () => {
-                  try {
-                    setPosting(true);
-                    const url = getApiUrl(`api/campaigns/${campaignId}/contents/${item.id}/post`);
-                    const res = await fetch(url, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ post_url: postUrl })
-                    });
-                    const data = await res.json();
-                    if (!res.ok || !data?.success) throw new Error(data?.error || 'Failed to save link');
-                    onPosted();
-                  } catch (e: any) {
-                    // eslint-disable-next-line no-alert
-                    alert(e.message);
-                  } finally {
-                    setPosting(false);
-                  }
-                }}
-              >Save</button>
+        <div className="p-4 space-y-3.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[10px] font-bold font-space uppercase tracking-wider text-neutral-800 truncate">
+              {item.creators?.name || 'Creator'} 
+              <span className="block text-[9px] font-normal text-zinc-500 font-sans lowercase">
+                @{item.creators?.ig_handle}
+              </span>
             </div>
+            <span className={`text-[9px] font-bold font-space uppercase tracking-wider px-2.5 py-1 rounded-full border ${statusColors[item.approval_status]}`}>
+              {item.approval_status.replace('_', ' ')}
+            </span>
           </div>
-        )}
 
-        {/* Metrics display/update */}
-        {(item.performance_metrics || userType === 'admin') && (
-          <div className="mt-3 border-t pt-3 text-sm">
-            <div className="font-medium mb-1">Performance</div>
-            {userType === 'admin' ? (
-              <div className="grid grid-cols-4 gap-2">
-                <input className="border rounded px-2 py-1" type="number" min={0} value={metrics.likes}
-                  onChange={(e) => setMetrics(m => ({ ...m, likes: Number(e.target.value) }))} placeholder="Likes" />
-                <input className="border rounded px-2 py-1" type="number" min={0} value={metrics.comments}
-                  onChange={(e) => setMetrics(m => ({ ...m, comments: Number(e.target.value) }))} placeholder="Comments" />
-                <input className="border rounded px-2 py-1" type="number" min={0} value={metrics.views}
-                  onChange={(e) => setMetrics(m => ({ ...m, views: Number(e.target.value) }))} placeholder="Views" />
-                <input className="border rounded px-2 py-1" type="number" min={0} step="0.01" value={metrics.engagement_rate}
-                  onChange={(e) => setMetrics(m => ({ ...m, engagement_rate: Number(e.target.value) }))} placeholder="Engagement %" />
-                <div className="col-span-4">
-                  <button
-                    disabled={savingMetrics}
-                    className="mt-2 px-3 py-1.5 rounded bg-gray-800 text-white text-sm disabled:opacity-50"
-                    onClick={async () => {
-                      try {
-                        setSavingMetrics(true);
-                        const url = getApiUrl(`api/campaigns/${campaignId}/contents/${item.id}/metrics`);
-                        const res = await fetch(url, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ performance_metrics: metrics })
-                        });
-                        const data = await res.json();
-                        if (!res.ok || !data?.success) throw new Error(data?.error || 'Failed to save metrics');
-                        onPosted();
-                      } catch (e: any) {
-                        alert(e.message);
-                      } finally {
-                        setSavingMetrics(false);
-                      }
-                    }}
-                  >Save metrics</button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm text-gray-700 space-x-3">
-                <span>Likes: {item.performance_metrics?.likes ?? '-'}</span>
-                <span>Comments: {item.performance_metrics?.comments ?? '-'}</span>
-                <span>Views: {item.performance_metrics?.views ?? '-'}</span>
-                <span>Engagement: {item.performance_metrics?.engagement_rate ?? '-'}%</span>
+          <div className="space-y-1.5 text-[10px] font-space uppercase tracking-wider text-zinc-500">
+            <div>
+              <span className="font-bold text-neutral-800">Type:</span> {item.content_type}
+            </div>
+            {item.caption && (
+              <div className="text-neutral-750 line-clamp-2 mt-0.5 normal-case font-sans">
+                <span className="font-bold font-space uppercase text-[10px] text-neutral-800 mr-1">Caption:</span> 
+                {item.caption}
               </div>
             )}
+            {item.hashtags && item.hashtags.length > 0 && (
+              <div className="text-[9px] font-bold text-zinc-400 font-sans lowercase">
+                {item.hashtags.map(h => `#${h}`).join(' ')}
+              </div>
+            )}
+            <div className="pt-1.5 flex flex-wrap gap-3">
+              {item.content_url && (
+                <a 
+                  href={item.content_url} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="text-neutral-900 font-bold underline hover:no-underline"
+                >
+                  Open Content ↗
+                </a>
+              )}
+              {item.post_url && (
+                <a 
+                  href={item.post_url} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="text-neutral-900 font-bold underline hover:no-underline"
+                >
+                  Live Instagram Link ↗
+                </a>
+              )}
+            </div>
+            <div className="text-[9px] text-zinc-400 pt-1">Submitted: {formatDateTime(item.created_at)}</div>
+            {item.posted_at && <div className="text-[9px] text-zinc-400">Posted: {formatDateTime(item.posted_at)}</div>}
           </div>
-        )}
+
+          {userType === 'brand' && (
+            <div className="pt-2 border-t border-zinc-150 space-y-3">
+              <textarea
+                className="w-full bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-3 py-2 text-[10px] font-sans outline-none transition-colors resize-none"
+                rows={2}
+                placeholder="Optional feedback (required for reject/revision)"
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+              />
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  disabled={busy}
+                  onClick={() => onReview(item.id, 'approved', feedback)}
+                  className="btn-primary-pill text-[9px] py-1.5 px-2 h-8 flex items-center justify-center"
+                >
+                  Approve
+                </button>
+                <button
+                  disabled={busy || !feedback.trim()}
+                  onClick={() => onReview(item.id, 'needs_revision', feedback)}
+                  className="btn-secondary-pill text-[9px] py-1.5 px-2 h-8 flex items-center justify-center"
+                >
+                  Revision
+                </button>
+                <button
+                  disabled={busy || !feedback.trim()}
+                  onClick={() => onReview(item.id, 'rejected', feedback)}
+                  className="btn-secondary-pill text-[9px] py-1.5 px-2 h-8 flex items-center justify-center border-zinc-200 hover:bg-neutral-50"
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
+          )}
+
+          {userType === 'admin' && item.brand_feedback && (
+            <div className="mt-2 bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-[10px] font-space uppercase tracking-wider">
+              <div className="text-neutral-800 font-bold">Brand Feedback</div>
+              <div className="text-zinc-500 mt-1 normal-case font-sans">{item.brand_feedback}</div>
+            </div>
+          )}
+
+          {/* Admin: Add live link once approved */}
+          {userType === 'admin' && item.approval_status === 'approved' && !item.post_url && (
+            <div className="mt-3 border-t border-zinc-150 pt-3 space-y-2">
+              <div className="text-[9px] font-bold font-space uppercase tracking-wider text-neutral-800">Add live post link</div>
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-3 py-1.5 text-xs font-sans outline-none transition-colors"
+                  placeholder="https://instagram.com/p/..."
+                  value={postUrl}
+                  onChange={(e) => setPostUrl(e.target.value)}
+                />
+                <button
+                  disabled={posting || !postUrl.trim()}
+                  className="btn-primary-pill text-[10px] py-1.5 px-4 h-8 flex items-center justify-center"
+                  onClick={async () => {
+                    try {
+                      setPosting(true);
+                      const url = getApiUrl(`api/campaigns/${campaignId}/contents/${item.id}/post`);
+                      const res = await fetch(url, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ post_url: postUrl })
+                      });
+                      const data = await res.json();
+                      if (!res.ok || !data?.success) throw new Error(data?.error || 'Failed to save link');
+                      onPosted();
+                    } catch (e: any) {
+                      // eslint-disable-next-line no-alert
+                      alert(e.message);
+                    } finally {
+                      setPosting(false);
+                    }
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Metrics display/update */}
+          {(item.performance_metrics || userType === 'admin') && (
+            <div className="mt-3 border-t border-zinc-150 pt-3 text-[10px] font-space uppercase tracking-wider">
+              <div className="font-bold text-neutral-800 mb-2">Performance</div>
+              {userType === 'admin' ? (
+                <div className="space-y-2.5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input 
+                      className="bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-2.5 py-1.5 text-xs font-sans outline-none transition-colors" 
+                      type="number" 
+                      min={0} 
+                      value={metrics.likes}
+                      onChange={(e) => setMetrics(m => ({ ...m, likes: Number(e.target.value) }))} 
+                      placeholder="Likes" 
+                    />
+                    <input 
+                      className="bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-2.5 py-1.5 text-xs font-sans outline-none transition-colors" 
+                      type="number" 
+                      min={0} 
+                      value={metrics.comments}
+                      onChange={(e) => setMetrics(m => ({ ...m, comments: Number(e.target.value) }))} 
+                      placeholder="Comments" 
+                    />
+                    <input 
+                      className="bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-2.5 py-1.5 text-xs font-sans outline-none transition-colors" 
+                      type="number" 
+                      min={0} 
+                      value={metrics.views}
+                      onChange={(e) => setMetrics(m => ({ ...m, views: Number(e.target.value) }))} 
+                      placeholder="Views" 
+                    />
+                    <input 
+                      className="bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-2.5 py-1.5 text-xs font-sans outline-none transition-colors" 
+                      type="number" 
+                      min={0} 
+                      step="0.01" 
+                      value={metrics.engagement_rate}
+                      onChange={(e) => setMetrics(m => ({ ...m, engagement_rate: Number(e.target.value) }))} 
+                      placeholder="Engagement %" 
+                    />
+                  </div>
+                  <div>
+                    <button
+                      disabled={savingMetrics}
+                      className="btn-primary-pill w-full text-[10px] py-1.5 h-8 flex items-center justify-center"
+                      onClick={async () => {
+                        try {
+                          setSavingMetrics(true);
+                          const url = getApiUrl(`api/campaigns/${campaignId}/contents/${item.id}/metrics`);
+                          const res = await fetch(url, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ performance_metrics: metrics })
+                          });
+                          const data = await res.json();
+                          if (!res.ok || !data?.success) throw new Error(data?.error || 'Failed to save metrics');
+                          onPosted();
+                        } catch (e: any) {
+                          alert(e.message);
+                        } finally {
+                          setSavingMetrics(false);
+                        }
+                      }}
+                    >
+                      Save Metrics
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 text-[10px] font-space uppercase tracking-wider text-zinc-500 bg-zinc-50 border border-zinc-150 rounded-xl p-2.5">
+                  <div>
+                    <span className="font-bold text-neutral-800">Likes:</span> {item.performance_metrics?.likes ?? '-'}
+                  </div>
+                  <div>
+                    <span className="font-bold text-neutral-800">Comments:</span> {item.performance_metrics?.comments ?? '-'}
+                  </div>
+                  <div>
+                    <span className="font-bold text-neutral-800">Views:</span> {item.performance_metrics?.views ?? '-'}
+                  </div>
+                  <div>
+                    <span className="font-bold text-neutral-800">Engagement:</span> {item.performance_metrics?.engagement_rate ?? '-'}%
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

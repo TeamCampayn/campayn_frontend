@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
+import { Input } from '../../components/ui/input'
+import { useToast } from '../../hooks/use-toast'
+import { supabase } from '../../lib/supabase'
+import { getApiUrl } from '../../lib/api'
 import { 
   Wallet, 
   ArrowUpRight, 
@@ -9,12 +13,11 @@ import {
   History, 
   CreditCard, 
   RefreshCw, 
-  Loader2 
+  Loader2,
+  Copy,
+  Coins,
+  ShieldCheck
 } from 'lucide-react'
-import { Input } from '../../components/ui/input'
-import { useToast } from '../../hooks/use-toast'
-import { supabase } from '../../lib/supabase'
-import { getApiUrl } from '../../lib/api'
 
 interface Transaction {
   id: string;
@@ -251,10 +254,10 @@ const WalletPage: React.FC = () => {
           contact: ''
         },
         theme: {
-          color: '#4F46E5'
+          color: '#000000'
         }
       };
-
+ 
       const rzp = new (window as any).Razorpay(options);
       rzp.on('payment.failed', function (failedResponse: any) {
         setIsDepositing(false);
@@ -265,7 +268,7 @@ const WalletPage: React.FC = () => {
         });
       });
       rzp.open();
-
+ 
     } catch (err: any) {
       toast({
         title: 'Payment Error',
@@ -276,194 +279,246 @@ const WalletPage: React.FC = () => {
     }
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: 'Copied!',
+      description: 'Reference ID copied to clipboard.',
+    });
+  };
+
   if (!brand) {
     return (
-      <div className="p-8 max-w-7xl mx-auto text-center">
-        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin mx-auto mb-4" />
-        <p className="text-gray-500 font-semibold">Loading brand account...</p>
+      <div className="p-8 max-w-7xl mx-auto text-center min-h-[400px] flex flex-col justify-center items-center">
+        <Loader2 className="h-8 w-8 text-black animate-spin mx-auto mb-4" />
+        <p className="text-xs font-space uppercase tracking-wider text-zinc-500">Loading brand account...</p>
       </div>
     );
   }
-
+ 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-300">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl lg:text-3xl font-bold tracking-tight text-gray-800">My Escrow Wallet</h2>
-        <p className="mt-1 text-gray-500 text-sm">
-          Fund your secure virtual wallet and monitor differential payouts to creators.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-extrabold font-space tracking-tight text-neutral-900 uppercase">Escrow Wallet</h2>
+          <p className="mt-1 text-xs text-neutral-500 font-space uppercase tracking-wider">
+            Secure virtual wallet for campaign funding, automated payouts, and transaction audits.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2 text-neutral-800 self-start md:self-auto">
+          <ShieldCheck className="h-4 w-4 text-neutral-700 animate-pulse" />
+          <span className="text-[9px] font-bold uppercase tracking-wider font-space">Secured by Razorpay Escrow</span>
+        </div>
       </div>
-
+ 
       {/* Wallet Info Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Wallet Balance Display Card */}
-        <Card className="lg:col-span-1 bg-gradient-to-br from-indigo-900 to-indigo-700 text-white shadow-xl relative overflow-hidden h-full rounded-2xl border-0">
-          <div className="absolute top-0 right-0 p-6 opacity-10">
+        <Card className="lg:col-span-1 bg-neutral-900 text-white shadow-sm relative overflow-hidden h-full rounded-2xl border border-neutral-800 group">
+          <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:opacity-[0.06] group-hover:scale-105 transition-all duration-700">
             <Wallet size={150} />
           </div>
-          <CardHeader>
-            <CardTitle className="text-indigo-200 text-xs font-semibold uppercase tracking-wider">
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <CardHeader className="pb-2">
+            <CardTitle className="text-neutral-400 text-[10px] font-bold font-space uppercase tracking-wider flex items-center gap-1.5">
+              <Coins className="h-3.5 w-3.5 text-neutral-300" />
               Virtual Escrow Balance
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 pb-8 flex flex-col justify-between h-48">
+          <CardContent className="pt-4 pb-6 flex flex-col justify-between min-h-[180px]">
             <div>
-              <span className="text-4xl font-extrabold tracking-tight">
-                ₹{isLoading ? '...' : (wallet?.balance?.toLocaleString() || '0.00')}
-              </span>
-              <p className="text-xs text-indigo-200 mt-2 font-medium">
-                This balance is securely locked in platform escrow for payout releases.
+              <div className="flex items-baseline gap-1">
+                <span className="text-4xl font-extrabold font-space tracking-tight text-white">
+                  {isLoading ? '...' : `₹${(wallet?.balance || 0).toLocaleString('en-IN')}`}
+                </span>
+                <span className="text-xs font-bold font-space text-neutral-400">INR</span>
+              </div>
+              <p className="text-[10px] font-space text-neutral-400 mt-4 leading-relaxed uppercase tracking-wider">
+                This balance is safely locked in platform escrow and is automatically released to creators upon approved post content submissions.
               </p>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] font-bold bg-white/10 px-3 py-1 rounded-full w-fit">
-              <CreditCard size={12} />
-              <span>Auto-created Virtual Wallet</span>
+            <div className="mt-6 flex items-center gap-1.5 text-[9px] font-bold font-space uppercase tracking-wider bg-white/10 px-3.5 py-1.5 rounded-full w-fit text-white border border-white/5 backdrop-blur-sm">
+              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span>
+              <span>Active Virtual Account</span>
             </div>
           </CardContent>
         </Card>
-
+ 
         {/* Add money Form Card */}
-        <Card className="lg:col-span-2 shadow-sm border border-gray-200/50 rounded-2xl bg-white">
-          <CardHeader>
-            <CardTitle className="text-gray-800 font-bold">Add Funds to Wallet</CardTitle>
-            <CardDescription>
-              Instantly simulate a topup to credit your brand escrow virtual balance.
+        <Card className="lg:col-span-2 bg-white border border-neutral-200/80 shadow-sm rounded-2xl">
+          <CardHeader className="pb-3 border-b border-neutral-100/60">
+            <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800 flex items-center gap-1.5">
+              <CreditCard className="h-4 w-4 text-neutral-700" />
+              Add Funds to Wallet
+            </CardTitle>
+            <CardDescription className="text-[10px] font-space text-neutral-400 mt-1 uppercase tracking-wider">
+              Top up your balance instantly using credit cards, UPI, net banking, or simulated Sandbox.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-5">
             {/* Presets */}
             <div>
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Preset Options</label>
-              <div className="grid grid-cols-3 gap-3 mt-2">
+              <label className="text-[10px] font-bold font-space uppercase tracking-wider text-neutral-450 block mb-2">Preset Options</label>
+              <div className="grid grid-cols-3 gap-3">
                 {[5000, 10000, 25000].map((val) => (
                   <button
                     key={val}
                     onClick={() => handleDeposit(val)}
                     disabled={isDepositing}
-                    className="py-2.5 px-4 bg-gray-50 border border-gray-200/60 rounded-xl text-sm font-bold text-gray-700 hover:bg-indigo-50/50 hover:border-indigo-200 active:scale-95 transition-all"
+                    className="py-2.5 px-4 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 hover:border-zinc-300 rounded-xl text-xs font-bold font-space uppercase tracking-wider text-zinc-800 active:scale-98 transition-all duration-200 disabled:opacity-50"
                   >
-                    + ₹{val.toLocaleString()}
+                    + ₹{val.toLocaleString('en-IN')}
                   </button>
                 ))}
               </div>
             </div>
-
+ 
             {/* Custom input */}
             <div>
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Or Enter Custom Amount (INR)</label>
-              <div className="flex gap-3 mt-2">
+              <label className="text-[10px] font-bold font-space uppercase tracking-wider text-neutral-450 block mb-2">Or Enter Custom Amount (INR)</label>
+              <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">₹</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 font-bold text-sm">₹</span>
                   <Input
                     type="number"
-                    placeholder="Enter amount"
+                    placeholder="Enter amount (e.g., 5000)"
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
-                    className="pl-8 rounded-xl border-gray-200"
+                    className="pl-8 h-10 rounded-xl border-neutral-200/80 focus:border-black focus:ring-black/20 font-space text-xs"
                     disabled={isDepositing}
                   />
                 </div>
-                <Button 
+                <button 
                   onClick={() => handleDeposit()}
                   disabled={isDepositing}
-                  className="bg-indigo-600 hover:bg-indigo-700 font-bold text-white shadow-sm flex items-center gap-2 rounded-xl px-5"
+                  className="btn-primary-pill py-2.5 px-6 h-10 text-xs font-bold uppercase font-space tracking-wider flex items-center justify-center gap-2 active:scale-98 transition-all duration-200 disabled:opacity-75"
                 >
                   {isDepositing ? (
                     <>
-                      <Loader2 className="animate-spin h-4 w-4" />
+                      <Loader2 className="animate-spin h-3.5 w-3.5" />
                       Processing...
                     </>
                   ) : (
                     <>
-                      <ArrowUpRight className="h-4 w-4" />
+                      <ArrowUpRight className="h-3.5 w-3.5" />
                       Deposit
                     </>
                   )}
-                </Button>
+                </button>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
+ 
       {/* Transaction history log */}
-      <Card className="shadow-sm border border-gray-200/50 rounded-2xl bg-white">
-        <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
+      <Card className="bg-white border border-neutral-200/80 shadow-sm rounded-2xl overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-neutral-100/60 p-6 bg-neutral-50/20">
           <div>
-            <CardTitle className="text-gray-800 font-bold flex items-center gap-2">
-              <History className="h-5 w-5 text-indigo-600" />
+            <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800 flex items-center gap-2">
+              <History className="h-4 w-4 text-neutral-700" />
               Transaction Ledger
             </CardTitle>
-            <CardDescription>
-              Chronological record of all wallet top-ups and creator payouts.
+            <CardDescription className="text-[10px] font-space text-neutral-400 mt-1 uppercase tracking-wider">
+              Chronological record of all wallet deposits, commitments, and creator releases.
             </CardDescription>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <button 
             onClick={fetchWalletAndTransactions}
-            className="text-xs font-semibold flex items-center gap-1.5 rounded-xl"
+            className="flex items-center gap-1.5 px-4 py-2 border border-neutral-200 hover:border-neutral-300 rounded-xl text-xs font-bold font-space uppercase tracking-wider text-neutral-700 hover:bg-neutral-50 transition-all duration-200 active:scale-95 bg-white shadow-sm"
           >
             <RefreshCw size={12} className={isLoading ? 'animate-spin' : ''} />
             Refresh
-          </Button>
+          </button>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b text-gray-400 text-xs font-bold uppercase tracking-wider">
-                  <th className="pb-3">Reference ID</th>
-                  <th className="pb-3">Type</th>
-                  <th className="pb-3">Details / Recipient Creator</th>
-                  <th className="pb-3">Status</th>
-                  <th className="pb-3">Date & Time</th>
-                  <th className="pb-3 text-right">Amount</th>
+                <tr className="border-b border-neutral-200 text-neutral-400 text-[10px] font-bold uppercase tracking-wider bg-neutral-50/10">
+                  <th className="py-4 pl-6 font-space">Reference ID</th>
+                  <th className="py-4 font-space">Type</th>
+                  <th className="py-4 font-space">Details / Recipient Creator</th>
+                  <th className="py-4 font-space">Status</th>
+                  <th className="py-4 font-space">Date & Time</th>
+                  <th className="py-4 pr-6 text-right font-space">Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y text-sm text-gray-700">
+              <tbody className="divide-y divide-neutral-100/80 text-xs text-neutral-700">
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-gray-400 font-medium">
+                    <td colSpan={6} className="py-12 text-center text-[10px] font-bold font-space uppercase tracking-wider text-neutral-400">
                       No transactions recorded yet.
                     </td>
                   </tr>
                 ) : (
                   transactions.map((t) => {
-                    const isPayout = t.type === 'payout';
-                    const formattedDate = new Date(t.created_at).toLocaleString();
+                    const isDebit = t.type?.toLowerCase() === 'payout' || t.type?.toLowerCase() === 'debit';
+                    const formattedDate = new Date(t.created_at).toLocaleString('en-IN', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                      hour12: false
+                    });
+                    const shortRefId = t.reference_id || t.id.substring(0, 8);
                     
                     return (
-                      <tr key={t.id} className="hover:bg-gray-50/50">
-                        <td className="py-4 font-mono text-xs font-semibold text-gray-500">
-                          {t.reference_id || t.id.substring(0, 8)}
+                      <tr key={t.id} className="hover:bg-neutral-50/30 transition-colors border-b border-neutral-100 last:border-0 group">
+                        <td className="py-4 pl-6">
+                          <button
+                            onClick={() => copyToClipboard(t.reference_id || t.id)}
+                            className="font-mono text-[10px] font-semibold text-neutral-400 hover:text-neutral-900 flex items-center gap-1.5 transition-colors focus:outline-none"
+                            title="Click to copy Reference ID"
+                          >
+                            <span>{shortRefId}</span>
+                            <Copy size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </button>
                         </td>
                         <td className="py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
-                            isPayout 
-                              ? 'bg-rose-50 text-rose-700 border border-rose-200/50' 
-                              : 'bg-green-50 text-green-700 border border-green-200/50'
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[9px] font-bold font-space uppercase tracking-wider border ${
+                            isDebit 
+                              ? 'bg-neutral-50 text-neutral-600 border-neutral-200' 
+                              : 'bg-neutral-100 text-neutral-800 border-neutral-200'
                           }`}>
-                            {isPayout ? <ArrowDownRight size={12} /> : <ArrowUpRight size={12} />}
+                            {isDebit ? <ArrowDownRight size={10} className="text-neutral-500" /> : <ArrowUpRight size={10} className="text-neutral-700" />}
                             {t.type}
                           </span>
                         </td>
-                        <td className="py-4 font-medium text-gray-800">
-                          {t.description || (isPayout ? 'Payout to Creator' : 'Wallet Deposit')}
+                        <td className="py-4 pr-4">
+                          <div className="font-semibold font-sans text-xs text-neutral-800 leading-tight">
+                            {t.description || (isDebit ? 'Payout to Creator' : 'Wallet Deposit')}
+                          </div>
                         </td>
                         <td className="py-4">
-                          <span className="inline-flex px-2 py-0.5 bg-gray-50 text-gray-600 text-xs font-bold rounded-full border border-gray-200/50">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold font-space uppercase tracking-wider border ${
+                            t.status?.toLowerCase() === 'completed' || t.status?.toLowerCase() === 'success'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100/60'
+                              : t.status?.toLowerCase() === 'pending'
+                              ? 'bg-amber-50 text-amber-700 border-amber-100/60 animate-pulse'
+                              : 'bg-red-50 text-red-700 border-red-100/60'
+                          }`}>
+                            <span className={`w-1 h-1 rounded-full ${
+                              t.status?.toLowerCase() === 'completed' || t.status?.toLowerCase() === 'success'
+                                ? 'bg-emerald-500'
+                                : t.status?.toLowerCase() === 'pending'
+                                ? 'bg-amber-500'
+                                : 'bg-red-500'
+                            }`} />
                             {t.status}
                           </span>
                         </td>
-                        <td className="py-4 text-gray-400 text-xs font-medium">
+                        <td className="py-4 text-neutral-400 text-[10px] font-bold font-space uppercase tracking-wider">
                           {formattedDate}
                         </td>
-                        <td className={`py-4 text-right font-black text-base ${
-                          isPayout ? 'text-rose-600' : 'text-green-600'
+                        <td className={`py-4 pr-6 text-right font-bold font-space text-sm ${
+                          isDebit ? 'text-neutral-800' : 'text-emerald-600 font-bold'
                         }`}>
-                          {isPayout ? '-' : '+'}₹{Number(t.amount).toLocaleString()}
+                          {isDebit ? '-' : '+'}₹{Number(t.amount).toLocaleString('en-IN')}
                         </td>
                       </tr>
                     );
@@ -477,5 +532,5 @@ const WalletPage: React.FC = () => {
     </div>
   )
 }
-
-export default WalletPage
+ 
+export default WalletPage;

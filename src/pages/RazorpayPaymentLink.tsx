@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ExternalLink, Copy, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -146,31 +142,31 @@ const RazorpayPaymentLink: React.FC = () => {
     switch (status) {
       case 'pending':
         return (
-          <div className="flex items-center gap-2 text-yellow-600">
-            <Clock className="h-4 w-4" />
-            <span className="font-medium">Payment Pending</span>
+          <div className="flex items-center gap-1.5 text-[10px] font-bold font-space uppercase tracking-wider text-zinc-600 bg-zinc-50 border border-zinc-200 px-3 py-1.5 rounded-full w-max">
+            <Clock className="h-3.5 w-3.5" />
+            <span>Payment Pending</span>
           </div>
         );
       case 'submitted':
         return (
-          <div className="flex items-center gap-2 text-blue-600">
-            <AlertCircle className="h-4 w-4" />
-            <span className="font-medium">Awaiting Verification</span>
+          <div className="flex items-center gap-1.5 text-[10px] font-bold font-space uppercase tracking-wider text-zinc-800 bg-zinc-50 border border-zinc-300 px-3 py-1.5 rounded-full w-max">
+            <AlertCircle className="h-3.5 w-3.5" />
+            <span>Awaiting Verification</span>
           </div>
         );
       case 'verified':
       case 'completed':
         return (
-          <div className="flex items-center gap-2 text-green-600">
-            <CheckCircle className="h-4 w-4" />
-            <span className="font-medium">Payment Verified</span>
+          <div className="flex items-center gap-1.5 text-[10px] font-bold font-space uppercase tracking-wider text-white bg-zinc-950 px-3 py-1.5 rounded-full w-max">
+            <CheckCircle className="h-3.5 w-3.5" />
+            <span>Payment Verified</span>
           </div>
         );
       default:
         return (
-          <div className="flex items-center gap-2 text-gray-600">
-            <Clock className="h-4 w-4" />
-            <span className="font-medium">{status}</span>
+          <div className="flex items-center gap-1.5 text-[10px] font-bold font-space uppercase tracking-wider text-zinc-500 bg-zinc-50 border border-zinc-200 px-3 py-1.5 rounded-full w-max">
+            <Clock className="h-3.5 w-3.5" />
+            <span>{status}</span>
           </div>
         );
     }
@@ -178,10 +174,10 @@ const RazorpayPaymentLink: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading payment information...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-zinc-950 mx-auto"></div>
+          <p className="text-xs font-space uppercase tracking-wider text-zinc-500">Loading payment details...</p>
         </div>
       </div>
     );
@@ -189,13 +185,20 @@ const RazorpayPaymentLink: React.FC = () => {
 
   if (!paymentInfo) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-gray-600">Payment information not found</p>
-            <Button onClick={() => navigate('/campaigns')} className="mt-4 mx-auto block">
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <Card className="bg-white border border-zinc-200 shadow-none rounded-2xl overflow-hidden p-6">
+          <CardContent className="pt-6 flex flex-col items-center justify-center text-center space-y-4">
+            <AlertCircle className="h-10 w-10 text-neutral-800" />
+            <div>
+              <h2 className="text-xs font-bold font-space uppercase tracking-wider text-neutral-850">Payment Info Not Found</h2>
+              <p className="text-[10px] font-space uppercase tracking-wider text-zinc-500 mt-1">We couldn't retrieve the payment record for this campaign.</p>
+            </div>
+            <button 
+              onClick={() => navigate('/campaigns')} 
+              className="btn-primary-pill text-xs py-2.5 px-6 mt-2"
+            >
               Back to Campaigns
-            </Button>
+            </button>
           </CardContent>
         </Card>
       </div>
@@ -206,37 +209,36 @@ const RazorpayPaymentLink: React.FC = () => {
   const isPaymentSubmitted = paymentInfo.payment_status === 'submitted';
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <Button
-          variant="ghost"
+    <div className="min-h-screen bg-white py-8 lg:py-12 animate-in fade-in duration-300">
+      <div className="max-w-4xl mx-auto px-6">
+        <button
           onClick={() => navigate('/campaigns')}
-          className="mb-6"
+          className="btn-secondary-pill text-xs py-2 px-5 h-9 flex items-center mb-8"
         >
           ← Back to Campaigns
-        </Button>
+        </button>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Campaign Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Campaign Payment</CardTitle>
-              <CardDescription>Complete payment for your campaign</CardDescription>
+          <Card className="bg-white border border-zinc-200 shadow-none rounded-2xl overflow-hidden">
+            <CardHeader className="pb-3 border-b border-zinc-150">
+              <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800">Campaign Payment</CardTitle>
+              <CardDescription className="text-[10px] font-space uppercase tracking-wider text-zinc-500">Complete payment for your campaign budget</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Campaign Name</p>
-                  <p className="font-semibold">{paymentInfo.campaign_name}</p>
+            <CardContent className="pt-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <p className="text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Campaign Name</p>
+                  <p className="text-xs font-bold font-space uppercase tracking-wider text-neutral-900">{paymentInfo.campaign_name}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Payment Amount</p>
-                  <p className="font-semibold text-2xl text-blue-600">
+                <div className="space-y-1">
+                  <p className="text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Payment Amount</p>
+                  <p className="text-2xl font-bold font-space tracking-tight text-neutral-900">
                     ₹{paymentInfo.payment_amount.toLocaleString()}
                   </p>
                 </div>
               </div>
-              <div className="pt-4 border-t">
+              <div className="pt-4 border-t border-zinc-150">
                 {getStatusBadge(paymentInfo.payment_status)}
               </div>
             </CardContent>
@@ -244,61 +246,63 @@ const RazorpayPaymentLink: React.FC = () => {
 
           {/* Payment Instructions */}
           {!isPaymentCompleted && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Instructions</CardTitle>
+            <Card className="bg-white border border-zinc-200 shadow-none rounded-2xl overflow-hidden">
+              <CardHeader className="pb-3 border-b border-zinc-150">
+                <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800">Payment Instructions</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-blue-900 mb-2">How to Pay:</h4>
-                  <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
-                    <li>Click the "Open Payment Link" button below</li>
-                    <li>Complete the payment on Razorpay's secure page</li>
-                    <li>After payment, copy the Payment ID from Razorpay</li>
-                    <li>Return here and enter the Payment ID in the form below</li>
-                    <li>Submit for verification</li>
+              <CardContent className="pt-6 space-y-6">
+                <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-5 space-y-3">
+                  <h4 className="text-[10px] font-bold font-space uppercase tracking-wider text-neutral-900">Step-by-Step Payment Guide:</h4>
+                  <ol className="list-decimal list-inside space-y-2 text-[10px] font-space uppercase tracking-wider text-zinc-500 leading-relaxed">
+                    <li>Click <span className="text-neutral-900 font-bold">"Open Payment Link"</span> to navigate to Razorpay.</li>
+                    <li>Complete the payment of <span className="text-neutral-900 font-bold">₹{paymentInfo.payment_amount.toLocaleString()}</span> securely.</li>
+                    <li>Once successful, copy the <span className="text-neutral-900 font-bold">Payment ID</span> (starts with <code className="font-mono bg-zinc-200 px-1 rounded">pay_...</code>).</li>
+                    <li>Submit the Payment ID in the form below for verification.</li>
                   </ol>
                 </div>
 
                 {/* Payment Link */}
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold">Razorpay Payment Link</Label>
-                  <div className="flex gap-2">
-                    <Input
+                  <label className="block text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Razorpay Payment Link</label>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="text"
                       value={RAZORPAY_PAYMENT_LINK}
                       readOnly
-                      className="font-mono text-sm"
+                      className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 text-xs font-mono text-zinc-600 outline-none"
                     />
-                    <Button
+                    <button
                       type="button"
-                      variant="outline"
                       onClick={copyToClipboard}
-                      className="flex items-center gap-2"
+                      className="btn-secondary-pill text-xs py-2.5 px-5 h-10 flex items-center justify-center gap-1.5"
                     >
                       {linkCopied ? (
                         <>
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle className="h-4 w-4 text-neutral-900" />
                           Copied
                         </>
                       ) : (
                         <>
-                          <Copy className="h-4 w-4" />
-                          Copy
+                          <Copy className="h-4 w-4 text-neutral-900" />
+                          Copy Link
                         </>
                       )}
-                    </Button>
+                    </button>
                   </div>
-                  <a
-                    href={RAZORPAY_PAYMENT_LINK}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block"
-                  >
-                    <Button className="w-full md:w-auto flex items-center gap-2">
-                      <ExternalLink className="h-4 w-4" />
-                      Open Payment Link
-                    </Button>
-                  </a>
+                  
+                  <div className="pt-2">
+                    <a
+                      href={RAZORPAY_PAYMENT_LINK}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block w-full sm:w-auto"
+                    >
+                      <button className="btn-primary-pill w-full sm:w-auto text-xs py-2.5 px-6 h-10 flex items-center justify-center gap-2">
+                        <ExternalLink className="h-4 w-4" />
+                        Open Payment Link
+                      </button>
+                    </a>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -306,45 +310,53 @@ const RazorpayPaymentLink: React.FC = () => {
 
           {/* Payment Submission Form */}
           {!isPaymentCompleted && !isPaymentSubmitted && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Submit Payment Details</CardTitle>
-                <CardDescription>
-                  After completing payment, enter your Razorpay Payment ID below
+            <Card className="bg-white border border-zinc-200 shadow-none rounded-2xl overflow-hidden">
+              <CardHeader className="pb-3 border-b border-zinc-150">
+                <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800">Submit Payment Details</CardTitle>
+                <CardDescription className="text-[10px] font-space uppercase tracking-wider text-zinc-500">
+                  After completing the transfer, enter your Razorpay Payment ID to verify your transaction.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmitPayment} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="payment-id">
+              <CardContent className="pt-6">
+                <form onSubmit={handleSubmitPayment} className="space-y-5">
+                  <div className="space-y-1.5">
+                    <label htmlFor="payment-id" className="block text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">
                       Razorpay Payment ID <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
+                    </label>
+                    <input
                       id="payment-id"
-                      placeholder="pay_XXXXXXXXXXXX"
+                      required
+                      placeholder="E.g., pay_PxR7N2kL90a1Bc"
                       value={razorpayPaymentId}
                       onChange={(e) => setRazorpayPaymentId(e.target.value)}
-                      required
+                      className="w-full bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-3.5 py-2.5 text-xs font-space uppercase tracking-wider outline-none transition-colors"
                     />
-                    <p className="text-xs text-gray-500">
-                      You'll find this on your payment receipt or Razorpay confirmation page
+                    <p className="text-[9px] text-zinc-400 font-space uppercase tracking-wider mt-1">
+                      Available on your Razorpay email receipt or success confirmation page.
                     </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Additional Notes (Optional)</Label>
-                    <Textarea
+                  <div className="space-y-1.5">
+                    <label htmlFor="notes" className="block text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Additional Notes (Optional)</label>
+                    <textarea
                       id="notes"
-                      placeholder="Any additional information about the payment..."
+                      rows={3}
+                      placeholder="Enter any additional details about this transfer..."
                       value={paymentNotes}
                       onChange={(e) => setPaymentNotes(e.target.value)}
-                      rows={3}
+                      className="w-full bg-transparent border border-zinc-200 focus:border-zinc-950 rounded-xl px-3.5 py-2.5 text-xs font-space uppercase tracking-wider outline-none transition-colors resize-none"
                     />
                   </div>
 
-                  <Button type="submit" disabled={submitting} className="w-full">
-                    {submitting ? 'Submitting...' : 'Submit Payment for Verification'}
-                  </Button>
+                  <div className="pt-2">
+                    <button 
+                      type="submit" 
+                      disabled={submitting} 
+                      className="btn-primary-pill w-full text-xs py-2.5 h-10 flex items-center justify-center"
+                    >
+                      {submitting ? 'Submitting Details...' : 'Submit Payment for Verification'}
+                    </button>
+                  </div>
                 </form>
               </CardContent>
             </Card>
@@ -352,32 +364,31 @@ const RazorpayPaymentLink: React.FC = () => {
 
           {/* Submitted Payment Info */}
           {isPaymentSubmitted && (
-            <Card className="border-blue-200 bg-blue-50">
-              <CardHeader>
-                <CardTitle className="text-blue-900">Payment Submitted</CardTitle>
-                <CardDescription className="text-blue-700">
-                  Your payment is being verified by our admin team
+            <Card className="bg-white border border-zinc-200 shadow-none rounded-2xl overflow-hidden bg-zinc-50/40">
+              <CardHeader className="pb-3 border-b border-zinc-150">
+                <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800">Payment Submitted</CardTitle>
+                <CardDescription className="text-[10px] font-space uppercase tracking-wider text-zinc-500">
+                  Our operations team is currently verifying your transaction.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <p className="text-sm text-blue-800">Razorpay Payment ID</p>
-                  <p className="font-mono font-semibold text-blue-900">
+              <CardContent className="pt-6 space-y-4">
+                <div className="space-y-1">
+                  <p className="text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Razorpay Payment ID</p>
+                  <p className="text-xs font-mono font-bold text-neutral-900">
                     {paymentInfo.razorpay_payment_id}
                   </p>
                 </div>
                 {paymentInfo.payment_submitted_at && (
-                  <div>
-                    <p className="text-sm text-blue-800">Submitted At</p>
-                    <p className="font-semibold text-blue-900">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Submitted At</p>
+                    <p className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800">
                       {new Date(paymentInfo.payment_submitted_at).toLocaleString()}
                     </p>
                   </div>
                 )}
-                <div className="pt-3 border-t border-blue-200">
-                  <p className="text-sm text-blue-800">
-                    ⏱️ Verification typically takes 1-2 hours during business hours
-                  </p>
+                <div className="pt-4 border-t border-zinc-150 text-[10px] font-space uppercase tracking-wider text-zinc-500 leading-normal flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-black flex-shrink-0" />
+                  <span>Verification typically completes within 1-2 hours during business hours.</span>
                 </div>
               </CardContent>
             </Card>
@@ -385,35 +396,38 @@ const RazorpayPaymentLink: React.FC = () => {
 
           {/* Verified Payment Info */}
           {isPaymentCompleted && (
-            <Card className="border-green-200 bg-green-50">
-              <CardHeader>
-                <CardTitle className="text-green-900 flex items-center gap-2">
-                  <CheckCircle className="h-6 w-6" />
+            <Card className="bg-white border border-zinc-200 shadow-none rounded-2xl overflow-hidden bg-zinc-50/40">
+              <CardHeader className="pb-3 border-b border-zinc-150">
+                <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-black" />
                   Payment Verified
                 </CardTitle>
-                <CardDescription className="text-green-700">
-                  Your payment has been verified successfully
+                <CardDescription className="text-[10px] font-space uppercase tracking-wider text-zinc-500">
+                  Your payment has been successfully recorded and applied.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <p className="text-sm text-green-800">Razorpay Payment ID</p>
-                  <p className="font-mono font-semibold text-green-900">
+              <CardContent className="pt-6 space-y-5">
+                <div className="space-y-1">
+                  <p className="text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Razorpay Payment ID</p>
+                  <p className="text-xs font-mono font-bold text-neutral-900">
                     {paymentInfo.razorpay_payment_id}
                   </p>
                 </div>
                 {paymentInfo.payment_verified_at && (
-                  <div>
-                    <p className="text-sm text-green-800">Verified At</p>
-                    <p className="font-semibold text-green-900">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-bold font-space uppercase tracking-wider text-zinc-500">Verified At</p>
+                    <p className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800">
                       {new Date(paymentInfo.payment_verified_at).toLocaleString()}
                     </p>
                   </div>
                 )}
-                <div className="pt-3 border-t border-green-200">
-                  <Button onClick={() => navigate(`/campaigns/${campaignId}`)} className="w-full">
+                <div className="pt-3 border-t border-zinc-150">
+                  <button 
+                    onClick={() => navigate(`/campaigns/${campaignId}`)} 
+                    className="btn-primary-pill w-full text-xs py-2.5 h-10 flex items-center justify-center"
+                  >
                     View Campaign Details
-                  </Button>
+                  </button>
                 </div>
               </CardContent>
             </Card>

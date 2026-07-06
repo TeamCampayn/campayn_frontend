@@ -120,7 +120,7 @@ function Hero() {
             <Button 
               size="lg" 
               className="gap-4"
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/auth?mode=signup')}
             >
               Start Your Campaign <MoveRight className="w-4 h-4" />
             </Button>

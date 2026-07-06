@@ -58,8 +58,8 @@ const MeshGradient: React.FC = () => {
         centerY + Math.cos(time) * 150,
         Math.max(canvas.width, canvas.height) * 0.8,
       )
-      gradient1.addColorStop(0, `rgba(0, 28, 128, ${0.4 + Math.sin(time) * 0.1})`)
-      gradient1.addColorStop(1, `rgba(26, 199, 255, ${0.2 + Math.cos(time + 1) * 0.1})`)
+      gradient1.addColorStop(0, `rgba(250, 204, 21, ${0.06 + Math.sin(time) * 0.03})`)
+      gradient1.addColorStop(1, `rgba(161, 98, 7, ${0.02 + Math.cos(time + 1) * 0.01})`)
 
       // Second gradient (cyan to green)
       const gradient2 = ctx.createRadialGradient(
@@ -70,8 +70,8 @@ const MeshGradient: React.FC = () => {
         centerY + Math.cos(time + 1.5) * 200,
         Math.max(canvas.width, canvas.height) * 0.6,
       )
-      gradient2.addColorStop(0, `rgba(4, 255, 177, ${0.3 + Math.sin(time + 2) * 0.1})`)
-      gradient2.addColorStop(1, `rgba(26, 199, 255, ${0.2 + Math.cos(time + 2) * 0.1})`)
+      gradient2.addColorStop(0, `rgba(210, 252, 21, ${0.04 + Math.sin(time + 2) * 0.02})`)
+      gradient2.addColorStop(1, `rgba(100, 116, 20, ${0.02 + Math.cos(time + 2) * 0.01})`)
 
       // Third gradient (pink/magenta)
       const gradient3 = ctx.createRadialGradient(
@@ -82,11 +82,11 @@ const MeshGradient: React.FC = () => {
         centerY + Math.cos(time + 3) * 160,
         Math.max(canvas.width, canvas.height) * 0.7,
       )
-      gradient3.addColorStop(0, `rgba(255, 31, 241, ${0.3 + Math.sin(time + 3) * 0.1})`)
-      gradient3.addColorStop(1, `rgba(0, 28, 128, ${0.2 + Math.cos(time + 3) * 0.1})`)
+      gradient3.addColorStop(0, `rgba(234, 179, 8, ${0.05 + Math.sin(time + 3) * 0.02})`)
+      gradient3.addColorStop(1, `rgba(3, 3, 3, ${0.03 + Math.cos(time + 3) * 0.01})`)
 
       // Apply gradients with blend modes
-      ctx.globalCompositeOperation = "screen"
+      ctx.globalCompositeOperation = "source-over"
 
       ctx.fillStyle = gradient1
       ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -120,7 +120,7 @@ const MeshGradient: React.FC = () => {
         width: "100%",
         height: "100%",
         zIndex: 0,
-        background: "#001c80",
+        background: "#030303",
       }}
     />
   )
@@ -404,31 +404,31 @@ const WaitlistComponent: React.FC<WaitlistFormProps> = ({
         }
       `}</style>
       
-      <section style={{ position: "relative", overflow: "hidden" }}>
+      <section className="px-3 pb-4 pt-2 md:px-4" style={{ position: "relative", overflow: "hidden" }}>
         <MeshGradient />
 
         <div
           style={{
             position: "relative",
             zIndex: 1,
-            minHeight: "100vh",
+            minHeight: "70vh",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "60px 20px",
+            padding: "48px 20px",
           }}
         >
           <div
             style={{
               width: "100%",
               maxWidth: "600px",
-              backgroundColor: "rgba(0, 0, 0, 0.4)",
-              borderRadius: "16px",
+              backgroundColor: "rgba(5, 5, 8, 0.55)",
+              borderRadius: "24px",
               overflow: "hidden",
               boxShadow:
-                "0px 170px 48px 0px rgba(0, 0, 0, 0.3), 0px 109px 44px 0px rgba(0, 0, 0, 0.25), 0px 61px 37px 0px rgba(0, 0, 0, 0.2), 0px 27px 27px 0px rgba(0, 0, 0, 0.15), 0px 7px 15px 0px rgba(0, 0, 0, 0.1)",
-              backdropFilter: "blur(20px)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
+                "0px 60px 48px 0px rgba(0, 0, 0, 0.3), 0px 27px 27px 0px rgba(0, 0, 0, 0.15), 0px 7px 15px 0px rgba(0, 0, 0, 0.1)",
+              backdropFilter: "blur(24px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
             }}
           >
             {/* Main Content */}
@@ -477,11 +477,12 @@ const WaitlistComponent: React.FC<WaitlistFormProps> = ({
                       <h1
                         style={{
                           fontSize: "28px",
-                          fontWeight: "600",
-                          color: "#e2e8f0",
+                          fontWeight: "700",
+                          color: "#ffffff",
                           margin: 0,
-                          lineHeight: "1.2",
-                          letterSpacing: "-0.02em",
+                          lineHeight: "1.15",
+                          letterSpacing: "-0.03em",
+                          fontFamily: "inherit",
                         }}
                       >
                         {title}

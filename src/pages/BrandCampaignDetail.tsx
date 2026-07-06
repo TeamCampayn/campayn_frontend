@@ -33,7 +33,9 @@ import {
   Send,
   TrendingUp,
   Sparkles,
-  Star
+  Star,
+  Wallet,
+  Lock
 } from 'lucide-react';
 
 interface Creator {
@@ -74,6 +76,7 @@ interface Campaign {
   brand_name: string;
   phase: 'creator_selection' | 'approval_pending' | 'approved_pending_funds' | 'payment_pending' | 'content_approval' | 'campaign_active' | 'campaign_complete';
   status: 'active' | 'paused' | 'completed' | 'cancelled';
+  payment_status?: 'pending' | 'paid' | 'refunded';
   budget: number;
   start_date: string;
   end_date: string;
@@ -85,6 +88,7 @@ interface Campaign {
   min_guarantee_per_creator?: number;
   max_payout_per_creator?: number;
   cpv_rate?: number;
+  requires_script?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -112,27 +116,121 @@ const BrandCampaignDetail: React.FC = () => {
   const [scriptRevisionFeedback, setScriptRevisionFeedback] = useState<Record<string, string>>({});
   const [scriptOptions, setScriptOptions] = useState<Record<string, 'brand' | 'creator'>>({});
   const [refreshingApps, setRefreshingApps] = useState<Record<string, boolean>>({});
+  const [wallet, setWallet] = useState<{
+    balance: number;
+    currency: string;
+    escrow_locked?: number;
+    reserved_pending?: number;
+  } | null>(null);
+  const [isWalletLoading, setIsWalletLoading] = useState(false);
+  const [payingFromWallet, setPayingFromWallet] = useState(false);
 
   useEffect(() => {
     if (id && brand?.id) {
       fetchCampaignDetails();
       fetchSelectionStatus();
+      fetchWalletBalance();
     }
   }, [id, brand?.id]);
+
+  // Real-time updates for brand wallet
+  useEffect(() => {
+    if (!brand?.id) return;
+    const channel = supabase
+      .channel(`brand-wallet-detail-realtime-${brand.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "brand_wallets", filter: `brand_id=eq.${brand.id}` },
+        () => {
+          fetchWalletBalance();
+        }
+      )
+      .subscribe();
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [brand?.id]);
+
+  const fetchWalletBalance = async () => {
+    if (!brand?.id) return;
+    try {
+      setIsWalletLoading(true);
+      const response = await fetch(getApiUrl(`api/brand/wallet?brandId=${brand.id}`));
+      const data = await response.json();
+      if (data.success) {
+        setWallet(data.wallet);
+      }
+    } catch (error) {
+      console.error('Error fetching wallet balance:', error);
+    } finally {
+      setIsWalletLoading(false);
+    }
+  };
+
+  const handlePayFromWallet = async () => {
+    if (!brand?.id || !campaign) return;
+    try {
+      setPayingFromWallet(true);
+      const url = getApiUrl(`api/campaigns/${id}/pay-from-wallet`);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          brandId: brand.id,
+          amount: campaign.budget
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({
+          title: 'Campaign Funded!',
+          description: `₹${formatNumber(campaign.budget)} has been successfully locked in escrow.`,
+        });
+        fetchCampaignDetails();
+        fetchWalletBalance();
+      } else {
+        toast({
+          title: 'Payment Failed',
+          description: data.error || 'Failed to complete payment',
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Payment Error',
+        description: error.message || 'An error occurred during payment processing.',
+        variant: 'destructive'
+      });
+    } finally {
+      setPayingFromWallet(false);
+    }
+  };
 
   // Real-time campaign updates via Supabase Realtime
   const { campaign: realtimeCampaign } = useRealtimeCampaign(id);
   
   useEffect(() => {
     if (realtimeCampaign && campaign) {
-      // Update campaign when it changes in real-time
-      if (realtimeCampaign.phase !== campaign.phase) {
-        fetchCampaignDetails(); // Refetch to get complete updated data
-        toast({
-          title: "Campaign Updated",
-          description: `Campaign phase changed`,
-          variant: "default",
-        });
+      const phaseChanged = realtimeCampaign.phase !== campaign.phase;
+      const paymentStatusChanged = (realtimeCampaign as any).payment_status !== campaign.payment_status;
+      if (phaseChanged || paymentStatusChanged) {
+        fetchCampaignDetails();
+        if (phaseChanged) {
+          toast({
+            title: "Campaign Updated",
+            description: `Campaign phase changed to ${realtimeCampaign.phase?.replace(/_/g, ' ')}`,
+          });
+        }
+        if (paymentStatusChanged && (realtimeCampaign as any).payment_status === 'paid') {
+          toast({
+            title: "✅ Campaign Funded!",
+            description: "Your escrow payment is confirmed. Waiting for Admin to launch.",
+          });
+        }
       }
     }
   }, [realtimeCampaign]);
@@ -663,6 +761,204 @@ const BrandCampaignDetail: React.FC = () => {
     }
   };
 
+  const renderWalletPaymentCard = () => {
+    const isFunded = campaign.payment_status === 'paid';
+    
+    // Calculate earmark reservations of other campaigns to find true available balance
+    const isCurrentCampaignUnpaidAndApproved = !isFunded && campaign.phase === 'approved_pending_funds';
+    const otherReservedPending = wallet !== null
+      ? (wallet.reserved_pending || 0) - (isCurrentCampaignUnpaidAndApproved ? campaign.budget : 0)
+      : 0;
+
+    const availableBalanceForThisCampaign = wallet !== null
+      ? Math.max(0, wallet.balance - Math.max(0, otherReservedPending))
+      : 0;
+
+    const hasEnoughBalance = !isFunded && wallet !== null && availableBalanceForThisCampaign >= campaign.budget;
+    const shortfall = campaign.budget - availableBalanceForThisCampaign;
+    const isApprovedPendingFunds = campaign.phase === 'approved_pending_funds';
+    const approvedCreators = campaignCreators.filter(c => c.status === 'approved');
+    const targetCount = campaign.target_creators_count || 1;
+
+    // ── STATE 1: Campaign already funded — show confirmation ──
+    if (isFunded) {
+      return (
+        <div className="flex flex-col items-center gap-5 py-6 px-4 text-center">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-full bg-neutral-900 text-white flex items-center justify-center shadow-sm border border-transparent">
+              <CheckCircle className="h-8 w-8" />
+            </div>
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-black rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+              <span className="text-white text-[10px] font-black">✓</span>
+            </span>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-neutral-800 mb-1 font-space uppercase">Campaign Funded Successfully</h3>
+            <p className="text-xs text-neutral-500 max-w-sm leading-relaxed uppercase tracking-wider font-space">
+              ₹{formatNumber(campaign.budget)} is secured in escrow. Our team is reviewing your campaign and will launch it shortly.
+            </p>
+          </div>
+          <div className="w-full max-w-sm p-4 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-start gap-3 text-left">
+            <Clock className="h-5 w-5 text-neutral-800 flex-shrink-0 mt-0.5 animate-pulse" />
+            <div>
+              <p className="text-xs font-bold text-neutral-950 uppercase tracking-wider font-space">Awaiting Admin Launch</p>
+              <p className="text-[10px] text-neutral-500 uppercase tracking-wider font-space mt-0.5 leading-relaxed">
+                Your campaign will go live in the creator app once the admin confirms the launch. You'll be notified instantly.
+              </p>
+            </div>
+          </div>
+          {!isApprovedPendingFunds && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-neutral-100 border border-neutral-200 rounded-full text-xs text-neutral-800 font-bold">
+              <CheckCircle className="h-3.5 w-3.5 text-neutral-800" />
+              {approvedCreators.length}/{targetCount} creators confirmed
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ── STATE 2: Enough balance — show single "Lock up Campaign Funding" button ──
+    if (hasEnoughBalance) {
+      return (
+        <div className="space-y-5">
+          <div className="text-center">
+            <Wallet className="h-12 w-12 mx-auto mb-3 text-neutral-900 bg-neutral-100 p-2.5 rounded-full" />
+            <h3 className="text-xl font-bold mb-1 text-neutral-900 font-space uppercase">
+              Lock up Campaign Funding
+            </h3>
+            <p className="text-xs text-neutral-500 uppercase tracking-wider font-space">
+              Your wallet has sufficient funds. Click below to lock ₹{formatNumber(campaign.budget)} in escrow and proceed.
+            </p>
+          </div>
+          
+          <div className="bg-white rounded-2xl border border-neutral-200/60 overflow-hidden divide-y divide-neutral-100 font-space uppercase">
+            <div className="flex items-center justify-between p-4">
+              <span className="text-[10px] font-bold text-neutral-400 tracking-wider">Your Cash Balance</span>
+              {isWalletLoading ? (
+                <span className="text-xs font-semibold text-neutral-400 animate-pulse">Loading…</span>
+              ) : (
+                <span className="text-base font-bold text-neutral-800">₹{formatNumber(wallet?.balance || 0)}</span>
+              )}
+            </div>
+            {otherReservedPending > 0 && (
+              <div className="flex items-center justify-between p-4">
+                <span className="text-[10px] font-bold text-neutral-400 tracking-wider">Reserved for other Campaigns</span>
+                <span className="text-xs font-semibold text-neutral-500">- ₹{formatNumber(otherReservedPending)}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between p-4">
+              <span className="text-[10px] font-bold text-neutral-400 tracking-wider">Available for this Campaign</span>
+              <span className="text-xs font-bold text-neutral-800">₹{formatNumber(availableBalanceForThisCampaign)}</span>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-neutral-50/50">
+              <span className="text-[10px] font-bold text-neutral-500 tracking-wider">Campaign Cost</span>
+              <span className="text-sm font-extrabold text-neutral-900">₹{formatNumber(campaign.budget)}</span>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-neutral-50/80">
+              <span className="text-[10px] font-bold text-neutral-500 tracking-wider">Balance After</span>
+              <span className="text-sm font-extrabold text-neutral-800">₹{formatNumber((wallet?.balance || 0) - campaign.budget)}</span>
+            </div>
+          </div>
+
+          {!isApprovedPendingFunds && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-neutral-55 border border-neutral-200 rounded-xl text-xs text-neutral-800 font-semibold font-space uppercase">
+              <CheckCircle className="h-3.5 w-3.5 text-neutral-800 flex-shrink-0" />
+              {approvedCreators.length}/{targetCount} creators approved — ready to secure budget
+            </div>
+          )}
+          <Button
+            onClick={handlePayFromWallet}
+            disabled={payingFromWallet}
+            className="btn-primary-pill w-full text-xs py-2.5 h-12 shadow-sm flex items-center justify-center gap-2"
+            size="lg"
+          >
+            {payingFromWallet ? (
+              <>
+                <RefreshCw className="h-5 w-5 animate-spin" />
+                Locking up Campaign Funding…
+              </>
+            ) : (
+              <>
+                <Lock className="h-5 w-5" />
+                Lock up Campaign Funding — ₹{formatNumber(campaign.budget)}
+              </>
+            )}
+          </Button>
+          <p className="text-xs text-center text-neutral-400">
+            🔒 Funds are held in secure escrow and released to creators only after content is approved.
+          </p>
+        </div>
+      );
+    }
+
+    // ── STATE 3: Insufficient balance — show top-up prompt ──
+    return (
+      <div className="space-y-5 font-space uppercase">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 mx-auto mb-3 text-neutral-800 bg-neutral-100 p-2.5 rounded-full" />
+          <h3 className="text-xl font-bold mb-1 text-neutral-900">Top Up Your Wallet to Continue</h3>
+          <p className="text-xs text-neutral-500 uppercase tracking-wider">
+            You need more available funds in your escrow wallet to activate this campaign.
+          </p>
+        </div>
+        
+        <div className="bg-white rounded-2xl border border-neutral-200/60 overflow-hidden divide-y divide-neutral-100">
+          <div className="flex items-center justify-between p-4">
+            <span className="text-[10px] font-bold text-neutral-400 tracking-wider">Total Wallet Balance</span>
+            {isWalletLoading ? (
+              <span className="text-xs font-semibold text-neutral-400 animate-pulse">Loading…</span>
+            ) : (
+              <span className="text-base font-bold text-neutral-800">₹{formatNumber(wallet?.balance || 0)}</span>
+            )}
+          </div>
+          {otherReservedPending > 0 && (
+            <div className="flex items-center justify-between p-4">
+              <span className="text-[10px] font-bold text-neutral-400 tracking-wider">Reserved for other Campaigns</span>
+              <span className="text-xs font-semibold text-neutral-500">- ₹{formatNumber(otherReservedPending)}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between p-4">
+            <span className="text-[10px] font-bold text-neutral-400 tracking-wider">Available for this Campaign</span>
+            <span className="text-xs font-semibold text-neutral-600">₹{formatNumber(availableBalanceForThisCampaign)}</span>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-neutral-50/50">
+            <span className="text-[10px] font-bold text-neutral-500 tracking-wider">Campaign Cost</span>
+            <span className="text-sm font-extrabold text-neutral-850">₹{formatNumber(campaign.budget)}</span>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-neutral-50/50 text-neutral-900 border-t border-neutral-200">
+            <span className="text-[10px] font-bold text-neutral-800 tracking-wider">Required Top Up</span>
+            <span className="text-base font-black text-neutral-950">+ ₹{formatNumber(shortfall)}</span>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-[10px] text-neutral-500 font-bold">
+            <span>Wallet funding progress</span>
+            <span>{Math.min(100, Math.round((availableBalanceForThisCampaign / campaign.budget) * 100))}%</span>
+          </div>
+          <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-neutral-900 rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, Math.round((availableBalanceForThisCampaign / campaign.budget) * 100))}%` }}
+            />
+          </div>
+        </div>
+        <Button
+          onClick={() => navigate('/wallet')}
+          className="btn-primary-pill w-full text-xs py-2.5 h-12 shadow-sm flex items-center justify-center gap-2"
+          size="lg"
+        >
+          <Wallet className="h-5 w-5" />
+          Top Up Wallet — Add ₹{formatNumber(shortfall)}
+        </Button>
+        <p className="text-xs text-center text-neutral-400">
+          After topping up, return to this page — your payment option will appear automatically.
+        </p>
+      </div>
+    );
+  };
+
   const updateResponse = (creatorId: string | number, status: string, response: string) => {
     setResponses(prev => ({
       ...prev,
@@ -672,11 +968,11 @@ const BrandCampaignDetail: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'recommended': return 'bg-blue-100 text-blue-800';
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      case 'requested_more': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'recommended': return 'bg-neutral-100 text-neutral-800 border border-neutral-200';
+      case 'approved': return 'bg-neutral-900 text-white border border-transparent';
+      case 'rejected': return 'bg-neutral-100 text-neutral-400 line-through border border-neutral-200';
+      case 'requested_more': return 'bg-neutral-100 text-neutral-600 border border-neutral-200';
+      default: return 'bg-neutral-100 text-neutral-800 border border-neutral-200';
     }
   };
 
@@ -747,61 +1043,120 @@ const BrandCampaignDetail: React.FC = () => {
       </div>
 
       {/* Campaign Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Campaign Overview</CardTitle>
+      <Card className="overflow-hidden border border-neutral-200/80 shadow-sm hover:shadow-md transition-all duration-300">
+        <CardHeader className="p-6 border-b border-neutral-100 bg-gradient-to-r from-neutral-50/50 to-white flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-purple-600" />
+            <CardTitle className="text-lg font-bold text-neutral-800">Campaign Overview</CardTitle>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <p className="text-gray-700">{campaign.description}</p>
-            
-            {/* Progress */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Campaign Progress</span>
-                <span className="text-sm text-gray-500">{getPhaseProgress(campaign.phase)}%</span>
-              </div>
-              <Progress value={getPhaseProgress(campaign.phase)} className="h-3" />
-            </div>
-
-            {/* Key Metrics */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <DollarSign className="h-6 w-6 mx-auto mb-2 text-green-600" />
-                <div className="text-2xl font-bold">₹{formatNumber(campaign.budget)}</div>
-                <div className="text-sm text-gray-600">Budget</div>
-              </div>
-              
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <Users className="h-6 w-6 mx-auto mb-2 text-blue-600" />
-                <div className="text-2xl font-bold">{campaignCreators.length}</div>
-                <div className="text-sm text-gray-600">Creators</div>
-              </div>
-              
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <Calendar className="h-6 w-6 mx-auto mb-2 text-purple-600" />
-                <div className="text-2xl font-bold">{new Date(campaign.created_at).toLocaleDateString()}</div>
-                <div className="text-sm text-gray-600">Created</div>
-              </div>
-              
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <Clock className="h-6 w-6 mx-auto mb-2 text-orange-600" />
-                <div className="text-2xl font-bold">{campaign.status}</div>
-                <div className="text-sm text-gray-600">Status</div>
-              </div>
-            </div>
-
-            {/* Campaign Objectives */}
-            {campaign.campaign_objectives && campaign.campaign_objectives.length > 0 && (
+        <CardContent className="p-6 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column: Description & Objectives */}
+            <div className="lg:col-span-2 space-y-5">
               <div>
-                <h4 className="font-semibold mb-2">Campaign Objectives</h4>
-                <div className="flex flex-wrap gap-2">
-                  {campaign.campaign_objectives.map((objective, index) => (
-                    <Badge key={index} variant="outline">{objective}</Badge>
-                  ))}
+                <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">About Campaign</h3>
+                <p className="text-neutral-600 leading-relaxed text-sm md:text-base">
+                  {campaign.description}
+                </p>
+              </div>
+              
+              {/* Objectives */}
+              {campaign.campaign_objectives && campaign.campaign_objectives.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Campaign Objectives</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {campaign.campaign_objectives.map((objective, index) => (
+                      <span 
+                        key={index} 
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-100/80 hover:bg-purple-100/50 transition-colors cursor-default"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mr-2" />
+                        {objective}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Right Column: Progress Widget */}
+            <div className="p-5 rounded-2xl border border-neutral-100 bg-neutral-50/40 flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Campaign Completion</span>
+                  <span className="text-sm font-black text-purple-600">{getPhaseProgress(campaign.phase)}%</span>
+                </div>
+                <Progress value={getPhaseProgress(campaign.phase)} className="h-2 bg-neutral-100 [&>div]:bg-purple-600" />
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-neutral-100/80">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-neutral-400 uppercase tracking-wider">Current Phase</span>
+                  <span className="font-bold text-purple-700 bg-purple-50 border border-purple-100 px-2.5 py-1 rounded-lg">
+                    {formatPhaseLabel(campaign.phase)}
+                  </span>
                 </div>
               </div>
-            )}
+            </div>
+          </div>
+
+          {/* Key Metrics Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-neutral-100">
+            {/* Metric 1: Budget */}
+            <div className="flex items-center gap-4 p-4 rounded-2xl border border-neutral-200/50 bg-white shadow-sm hover:shadow-md transition-all duration-300 group">
+              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 group-hover:scale-105 transition-transform duration-300">
+                <DollarSign className="h-5 w-5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Total Budget</span>
+                <div className="text-xl font-extrabold text-neutral-800 mt-0.5">₹{formatNumber(campaign.budget)}</div>
+              </div>
+            </div>
+
+            {/* Metric 2: Creators */}
+            <div className="flex items-center gap-4 p-4 rounded-2xl border border-neutral-200/50 bg-white shadow-sm hover:shadow-md transition-all duration-300 group">
+              <div className="p-3 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 group-hover:scale-105 transition-transform duration-300">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Target Creators</span>
+                <div className="text-xl font-extrabold text-neutral-800 mt-0.5">{campaignCreators.length}</div>
+              </div>
+            </div>
+
+            {/* Metric 3: Created On */}
+            <div className="flex items-center gap-4 p-4 rounded-2xl border border-neutral-200/50 bg-white shadow-sm hover:shadow-md transition-all duration-300 group">
+              <div className="p-3 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 group-hover:scale-105 transition-transform duration-300">
+                <Calendar className="h-5 w-5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Created On</span>
+                <div className="text-xl font-extrabold text-neutral-800 mt-0.5">
+                  {new Date(campaign.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </div>
+              </div>
+            </div>
+
+            {/* Metric 4: Status */}
+            <div className="flex items-center gap-4 p-4 rounded-2xl border border-neutral-200/50 bg-white shadow-sm hover:shadow-md transition-all duration-300 group">
+              <div className={`p-3 rounded-xl border group-hover:scale-105 transition-transform duration-300 ${
+                campaign.status === 'active' 
+                  ? 'bg-green-50 text-green-600 border-green-100' 
+                  : 'bg-neutral-50 text-neutral-600 border-neutral-200/80'
+              }`}>
+                <Clock className="h-5 w-5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Campaign Status</span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className={`w-2 h-2 rounded-full ${
+                    campaign.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-neutral-400'
+                  }`} />
+                  <span className="text-xl font-extrabold text-neutral-800 capitalize">{campaign.status}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -916,65 +1271,203 @@ const BrandCampaignDetail: React.FC = () => {
         </Card>
       )}
 
-      {/* Creator Selection Phase */}
-      {campaign.phase === 'creator_selection' && (
-        <Card className="border-t-4 border-t-purple-600 shadow-lg">
-          <CardHeader className="bg-gray-50/50">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <CardTitle className="flex items-center gap-2 text-xl font-bold text-gray-900">
-                <Users className="h-6 w-6 text-purple-600" />
-                Campaign Workspace
-              </CardTitle>
-              {(() => {
-                const totalRecommended = campaignCreators.length;
-                const respondedCreators = campaignCreators.filter(c => c.status !== 'recommended').length;
-                const approvedCreators = campaignCreators.filter(c => c.status === 'approved').length;
-                const targetCount = campaign?.target_creators_count || 1;
-                const allResponded = respondedCreators === totalRecommended;
-                const targetReached = approvedCreators >= targetCount;
-                
-                return (
-                  <div className="flex items-center gap-3 text-sm flex-wrap">
-                    <div className="flex items-center gap-1.5 bg-white border px-3 py-1.5 rounded-full shadow-sm">
-                      <span className="font-semibold text-gray-600">Target:</span>
-                      <span className={`font-bold ${targetReached ? 'text-green-600' : 'text-purple-600'}`}>
-                        {approvedCreators}/{targetCount} creators needed
-                      </span>
-                    </div>
-                    {targetReached && (
-                      <div className="bg-green-100 text-green-800 px-3 py-1.5 rounded-full font-bold flex items-center gap-1 shadow-sm border border-green-200">
-                        <CheckCircle className="h-4 w-4" />
-                        Target reached - Proceed to Payment!
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-            </div>
+      {/* Other Phase Information */}
+      {campaign.phase !== 'creator_selection' && (
+        <Card className="overflow-hidden border border-neutral-200/80 shadow-sm hover:shadow-md transition-all duration-300">
+          <CardHeader className="p-6 border-b border-neutral-100 bg-gradient-to-r from-neutral-50/50 to-white">
+            <CardTitle className="text-lg font-bold text-neutral-800 flex items-center gap-2">
+              <Clock className="h-5 w-5 text-purple-600 animate-pulse" />
+              Current Phase: {formatPhaseLabel(campaign.phase)}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="p-6">
+            <div className="py-6">
+              {campaign.phase === 'approval_pending' && (
+                <div className="flex flex-col items-center text-center max-w-xl mx-auto">
+                  <div className="relative mx-auto mb-5 w-16 h-16 flex items-center justify-center">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-20"></span>
+                    <div className="relative w-16 h-16 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 shadow-sm">
+                      <Clock className="h-6 w-6" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-extrabold text-neutral-800 mb-2">Pending Administrative Approval</h3>
+                  <p className="text-neutral-500 text-sm leading-relaxed mb-5">
+                    Our team is currently auditing your campaign details, objective requirements, and budget constraints. 
+                    You'll be notified immediately once review completes.
+                  </p>
+                  <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-3.5 px-6 max-w-sm text-xs font-bold text-blue-700 flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-blue-500" />
+                    <span>Estimated Review Duration: 12-24 hours</span>
+                  </div>
+                </div>
+              )}
+              {campaign.phase === 'approved_pending_funds' && renderWalletPaymentCard()}
+              {campaign.phase === 'payment_pending' && renderWalletPaymentCard()}
+              {campaign.phase === 'content_approval' && (() => {
+                // Check if content exists and if all content is approved
+                const hasContent = contents.length > 0;
+                const allContentApproved = hasContent && contents.every((c: any) => c.approval_status === 'approved');
+                
+                if (hasContent && allContentApproved) {
+                  return (
+                    <div className="flex flex-col items-center text-center max-w-xl mx-auto">
+                      <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center mb-5 shadow-sm">
+                        <CheckCircle className="h-7 w-7" />
+                      </div>
+                      <h3 className="text-xl font-extrabold text-neutral-800 mb-2">All Content Drafts Approved!</h3>
+                      <p className="text-neutral-500 text-sm leading-relaxed mb-5">
+                        Excellent work! All submitted content drafts have been approved. Creators will commence publishing their media live shortly.
+                      </p>
+                      
+                      <div className="bg-neutral-50 border border-neutral-200/60 rounded-2xl p-4 w-full mb-6 text-left">
+                        <div className="flex items-center gap-2 text-neutral-800 font-bold text-xs mb-2 uppercase tracking-wider">
+                          <Clock className="h-4 w-4 text-purple-600 animate-pulse" />
+                          Next Lifecycle Steps
+                        </div>
+                        <ul className="text-xs text-neutral-500 space-y-1.5 font-medium">
+                          <li className="flex items-center gap-1.5">• Admin coordinates schedule matching creator posting slots</li>
+                          <li className="flex items-center gap-1.5">• Live links and metrics populate automatically on launch</li>
+                          <li className="flex items-center gap-1.5">• Instant notifications when verification results occur</li>
+                        </ul>
+                      </div>
+                      
+                      <Button 
+                        onClick={() => navigate(`/dashboard/campaigns/${id}/content`)} 
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold h-10 px-5 rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-1.5"
+                      >
+                        <FileText className="h-4 w-4" />
+                        View Approved Content
+                      </Button>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div className="flex flex-col items-center text-center max-w-xl mx-auto">
+                      <div className="w-16 h-16 rounded-full bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center mb-5 shadow-sm">
+                        <FileText className="h-6 w-6" />
+                      </div>
+                      <h3 className="text-xl font-extrabold text-neutral-800 mb-2">Content Draft Verification</h3>
+                      <p className="text-neutral-500 text-sm leading-relaxed mb-5">
+                        Selected creators are actively composing content scripts and video drafts for your review and sign-off.
+                      </p>
+                      <Button 
+                        onClick={() => navigate(`/dashboard/campaigns/${id}/content`)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold h-10 px-5 rounded-xl shadow-sm hover:shadow transition-all"
+                      >
+                        Go to Content Review Panel
+                      </Button>
+                    </div>
+                  );
+                }
+              })()}
+              {campaign.phase === 'campaign_active' && (
+                <div className="flex flex-col items-center text-center max-w-xl mx-auto">
+                  <div className="relative mx-auto mb-5 w-16 h-16 flex items-center justify-center">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-20"></span>
+                    <div className="relative w-16 h-16 rounded-full bg-green-50 text-green-600 flex items-center justify-center border border-green-150 shadow-sm">
+                      <Eye className="h-6 w-6 animate-pulse" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-extrabold text-neutral-800 mb-2">Campaign is Active & Live</h3>
+                  <p className="text-neutral-500 text-sm leading-relaxed mb-6">
+                    Your content has been approved! Creators are currently publishing their videos, and you can monitor verified analytics in real-time.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+                    <Button 
+                      onClick={() => navigate(`/dashboard/campaigns/${id}/analytics`)} 
+                      className="bg-green-600 hover:bg-green-700 text-white font-bold h-10 px-5 rounded-xl shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <TrendingUp className="h-4 w-4" />
+                      Monitor Analytics
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => navigate(`/dashboard/campaigns/${id}/content`)}
+                      className="border-neutral-200 text-neutral-700 hover:bg-neutral-50 font-bold h-10 px-5 rounded-xl transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <FileText className="h-4 w-4" />
+                      View Content Details
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {campaign.phase === 'campaign_complete' && (
+                <div className="flex flex-col items-center text-center max-w-xl mx-auto">
+                  <div className="w-16 h-16 rounded-full bg-neutral-50 text-neutral-600 border border-neutral-200/80 flex items-center justify-center mb-5 shadow-sm">
+                    <CheckCircle className="h-7 w-7" />
+                  </div>
+                  <h3 className="text-xl font-extrabold text-neutral-800 mb-2">Campaign Completed</h3>
+                  <p className="text-neutral-500 text-sm leading-relaxed mb-5">
+                    Your campaign cycle has successfully concluded. All stats are verified, locked, and ready for your audit.
+                  </p>
+                  <Button 
+                    onClick={() => navigate(`/dashboard/campaigns/${id}/analytics`)} 
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold h-10 px-5 rounded-xl shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <TrendingUp className="h-4 w-4" />
+                    View Final Reports
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {/* Creator Selection Phase */}
+      {campaign.phase !== 'approval_pending' && (
+        <Card className="overflow-hidden border border-neutral-200/80 shadow-sm hover:shadow-md transition-all duration-300">
+          <CardHeader className="p-6 border-b border-neutral-100 bg-gradient-to-r from-neutral-50/50 to-white flex flex-row items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-purple-600" />
+              <CardTitle className="text-lg font-bold text-neutral-800">Campaign Workspace</CardTitle>
+            </div>
+            {(() => {
+              const totalRecommended = campaignCreators.length;
+              const respondedCreators = campaignCreators.filter(c => c.status !== 'recommended').length;
+              const approvedCreators = campaignCreators.filter(c => c.status === 'approved').length;
+              const targetCount = campaign?.target_creators_count || 1;
+              const allResponded = respondedCreators === totalRecommended;
+              const targetReached = approvedCreators >= targetCount;
+              
+              return (
+                <div className="flex items-center gap-3 text-sm flex-wrap">
+                  <div className="flex items-center gap-2 bg-purple-50/50 border border-purple-100/80 px-3.5 py-1.5 rounded-full text-xs font-bold text-purple-700 shadow-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                    <span>Target: {approvedCreators}/{targetCount} creators needed</span>
+                  </div>
+                  {targetReached && (
+                    <div className="bg-emerald-50 text-emerald-700 px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm border border-emerald-100">
+                      <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Target Met</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </CardHeader>
+          <CardContent className="p-6">
             {/* Elegant Tab Selectors */}
-            <div className="flex border-b mb-6 bg-gray-100/50 p-1.5 rounded-xl border">
+            <div className="flex bg-neutral-100/80 p-1.5 rounded-2xl max-w-lg mb-6 border border-neutral-200/20">
               <button
                 onClick={() => setActiveTab('applicants')}
-                className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 ${
                   activeTab === 'applicants'
-                    ? 'bg-white text-gray-900 shadow-sm border'
-                    : 'text-gray-500 hover:text-gray-900'
+                    ? 'bg-white text-neutral-800 shadow-sm border border-neutral-200/40'
+                    : 'text-neutral-500 hover:text-neutral-800'
                 }`}
               >
-                <Users className="h-4 w-4 text-purple-600" />
+                <Users className="h-3.5 w-3.5 text-purple-600" />
                 Direct Applicants ({applications.length})
               </button>
               <button
                 onClick={() => setActiveTab('recommended')}
-                className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 ${
                   activeTab === 'recommended'
-                    ? 'bg-white text-gray-900 shadow-sm border'
-                    : 'text-gray-500 hover:text-gray-900'
+                    ? 'bg-white text-neutral-800 shadow-sm border border-neutral-200/40'
+                    : 'text-neutral-500 hover:text-neutral-800'
                 }`}
               >
-                <Sparkles className="h-4 w-4 text-purple-500 animate-pulse" />
+                <Sparkles className="h-3.5 w-3.5 text-purple-500 animate-pulse" />
                 AI Recommended Creators ({campaignCreators.length})
               </button>
             </div>
@@ -997,7 +1490,7 @@ const BrandCampaignDetail: React.FC = () => {
                     const latestScript = app.submissions?.find((s: any) => s.kind === 'script');
                     
                     return (
-                      <div key={app.id} className="border rounded-2xl p-6 hover:shadow-md transition-all bg-white relative overflow-hidden text-left">
+                      <div key={app.id} className="border border-neutral-200/70 rounded-2xl p-6 hover:shadow-md transition-all duration-300 bg-white relative overflow-hidden text-left flex flex-col gap-5">
                         {/* Premium Side Border Indicator based on application status */}
                         <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
                           app.status === 'applied' ? 'bg-blue-500' :
@@ -1009,20 +1502,20 @@ const BrandCampaignDetail: React.FC = () => {
                           'bg-gray-400'
                         }`} />
 
-                        <div className="flex items-start justify-between gap-6 flex-wrap">
+                        <div className="flex items-start justify-between gap-6 flex-wrap w-full">
                           <div className="flex items-center gap-4 flex-1 min-w-0">
                             {/* Avatar */}
                             <div className="relative flex-shrink-0">
                               <img 
                                 src={creator.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&size=200&background=random`}
                                 alt={creator.name}
-                                className="w-16 h-16 rounded-full object-cover border-2 border-gray-100"
+                                className="w-16 h-16 rounded-full object-cover border-2 border-neutral-100 shadow-sm"
                                 onError={(e) => {
                                   e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.name)}&size=200&background=random`;
                                 }}
                               />
                               {creator.campayn_score > 80 && (
-                                <div className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full p-1 border border-white">
+                                <div className="absolute -bottom-1 -right-1 bg-amber-500 rounded-full p-1 border border-white shadow-sm">
                                   <Star className="h-3 w-3 text-white fill-current" />
                                 </div>
                               )}
@@ -1031,54 +1524,61 @@ const BrandCampaignDetail: React.FC = () => {
                             {/* Info */}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap mb-1">
-                                <h4 className="font-bold text-lg text-gray-900">{creator.name}</h4>
-                                <Badge className="bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold border border-purple-200 text-xs">
+                                <h4 className="font-extrabold text-lg text-neutral-800 tracking-tight">{creator.name}</h4>
+                                <Badge className="bg-purple-50 text-purple-700 hover:bg-purple-100/80 font-bold border border-purple-200/50 text-[11px] px-2 py-0.5 rounded-full">
                                   ⭐ Score: {creator.campayn_score || 0}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-gray-600 mb-2 font-medium">
+                              <p className="text-xs text-neutral-500 mb-3 flex items-center gap-1">
                                 <a 
                                   href={`https://instagram.com/${creator.ig_handle}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="hover:text-purple-600 transition-colors font-semibold"
+                                  className="hover:text-purple-600 font-semibold transition-colors text-neutral-600"
                                 >
                                   @{creator.ig_handle}
                                 </a>
-                                {creator.city && ` • ${creator.city}, ${creator.state || ''}`}
+                                {creator.city && (
+                                  <>
+                                    <span className="text-neutral-300">•</span>
+                                    <span>{creator.city}, {creator.state || ''}</span>
+                                  </>
+                                )}
                               </p>
                               {creator.bio && (
-                                <p className="text-sm text-gray-500 mb-3 line-clamp-2 italic">"{creator.bio}"</p>
+                                <p className="text-xs text-neutral-500 mb-4 line-clamp-2 italic leading-relaxed">"{creator.bio}"</p>
                               )}
 
                               {/* Stats Grid */}
-                              <div className="grid grid-cols-3 gap-4 text-center bg-gray-50 rounded-xl p-3 max-w-lg border">
-                                <div>
-                                  <p className="text-[10px] uppercase font-bold text-gray-400 mb-0.5 tracking-wider">Followers</p>
-                                  <p className="font-bold text-gray-900 text-sm">{formatNumber(creator.followers_count || 0)}</p>
+                              <div className="flex items-center gap-6 bg-neutral-50/50 rounded-2xl p-4 border border-neutral-150 max-w-lg">
+                                <div className="flex-1">
+                                  <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Followers</p>
+                                  <p className="font-extrabold text-neutral-800 text-sm mt-0.5">{formatNumber(creator.followers_count || 0)}</p>
                                 </div>
-                                <div>
-                                  <p className="text-[10px] uppercase font-bold text-gray-400 mb-0.5 tracking-wider">Engagement</p>
-                                  <p className="font-bold text-purple-600 text-sm">{formatPercentage(creator.engagement_rate || 0)}</p>
+                                <div className="w-px h-8 bg-neutral-200/80" />
+                                <div className="flex-1">
+                                  <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Engagement</p>
+                                  <p className="font-extrabold text-purple-600 text-sm mt-0.5">{formatPercentage(creator.engagement_rate || 0)}</p>
                                 </div>
-                                <div>
-                                  <p className="text-[10px] uppercase font-bold text-gray-400 mb-0.5 tracking-wider">Avg Views</p>
-                                  <p className="font-bold text-blue-600 text-sm">{formatNumber(creator.avg_views || 0)}</p>
+                                <div className="w-px h-8 bg-neutral-200/80" />
+                                <div className="flex-1">
+                                  <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Avg Views</p>
+                                  <p className="font-extrabold text-blue-600 text-sm mt-0.5">{formatNumber(creator.avg_views || 0)}</p>
                                 </div>
                               </div>
                             </div>
                           </div>
 
                           {/* Top-Right Status Badge */}
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 self-start">
                             <Badge className={
-                              app.status === 'applied' ? 'bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-100' :
-                              app.status === 'approved' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200 hover:bg-yellow-100' :
-                              app.status === 'rejected' ? 'bg-red-100 text-red-800 border border-red-200 hover:bg-red-100' :
-                              app.status === 'script_submitted' ? 'bg-purple-100 text-purple-800 border border-purple-200 hover:bg-purple-100' :
-                              app.status === 'script_approved' ? 'bg-green-100 text-green-800 border border-green-200 hover:bg-green-100' :
-                              app.status === 'revision_requested' ? 'bg-orange-100 text-orange-800 border border-orange-200 hover:bg-orange-100' :
-                              'bg-gray-100 text-gray-800 border border-gray-200 hover:bg-gray-100'
+                              app.status === 'applied' ? 'bg-blue-50 text-blue-700 border border-blue-200/50 hover:bg-blue-50/80 rounded-full font-extrabold text-[10px] px-2.5 py-0.5 tracking-wider' :
+                              app.status === 'approved' ? 'bg-amber-50 text-amber-700 border border-amber-200/50 hover:bg-amber-50/80 rounded-full font-extrabold text-[10px] px-2.5 py-0.5 tracking-wider' :
+                              app.status === 'rejected' ? 'bg-red-50 text-red-700 border border-red-200/50 hover:bg-red-50/80 rounded-full font-extrabold text-[10px] px-2.5 py-0.5 tracking-wider' :
+                              app.status === 'script_submitted' ? 'bg-purple-50 text-purple-700 border border-purple-200/50 hover:bg-purple-50/80 rounded-full font-extrabold text-[10px] px-2.5 py-0.5 tracking-wider' :
+                              app.status === 'script_approved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50 hover:bg-emerald-50/80 rounded-full font-extrabold text-[10px] px-2.5 py-0.5 tracking-wider' :
+                              app.status === 'revision_requested' ? 'bg-orange-50 text-orange-700 border border-orange-200/50 hover:bg-orange-50/80 rounded-full font-extrabold text-[10px] px-2.5 py-0.5 tracking-wider' :
+                              'bg-neutral-50 text-neutral-700 border border-neutral-200/50 hover:bg-neutral-50/80 rounded-full font-extrabold text-[10px] px-2.5 py-0.5 tracking-wider'
                             }>
                               {app.status.toUpperCase()}
                             </Badge>
@@ -1089,10 +1589,10 @@ const BrandCampaignDetail: React.FC = () => {
 
                         {/* Phase 1: Review Application (applied status) */}
                         {app.status === 'applied' && (
-                          <div className="mt-5 border-t pt-4 space-y-4">
+                          <div className="mt-2 border-t border-neutral-100 pt-4 space-y-4 w-full">
                             <textarea
                               placeholder="Add application feedback or instructions... (e.g. Nice profile, look forward to working with you!)"
-                              className="w-full p-3 border rounded-lg resize-none text-sm focus:ring-purple-500 focus:border-purple-500"
+                              className="w-full p-3.5 border border-neutral-200 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl resize-none text-sm bg-neutral-50/30 placeholder-neutral-400 focus:bg-white transition-all duration-200"
                               rows={2}
                               value={appResponses[app.id] || ''}
                               onChange={(e) => setAppResponses(prev => ({ ...prev, [app.id]: e.target.value }))}
@@ -1101,18 +1601,18 @@ const BrandCampaignDetail: React.FC = () => {
                               <Button
                                 onClick={() => handleApplicationResponse(app.id, 'approved')}
                                 disabled={isResponding}
-                                className="bg-green-600 hover:bg-green-700 flex items-center text-sm font-semibold h-10 px-4 text-white"
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-10 px-5 rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-1.5"
                               >
-                                <ThumbsUp className="h-4 w-4 mr-1.5" />
+                                <ThumbsUp className="h-4 w-4" />
                                 Approve Applicant
                               </Button>
                               <Button
                                 variant="outline"
                                 onClick={() => handleApplicationResponse(app.id, 'rejected')}
                                 disabled={isResponding}
-                                className="text-red-600 hover:bg-red-50 border-red-200 flex items-center text-sm font-semibold h-10 px-4"
+                                className="text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300 font-bold h-10 px-5 rounded-xl transition-all flex items-center gap-1.5"
                               >
-                                <ThumbsDown className="h-4 w-4 mr-1.5" />
+                                <ThumbsDown className="h-4 w-4" />
                                 Reject
                               </Button>
                             </div>
@@ -1122,71 +1622,85 @@ const BrandCampaignDetail: React.FC = () => {
                         {/* Phase 2: Script Options Choice (approved status) */}
                         {app.status === 'approved' && (
                           <div className="mt-5 border-t pt-4">
-                            <div className="mb-4 bg-gray-50/50 p-4 rounded-xl border border-dashed">
-                              <label className="text-sm font-bold text-gray-800 block mb-3">Choose Scripting Protocol:</label>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <label className={`flex items-start gap-3 cursor-pointer text-sm border rounded-xl p-4 transition-all ${
-                                  scriptOptions[app.id] !== 'creator'
-                                    ? 'bg-purple-50/30 border-purple-300 ring-1 ring-purple-300'
-                                    : 'bg-white hover:bg-gray-50 border-gray-200'
-                                }`}>
-                                  <input
-                                    type="radio"
-                                    name={`script-option-${app.id}`}
-                                    checked={scriptOptions[app.id] !== 'creator'}
-                                    onChange={() => setScriptOptions(prev => ({ ...prev, [app.id]: 'brand' }))}
-                                    className="text-purple-600 focus:ring-purple-500 mt-0.5"
-                                  />
-                                  <div>
-                                    <span className="font-bold block text-gray-900">Provide Custom Brand Script</span>
-                                    <span className="text-xs text-gray-500 mt-0.5 block">Paste your script directly to skip drafting. Fast & instant.</span>
+                            {campaign?.requires_script !== false ? (
+                              <>
+                                <div className="mb-4 bg-gray-50/50 p-4 rounded-xl border border-dashed">
+                                  <label className="text-sm font-bold text-gray-800 block mb-3">Choose Scripting Protocol:</label>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <label className={`flex items-start gap-3 cursor-pointer text-sm border rounded-xl p-4 transition-all ${
+                                      scriptOptions[app.id] !== 'creator'
+                                        ? 'bg-purple-50/30 border-purple-300 ring-1 ring-purple-300'
+                                        : 'bg-white hover:bg-gray-50 border-gray-200'
+                                    }`}>
+                                      <input
+                                        type="radio"
+                                        name={`script-option-${app.id}`}
+                                        checked={scriptOptions[app.id] !== 'creator'}
+                                        onChange={() => setScriptOptions(prev => ({ ...prev, [app.id]: 'brand' }))}
+                                        className="text-purple-600 focus:ring-purple-500 mt-0.5"
+                                      />
+                                      <div>
+                                        <span className="font-bold block text-gray-900">Provide Custom Brand Script</span>
+                                        <span className="text-xs text-gray-500 mt-0.5 block">Paste your script directly to skip drafting. Fast & instant.</span>
+                                      </div>
+                                    </label>
+                                    <label className={`flex items-start gap-3 cursor-pointer text-sm border rounded-xl p-4 transition-all ${
+                                      scriptOptions[app.id] === 'creator'
+                                        ? 'bg-purple-50/30 border-purple-300 ring-1 ring-purple-300'
+                                        : 'bg-white hover:bg-gray-50 border-gray-200'
+                                    }`}>
+                                      <input
+                                        type="radio"
+                                        name={`script-option-${app.id}`}
+                                        checked={scriptOptions[app.id] === 'creator'}
+                                        onChange={() => setScriptOptions(prev => ({ ...prev, [app.id]: 'creator' }))}
+                                        className="text-purple-600 focus:ring-purple-500 mt-0.5"
+                                      />
+                                      <div>
+                                        <span className="font-bold block text-gray-900">Let Creator Draft Script</span>
+                                        <span className="text-xs text-gray-500 mt-0.5 block">Creator will upload their custom script draft for your review.</span>
+                                      </div>
+                                    </label>
                                   </div>
-                                </label>
-                                <label className={`flex items-start gap-3 cursor-pointer text-sm border rounded-xl p-4 transition-all ${
-                                  scriptOptions[app.id] === 'creator'
-                                    ? 'bg-purple-50/30 border-purple-300 ring-1 ring-purple-300'
-                                    : 'bg-white hover:bg-gray-50 border-gray-200'
-                                }`}>
-                                  <input
-                                    type="radio"
-                                    name={`script-option-${app.id}`}
-                                    checked={scriptOptions[app.id] === 'creator'}
-                                    onChange={() => setScriptOptions(prev => ({ ...prev, [app.id]: 'creator' }))}
-                                    className="text-purple-600 focus:ring-purple-500 mt-0.5"
-                                  />
-                                  <div>
-                                    <span className="font-bold block text-gray-900">Let Creator Draft Script</span>
-                                    <span className="text-xs text-gray-500 mt-0.5 block">Creator will upload their custom script draft for your review.</span>
-                                  </div>
-                                </label>
-                              </div>
-                            </div>
+                                </div>
 
-                            {scriptOptions[app.id] !== 'creator' ? (
-                              <div className="space-y-3">
-                                <textarea
-                                  placeholder="Paste or write your campaign script here... Include Hook, Key Messages, and Call-to-action (CTA)."
-                                  className="w-full p-4 border rounded-xl resize-none text-sm font-mono bg-purple-50/10 focus:ring-purple-500 focus:border-purple-500"
-                                  rows={4}
-                                  value={brandScripts[app.id] || ''}
-                                  onChange={(e) => setBrandScripts(prev => ({ ...prev, [app.id]: e.target.value }))}
-                                />
-                                <Button
-                                  onClick={() => handleSendBrandScript(app.id)}
-                                  disabled={isResponding || !brandScripts[app.id]?.trim()}
-                                  className="bg-purple-600 hover:bg-purple-700 flex items-center text-sm font-semibold h-10 px-4 text-white"
-                                >
-                                  <Send className="h-4 w-4 mr-1.5" />
-                                  Submit & Approve Script
-                                </Button>
-                              </div>
+                                {scriptOptions[app.id] !== 'creator' ? (
+                                  <div className="space-y-3">
+                                    <textarea
+                                      placeholder="Paste or write your campaign script here... Include Hook, Key Messages, and Call-to-action (CTA)."
+                                      className="w-full p-4 border rounded-xl resize-none text-sm font-mono bg-purple-50/10 focus:ring-purple-500 focus:border-purple-500"
+                                      rows={4}
+                                      value={brandScripts[app.id] || ''}
+                                      onChange={(e) => setBrandScripts(prev => ({ ...prev, [app.id]: e.target.value }))}
+                                    />
+                                    <Button
+                                      onClick={() => handleSendBrandScript(app.id)}
+                                      disabled={isResponding || !brandScripts[app.id]?.trim()}
+                                      className="bg-purple-600 hover:bg-purple-700 flex items-center text-sm font-semibold h-10 px-4 text-white"
+                                    >
+                                      <Send className="h-4 w-4 mr-1.5" />
+                                      Submit & Approve Script
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="bg-purple-50/50 border border-purple-200 rounded-xl p-4 flex items-center gap-3">
+                                    <Clock className="h-5 w-5 text-purple-600 animate-pulse" />
+                                    <div className="text-sm">
+                                      <p className="font-bold text-purple-900">Awaiting Creator Script Draft</p>
+                                      <p className="text-purple-700 text-xs mt-0.5">
+                                        The creator has been notified to draft a script matching your campaign guidelines. They will submit it inside the App shortly.
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+                              </>
                             ) : (
-                              <div className="bg-purple-50/50 border border-purple-200 rounded-xl p-4 flex items-center gap-3">
-                                <Clock className="h-5 w-5 text-purple-600 animate-pulse" />
+                              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3">
+                                <Clock className="h-5 w-5 text-blue-600 animate-pulse" />
                                 <div className="text-sm">
-                                  <p className="font-bold text-purple-900">Awaiting Creator Script Draft</p>
-                                  <p className="text-purple-700 text-xs mt-0.5">
-                                    The creator has been notified to draft a script matching your campaign guidelines. They will submit it inside the App shortly.
+                                  <p className="font-bold text-blue-900 font-semibold">Awaiting Creator Content/Reel Post</p>
+                                  <p className="text-blue-700 text-xs mt-0.5">
+                                    This campaign does not require script approval. The creator is filming the video and will submit their live reel/post link directly.
                                   </p>
                                 </div>
                               </div>
@@ -1460,22 +1974,22 @@ const BrandCampaignDetail: React.FC = () => {
               ) : (
                 <div className="space-y-4">
                   {campaignCreators.map((campaignCreator) => (
-                    <div key={campaignCreator.id} className="border rounded-2xl p-6 hover:shadow-md transition-shadow bg-white text-left">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-center gap-4 flex-1">
+                    <div key={campaignCreator.id} className="border border-neutral-200/70 rounded-2xl p-6 hover:shadow-md transition-all duration-300 bg-white text-left flex flex-col gap-5">
+                      <div className="flex items-start justify-between gap-6 flex-wrap w-full">
+                        <div className="flex items-center gap-4 flex-1 min-w-0">
                           {/* Profile Picture */}
                           <div className="relative flex-shrink-0">
                             <img 
                               src={campaignCreator.creators.profile_picture_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(campaignCreator.creators.name)}&size=200&background=random`}
                               alt={campaignCreator.creators.name}
-                              className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                              className="w-16 h-16 rounded-full object-cover border-2 border-neutral-100 shadow-sm"
                               onError={(e) => {
-                                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(campaignCreator.creators.name)}&size=200&background=random`;
+                                  e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(campaignCreator.creators.name)}&size=200&background=random`;
                               }}
                             />
                             {campaignCreator.creators.verified && (
-                              <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1">
-                                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1 border border-white shadow-sm">
+                                <svg className="w-3 h-3 text-white fill-current" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                 </svg>
                               </div>
@@ -1484,27 +1998,27 @@ const BrandCampaignDetail: React.FC = () => {
 
                           {/* Creator Info */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="font-semibold text-lg text-gray-900">{campaignCreator.creators.name}</h4>
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <h4 className="font-extrabold text-lg text-neutral-800 tracking-tight">{campaignCreator.creators.name}</h4>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => navigate(`/dashboard/creator-profile/${campaignCreator.creators.ig_handle}`, {
                                   state: { creator: campaignCreator.creators }
                                 })}
-                                className="text-blue-600 hover:text-blue-800 px-2 py-1 h-auto"
+                                className="text-blue-600 hover:text-blue-800 px-2 py-0.5 h-auto text-xs font-bold"
                               >
                                 <Eye className="h-3 w-3 mr-1" />
                                 View Full Profile
                               </Button>
                             </div>
                             
-                            <p className="text-sm text-gray-600 mb-2">
+                            <p className="text-xs text-neutral-500 mb-3 font-medium">
                               <a 
                                 href={`https://instagram.com/${campaignCreator.creators.ig_handle}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="hover:text-purple-600 transition-colors"
+                                className="hover:text-purple-600 transition-colors text-neutral-600"
                               >
                                 @{campaignCreator.creators.ig_handle}
                               </a>
@@ -1512,29 +2026,35 @@ const BrandCampaignDetail: React.FC = () => {
 
                             {/* Bio */}
                             {campaignCreator.creators.bio && (
-                              <p className="text-sm text-gray-600 mb-3 line-clamp-2">{campaignCreator.creators.bio}</p>
+                              <p className="text-xs text-neutral-500 mb-4 line-clamp-2 leading-relaxed italic">"{campaignCreator.creators.bio}"</p>
                             )}
                             
                             {/* Stats Grid */}
-                            <div className="grid grid-cols-3 gap-4 text-center bg-gray-50 rounded-lg p-3">
-                              <div>
-                                <p className="text-xs text-gray-500 mb-1">Followers</p>
-                                <p className="font-bold text-gray-900">{formatNumber(campaignCreator.creators.followers_count)}</p>
+                            <div className="flex items-center gap-6 bg-neutral-50/50 rounded-2xl p-4 border border-neutral-150 max-w-lg">
+                              <div className="flex-1">
+                                <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Followers</p>
+                                <p className="font-extrabold text-neutral-800 text-sm mt-0.5">{formatNumber(campaignCreator.creators.followers_count)}</p>
                               </div>
-                              <div>
-                                <p className="text-xs text-gray-500 mb-1">Engagement</p>
-                                <p className="font-bold text-purple-600">{formatPercentage(campaignCreator.creators.engagement_rate)}</p>
+                              <div className="w-px h-8 bg-neutral-200/80" />
+                              <div className="flex-1">
+                                <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Engagement</p>
+                                <p className="font-extrabold text-purple-600 text-sm mt-0.5">{formatPercentage(campaignCreator.creators.engagement_rate)}</p>
                               </div>
-                              <div>
-                                <p className="text-xs text-gray-500 mb-1">Category</p>
-                                <Badge variant="outline" className="font-semibold">{campaignCreator.creators.category}</Badge>
+                              <div className="w-px h-8 bg-neutral-200/80" />
+                              <div className="flex-1">
+                                <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Category</p>
+                                <div className="mt-0.5">
+                                  <Badge variant="outline" className="font-bold text-[10px] text-neutral-700 bg-white border-neutral-200 rounded-full px-2 py-0">
+                                    {campaignCreator.creators.category}
+                                  </Badge>
+                                </div>
                               </div>
                             </div>
 
                             {/* Subcategory */}
                             {campaignCreator.creators.subcategory && (
-                              <div className="mt-2">
-                                <Badge variant="secondary" className="text-xs">
+                              <div className="mt-3">
+                                <Badge variant="secondary" className="text-[10px] font-bold bg-neutral-100 text-neutral-600 rounded-full px-2">
                                   {campaignCreator.creators.subcategory}
                                 </Badge>
                               </div>
@@ -1542,53 +2062,54 @@ const BrandCampaignDetail: React.FC = () => {
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-2">
-                          <Badge className={getStatusColor(campaignCreator.status)}>
-                            {campaignCreator.status}
+                        <div className="flex items-center gap-2 self-start">
+                          <Badge className={`rounded-full font-extrabold text-[10px] px-2.5 py-0.5 tracking-wider ${getStatusColor(campaignCreator.status)}`}>
+                            {campaignCreator.status.toUpperCase()}
                           </Badge>
                         </div>
                       </div>
 
                       {campaignCreator.status === 'recommended' && (
-                        <div className="mt-4 space-y-3">
+                        <div className="mt-2 border-t border-neutral-100 pt-4 space-y-4 w-full">
                           <textarea
                             placeholder="Add your message... (For 'Request More Info', this will start a chat with admin)"
-                            className="w-full p-3 border rounded-lg resize-none"
+                            className="w-full p-3.5 border border-neutral-200 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl resize-none text-sm bg-neutral-50/30 placeholder-neutral-400 focus:bg-white transition-all duration-200"
                             rows={3}
                             value={responses[campaignCreator.creator_id]?.response || ''}
                             onChange={(e) => updateResponse(campaignCreator.creator_id, 'response', e.target.value)}
                           />
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             <div className="flex gap-2 flex-wrap">
                               <Button
                                 onClick={() => handleCreatorResponse(campaignCreator.creator_id, 'approved')}
                                 disabled={responding === String(campaignCreator.creator_id)}
-                                className="flex items-center text-white bg-purple-600 hover:bg-purple-700"
+                                className="bg-purple-600 hover:bg-purple-700 text-white font-bold h-10 px-5 rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-1.5"
                               >
-                                <ThumbsUp className="h-4 w-4 mr-1" />
+                                <ThumbsUp className="h-4 w-4" />
                                 Approve Recommendation
                               </Button>
                               <Button
                                 variant="outline"
                                 onClick={() => handleCreatorResponse(campaignCreator.creator_id, 'requested_more')}
                                 disabled={responding === String(campaignCreator.creator_id)}
-                                className="flex items-center"
+                                className="border-neutral-200 text-neutral-700 hover:bg-neutral-50 font-bold h-10 px-5 rounded-xl transition-all flex items-center gap-1.5"
                               >
-                                <MessageSquare className="h-4 w-4 mr-1" />
+                                <MessageSquare className="h-4 w-4" />
                                 Request More Info
                               </Button>
                               <Button
                                 variant="destructive"
                                 onClick={() => handleCreatorResponse(campaignCreator.creator_id, 'rejected')}
                                 disabled={responding === String(campaignCreator.creator_id)}
-                                className="flex items-center"
+                                className="bg-red-600 hover:bg-red-700 text-white font-bold h-10 px-5 rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-1.5"
                               >
-                                <ThumbsDown className="h-4 w-4 mr-1" />
+                                <ThumbsDown className="h-4 w-4" />
                                 Reject
                               </Button>
                             </div>
-                            <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                              💡 <strong>Approve/Reject:</strong> Sends your message as final decision • <strong>Request More Info:</strong> Starts a chat with admin
+                            <div className="text-xs text-neutral-500 bg-neutral-50 border border-neutral-100 p-3 rounded-xl flex items-center gap-1.5 leading-relaxed">
+                              <span>💡</span>
+                              <span><strong>Approve/Reject:</strong> Sends your message as a final decision • <strong>Request More Info:</strong> Starts a chat with the administrator.</span>
                             </div>
                           </div>
                         </div>
@@ -1667,188 +2188,6 @@ const BrandCampaignDetail: React.FC = () => {
         </Card>
       )}
 
-      {/* Other Phase Information */}
-      {campaign.phase !== 'creator_selection' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Current Phase: {formatPhaseLabel(campaign.phase)}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8">
-              {campaign.phase === 'approval_pending' && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <Clock className="h-12 w-12 mx-auto mb-4 text-blue-500 animate-pulse" />
-                    <h3 className="text-lg font-semibold mb-2">Pending Admin Approval</h3>
-                    <p className="text-gray-600 mb-4">
-                      Our team is currently reviewing your campaign details and creator requirements. 
-                      You will be notified once the campaign is approved and ready for the next step.
-                    </p>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-700">
-                        Estimated review time: 12-24 hours.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {campaign.phase === 'approved_pending_funds' && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <DollarSign className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                    <h3 className="text-lg font-semibold mb-2">Campaign Approved!</h3>
-                    <p className="text-gray-600 mb-4">
-                      Admin has approved your campaign. Please add funds to your wallet to proceed with creator invitations.
-                    </p>
-                    <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="text-sm text-green-800">
-                        Total Budget: ₹{formatNumber(campaign.budget)}
-                      </div>
-                    </div>
-                  </div>
-                  <RazorpayCheckout
-                    campaignId={id!}
-                    amount={campaign.budget}
-                    campaignName={campaign.campaign_name}
-                    onSuccess={() => {
-                      fetchCampaignDetails();
-                      toast({
-                        title: 'Funds Added',
-                        description: 'Your wallet has been funded and campaign is moving to selection phase.',
-                      });
-                    }}
-                    onError={(err) => {
-                      toast({
-                        title: 'Payment Error',
-                        description: err.message || 'Payment failed',
-                        variant: 'destructive'
-                      });
-                    }}
-                  />
-                </div>
-              )}
-              {campaign.phase === 'payment_pending' && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <DollarSign className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
-                    <h3 className="text-lg font-semibold mb-2">Secure Payment Required</h3>
-                    <p className="text-gray-600 mb-4">
-                      You've approved the required number of creators. Complete the payment securely to unlock content approval.
-                    </p>
-                    {(() => {
-                      const approvedCreators = campaignCreators.filter(c => c.status === 'approved');
-                      const targetCount = campaign?.target_creators_count || 1;
-                      return (
-                        <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <div className="text-sm text-green-800">
-                            ✅ Target achieved: {approvedCreators.length}/{targetCount} creators approved
-                          </div>
-                          <p className="text-xs text-green-700 mt-2">Next: Pay campaign budget to proceed</p>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                  <RazorpayCheckout
-                    campaignId={id!}
-                    amount={campaign.budget}
-                    campaignName={campaign.campaign_name}
-                    onSuccess={() => {
-                      // After successful payment, backend moves phase to content_approval. Refetch.
-                      fetchCampaignDetails();
-                      toast({
-                        title: 'Payment Verified',
-                        description: 'Campaign moved to Content Approval phase.',
-                      });
-                    }}
-                    onError={(err) => {
-                      console.error('Razorpay payment error:', err);
-                      toast({
-                        title: 'Payment Error',
-                        description: err.message || 'Payment failed or cancelled',
-                        variant: 'destructive'
-                      });
-                    }}
-                  />
-                  <div className="text-xs text-gray-500 text-center">
-                    Powered by Razorpay • Supports UPI, Cards, NetBanking & Wallets
-                  </div>
-                </div>
-              )}
-              {campaign.phase === 'content_approval' && (() => {
-                // Check if content exists and if all content is approved
-                const hasContent = contents.length > 0;
-                const allContentApproved = hasContent && contents.every((c: any) => c.approval_status === 'approved');
-                
-                if (hasContent && allContentApproved) {
-                  return (
-                    <>
-                      <Clock className="h-12 w-12 mx-auto mb-4 text-blue-500 animate-pulse" />
-                      <h3 className="text-lg font-semibold mb-2">Content Approved!</h3>
-                      <p className="text-gray-600 mb-4">
-                        Great! All content has been approved. Creators will be posting soon and you'll see your posts live.
-                      </p>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                        <div className="flex items-center gap-2 text-blue-800">
-                          <Clock className="h-4 w-4" />
-                          <span className="font-medium">What happens next:</span>
-                        </div>
-                        <ul className="mt-2 text-sm text-blue-700 space-y-1">
-                          <li>• Admin will coordinate with creators for posting</li>
-                          <li>• Live post links will be added as content goes live</li>
-                          <li>• You'll be notified when analytics become available</li>
-                        </ul>
-                      </div>
-                      <div className="space-y-2">
-                        <Button onClick={() => navigate(`/dashboard/campaigns/${id}/content`)} variant="outline">
-                          <FileText className="h-4 w-4 mr-2" />
-                          View Approved Content
-                        </Button>
-                      </div>
-                    </>
-                  );
-                } else {
-                  return (
-                    <>
-                      <FileText className="h-12 w-12 mx-auto mb-4 text-purple-500" />
-                      <h3 className="text-lg font-semibold mb-2">Content Review</h3>
-                      <p className="text-gray-600">Creators are submitting content for your review and approval.</p>
-                      <div className="mt-4">
-                        <Button onClick={() => navigate(`/dashboard/campaigns/${id}/content`)}>
-                          Go to Content Review
-                        </Button>
-                      </div>
-                    </>
-                  );
-                }
-              })()}
-              {campaign.phase === 'campaign_active' && (
-                <>
-                  <Eye className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                  <h3 className="text-lg font-semibold mb-2">Campaign Active</h3>
-                  <p className="text-gray-600 mb-4">Your content has been approved! Creators are now posting and you can monitor live performance metrics.</p>
-                  <div className="mt-4 space-y-3">
-                    <Button onClick={() => navigate(`/dashboard/campaigns/${id}/analytics`)} className="w-full bg-green-600 hover:bg-green-700">
-                      <TrendingUp className="h-4 w-4 mr-2" />
-                      Monitor Campaign Analytics
-                    </Button>
-                    <Button variant="outline" onClick={() => navigate(`/dashboard/campaigns/${id}/content`)}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      View Content Details
-                    </Button>
-                  </div>
-                </>
-              )}
-              {campaign.phase === 'campaign_complete' && (
-                <>
-                  <CheckCircle className="h-12 w-12 mx-auto mb-4 text-gray-500" />
-                  <h3 className="text-lg font-semibold mb-2">Campaign Completed</h3>
-                  <p className="text-gray-600">Your campaign has been successfully completed. Review the results and analytics.</p>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

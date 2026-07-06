@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+import tailwindAnimate from "tailwindcss-animate";
+
 
 export default {
 	darkMode: ["class"],
@@ -21,6 +23,7 @@ export default {
 			fontFamily: {
 				'sans': ['Inter', 'system-ui', 'sans-serif'],
 				'heading': ['Space Grotesk', 'system-ui', 'sans-serif'],
+				'display': ['Archivo', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -28,6 +31,12 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				panel: 'hsl(var(--panel))',
+				blue: 'hsl(var(--blue))',
+				ink: {
+					DEFAULT: 'hsl(var(--ink))',
+					foreground: 'hsl(var(--ink-foreground))',
+				},
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))'
@@ -101,5 +110,5 @@ export default {
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [tailwindAnimate],
 } satisfies Config;

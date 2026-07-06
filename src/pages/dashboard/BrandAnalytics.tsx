@@ -6,7 +6,11 @@ import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { useToast } from '../../hooks/use-toast';
+import { ScheduleReportDialog } from '../../components/analytics/ScheduleReportDialog';
 import { getApiUrl } from '../../lib/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import html2canvas from 'html2canvas';
 import {
   BarChart3,
   TrendingUp,
@@ -25,7 +29,8 @@ import {
   FileText,
   Share2,
   Zap,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Loader2
 } from 'lucide-react';
 import {
   LineChart,
@@ -232,6 +237,10 @@ const BrandAnalytics: React.FC = () => {
     cpc: true,
   });
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [reportStep, setReportStep] = useState('');
 
   useEffect(() => {
     if (brand?.id) {
@@ -346,49 +355,468 @@ const BrandAnalytics: React.FC = () => {
 
   const handleDownloadReport = async () => {
     try {
+      if (!brand?.id) {
+        toast({
+          title: 'Not Ready',
+          description: 'Brand data is still loading. Please try again.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      setIsGeneratingReport(true);
+      setReportStep('Initializing...');
+
       toast({
-        title: 'Generating Report',
-        description: 'Your analytics report is being prepared...'
+        title: 'Generating AI Report',
+        description: 'Campayn AI is analyzing your data and preparing a high-fidelity PDF. This may take up to 20 seconds.'
       });
-      
-      // TODO: Implement actual PDF/CSV generation
-      // For now, prepare data for download
-      const reportData = {
-        brand: brand?.brand_name,
-        generated_at: new Date().toISOString(),
-        period: timeRange,
-        summary: analytics,
-        campaigns: (campaigns || []).filter(Boolean).map(c => ({
-          name: c.campaign_name || 'Unnamed',
-          phase: c.phase || '',
-          budget: c.budget || 0,
-          creators: c.creator_count || 0,
-          reach: c.total_reach || 0,
-          engagement: c.total_engagement || 0
-        })),
-        creator_performance: creatorPerformance
+
+      // Let offscreen container render
+      setReportStep('Capturing charts...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      let overviewChartImg = '';
+      let demographicsChartImg = '';
+
+      try {
+        const overviewNode = document.getElementById('pdf-chart-overview');
+        const demoNode = document.getElementById('pdf-chart-demographics');
+
+        if (overviewNode) {
+          const canvas = await html2canvas(overviewNode, {
+            scale: 2, // higher resolution
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+          });
+          overviewChartImg = canvas.toDataURL('image/png');
+        }
+
+        if (demoNode) {
+          const canvas = await html2canvas(demoNode, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+          });
+          demographicsChartImg = canvas.toDataURL('image/png');
+        }
+      } catch (err) {
+        console.error('Error capturing charts with html2canvas:', err);
+      }
+
+      setReportStep('Analyzing with AI...');
+      const response = await fetch(getApiUrl('/api/ai/generate-report'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          brand_name: brand.brand_name || 'Brand',
+          period: timeRange,
+          summary: analytics,
+          campaigns: campaigns,
+          creator_performance: creatorPerformance,
+          demographics: demoData
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('AI analysis request failed.');
+      }
+
+      const resData = await response.json();
+      if (!resData.success) {
+        throw new Error(resData.error || 'Failed to generate AI analysis.');
+      }
+
+      const ai = resData.analysis;
+
+      setReportStep('Assembling PDF...');
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const brandName = brand.brand_name || 'Brand';
+      const formattedDate = new Date().toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+
+      // Cover Page
+      // Background Accent top bar
+      doc.setFillColor(9, 9, 11); // zinc-950
+      doc.rect(0, 0, 210, 80, 'F');
+
+      // Campayn logo mark on cover
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(28);
+      doc.setTextColor(255, 255, 255);
+      doc.text('CAMPAYN', 20, 45);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(161, 161, 170); // zinc-400
+      doc.text('AI-POWERED INFLUENCER MARKETING PLATFORM', 20, 55);
+
+      // Title Details
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.setTextColor(24, 24, 27); // zinc-900
+      doc.text('PERFORMANCE ANALYTICS REPORT', 20, 110);
+
+      // Horizontal Divider line
+      doc.setDrawColor(228, 228, 231); // zinc-200
+      doc.setLineWidth(0.5);
+      doc.line(20, 120, 190, 120);
+
+      // Metadata
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(113, 113, 122); // zinc-500
+      doc.text('PREPARED FOR:', 20, 140);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(9, 9, 11);
+      doc.text(brandName.toUpperCase(), 20, 148);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(113, 113, 122);
+      doc.text('REPORTING PERIOD:', 20, 170);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(9, 9, 11);
+      doc.text(timeRange === '7d' ? 'Last 7 Days' : timeRange === '30d' ? 'Last 30 Days' : timeRange === '90d' ? 'Last 90 Days' : 'All Time', 20, 177);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(113, 113, 122);
+      doc.text('GENERATED ON:', 20, 200);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(9, 9, 11);
+      doc.text(formattedDate, 20, 207);
+
+      // Concluding branding watermark
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(9);
+      doc.setTextColor(161, 161, 170);
+      doc.text('Confidential Document. Generated by Campayn Tech. All rights reserved.', 20, 260);
+
+      // Helper function for header/footer on subsequent pages
+      const addHeaderFooter = (pageNo: number) => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(161, 161, 170);
+        doc.text('CAMPAYN ANALYTICS', 20, 12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Page ${pageNo}`, 180, 12);
+        doc.setDrawColor(244, 244, 245);
+        doc.setLineWidth(0.2);
+        doc.line(20, 15, 190, 15);
       };
-      
-      // Create downloadable JSON (temporary - replace with PDF/CSV)
-      const dataStr = JSON.stringify(reportData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `campayn-analytics-${brand?.brand_name}-${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-      
-      toast({
-        title: 'Report Downloaded',
-        description: 'Your analytics report has been downloaded successfully.'
+
+      // Page 2: Executive Summary & KPI Metrics
+      doc.addPage();
+      addHeaderFooter(2);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(9, 9, 11);
+      doc.text('1. Executive Summary', 20, 26);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(39, 39, 42); // zinc-800
+      let y = 34;
+      const splitSummary = doc.splitTextToSize(ai.executive_summary || '', 170);
+      doc.text(splitSummary, 20, y);
+      y += splitSummary.length * 4.5 + 8;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(9, 9, 11);
+      doc.text('Key Performance Indicators (KPIs)', 20, y);
+      y += 6;
+
+      // KPIs Table
+      const kpiBody = [
+        ['Total Campaigns Run', String(analytics?.totalCampaigns || 0), 'Total Reach', formatNumber(analytics?.totalReach || 0)],
+        ['Active Campaigns', String(analytics?.activeCampaigns || 0), 'Total Engagement', formatNumber(analytics?.totalEngagement || 0)],
+        ['Budget Spent', formatCurrency(analytics?.totalBudgetSpent || 0), 'Average Engagement Rate', `${(analytics?.avgEngagementRate || 0).toFixed(2)}%`],
+        ['Return on Investment (ROI)', `${(analytics?.roi || 0).toFixed(1)}%`, 'Content Pieces Generated', String(analytics?.totalContent || 0)]
+      ];
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Metric', 'Value', 'Metric', 'Value']],
+        body: kpiBody,
+        theme: 'striped',
+        headStyles: { fillColor: [9, 9, 11], fontSize: 9 },
+        bodyStyles: { fontSize: 8.5, textColor: [39, 39, 42] },
+        margin: { left: 20, right: 20 },
       });
-    } catch (error) {
-      console.error('Error downloading report:', error);
+
+      // Page 3: Performance Charts
+      if (overviewChartImg) {
+        doc.addPage();
+        addHeaderFooter(3);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.setTextColor(9, 9, 11);
+        doc.text('2. Performance Visualization', 20, 26);
+
+        // Add Image
+        doc.addImage(overviewChartImg, 'PNG', 20, 32, 170, 80);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(9, 9, 11);
+        doc.text('Campaign Execution Analysis', 20, 122);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9.5);
+        doc.setTextColor(39, 39, 42);
+        const splitCampaignAnalysis = doc.splitTextToSize(ai.campaign_analysis || '', 170);
+        doc.text(splitCampaignAnalysis, 20, 130);
+      }
+
+      // Page 4: Detailed Campaign Breakdown
+      doc.addPage();
+      const pageFourNo = overviewChartImg ? 4 : 3;
+      addHeaderFooter(pageFourNo);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(9, 9, 11);
+      doc.text('3. Detailed Campaign Performance', 20, 26);
+
+      const campaignRows = campaigns.slice(0, 10).map(c => [
+        c.campaign_name,
+        c.phase.replace('_', ' ').toUpperCase(),
+        formatCurrency(c.budget),
+        String(c.creator_count),
+        formatNumber(c.total_reach || 0),
+        formatNumber(c.total_engagement || 0)
+      ]);
+
+      autoTable(doc, {
+        startY: 32,
+        head: [['Campaign Name', 'Phase', 'Budget', 'Creators', 'Reach', 'Engagement']],
+        body: campaignRows,
+        theme: 'striped',
+        headStyles: { fillColor: [9, 9, 11], fontSize: 9 },
+        bodyStyles: { fontSize: 8, textColor: [39, 39, 42] },
+        margin: { left: 20, right: 20 },
+      });
+
+      let nextY = (doc as any).lastAutoTable.finalY + 12;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(9, 9, 11);
+      doc.text('Financial & Return Metrics', 20, nextY);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(39, 39, 42);
+      const splitRoiInsights = doc.splitTextToSize(ai.roi_budget_insights || '', 170);
+      doc.text(splitRoiInsights, 20, nextY + 8);
+
+      // Page 5: Creator Performance Analysis
+      doc.addPage();
+      const pageFiveNo = pageFourNo + 1;
+      addHeaderFooter(pageFiveNo);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(9, 9, 11);
+      doc.text('4. Creator Performance Analysis', 20, 26);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(39, 39, 42);
+      const splitCreatorPerformanceAnalysis = doc.splitTextToSize(ai.creator_performance_analysis || '', 170);
+      doc.text(splitCreatorPerformanceAnalysis, 20, 34);
+
+      const creatorRows = creatorPerformance.slice(0, 8).map(c => [
+        c.creator_name,
+        c.ig_handle,
+        formatNumber(c.followers),
+        String(c.total_posts),
+        formatNumber(c.total_engagement),
+        `${c.avg_engagement_rate.toFixed(2)}%`
+      ]);
+
+      autoTable(doc, {
+        startY: 34 + splitCreatorPerformanceAnalysis.length * 4.5 + 8,
+        head: [['Creator Name', 'Handle', 'Followers', 'Posts', 'Engagement', 'Avg. Rate']],
+        body: creatorRows,
+        theme: 'striped',
+        headStyles: { fillColor: [9, 9, 11], fontSize: 9 },
+        bodyStyles: { fontSize: 8, textColor: [39, 39, 42] },
+        margin: { left: 20, right: 20 },
+      });
+
+      // Page 6: Audience Demographics
+      doc.addPage();
+      const pageSixNo = pageFiveNo + 1;
+      addHeaderFooter(pageSixNo);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(9, 9, 11);
+      doc.text('5. Audience Demographics & Sentiment', 20, 26);
+
+      if (demographicsChartImg) {
+        doc.addImage(demographicsChartImg, 'PNG', 20, 32, 170, 75);
+      }
+
+      const demoY = demographicsChartImg ? 112 : 32;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(9, 9, 11);
+      doc.text('Audience Insights & Alignment', 20, demoY);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(39, 39, 42);
+      const splitAudienceInsights = doc.splitTextToSize(ai.audience_insights || '', 170);
+      doc.text(splitAudienceInsights, 20, demoY + 8);
+
+      // Mentioned tags
+      const tagY = demoY + 8 + splitAudienceInsights.length * 4.5 + 8;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(9, 9, 11);
+      doc.text('Frequently Mentioned Keywords in Comments:', 20, tagY);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(113, 113, 122);
+      doc.text((demoData.keywords || []).map((k: string) => `#${k}`).join(', '), 20, tagY + 5);
+
+      // Page 7: Strategic Recommendations
+      doc.addPage();
+      const pageSevenNo = pageSixNo + 1;
+      addHeaderFooter(pageSevenNo);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(9, 9, 11);
+      doc.text('6. Strategic Recommendations & Actions', 20, 26);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(239, 68, 68); // red-500
+      doc.text('Risk Flags & Underperformance Review', 20, 34);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(39, 39, 42);
+      const splitRiskFlags = doc.splitTextToSize(ai.risk_flags || '', 170);
+      doc.text(splitRiskFlags, 20, 40);
+
+      const recY = 40 + splitRiskFlags.length * 4.5 + 10;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(79, 70, 229); // indigo-600
+      doc.text('Strategic Action Items', 20, recY);
+
+      let currentRecY = recY + 6;
+      (ai.strategic_recommendations || []).forEach((rec: string, index: number) => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(79, 70, 229);
+        doc.text(`${index + 1}.`, 20, currentRecY);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(39, 39, 42);
+        const splitRec = doc.splitTextToSize(rec, 162);
+        doc.text(splitRec, 26, currentRecY);
+        currentRecY += splitRec.length * 4.5 + 4;
+      });
+
+      // Disclaimer page footer
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8.5);
+      doc.setTextColor(161, 161, 170);
+      const splitDisclaimer = doc.splitTextToSize('Disclaimer: This report was compiled by Campayn Tech utilizing proprietary campaign trackers, historical data, and artificial intelligence models. While data is derived from official social media APIs and vetted creator submissions, predictions and recommendations are analytical assessments and should be calibrated with overall brand strategy.', 170);
+      doc.text(splitDisclaimer, 20, 265);
+
+      // Save PDF
+      doc.save(`campayn-analytics-report-${brandName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${timeRange}-${new Date().toISOString().split('T')[0]}.pdf`);
+
       toast({
-        title: 'Error',
-        description: 'Failed to download report',
+        title: 'Report Downloaded ✓',
+        description: 'Your high-fidelity AI-powered report has been saved successfully.'
+      });
+
+    } catch (error: any) {
+      console.error('Error generating AI PDF report:', error);
+      toast({
+        title: 'Report Generation Failed',
+        description: error.message || 'There was an error communicating with the AI server.',
         variant: 'destructive'
       });
+    } finally {
+      setIsGeneratingReport(false);
+      setReportStep('');
+    }
+  };
+
+  const handleShareAnalytics = async () => {
+    try {
+      if (!brand?.id) {
+        toast({ title: 'Not Ready', description: 'Brand data is loading.', variant: 'destructive' });
+        return;
+      }
+      // Correct route: /shared/analytics/:brandId
+      const shareUrl = `${window.location.origin}/shared/analytics/${brand.id}`;
+      if (navigator.share) {
+        await navigator.share({
+          title: `${brand?.brand_name} Analytics Report`,
+          text: `Campaign analytics for ${brand?.brand_name} — powered by Campayn`,
+          url: shareUrl
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({
+          title: 'Link Copied ✓',
+          description: 'Shareable analytics link copied to clipboard.'
+        });
+      }
+    } catch (error: any) {
+      if (error?.name !== 'AbortError') {
+        // Fallback: try clipboard even on error
+        try {
+          const shareUrl = `${window.location.origin}/shared/analytics/${brand?.id}`;
+          await navigator.clipboard.writeText(shareUrl);
+          toast({ title: 'Link Copied ✓', description: 'Shareable analytics link copied to clipboard.' });
+        } catch {
+          toast({
+            title: 'Share Failed',
+            description: 'Could not copy link. Please copy the URL manually.',
+            variant: 'destructive'
+          });
+        }
+      }
+    }
+  };
+
+  const handleRefreshData = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await fetchAnalytics();
+      toast({
+        title: 'Data Refreshed',
+        description: 'Analytics data is up to date.'
+      });
+    } catch {
+      // fetchAnalytics already shows its own error toast
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -533,10 +961,15 @@ const BrandAnalytics: React.FC = () => {
           </Button>
           <Button 
             onClick={handleDownloadReport} 
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs px-4 py-2 h-auto border-0 shadow-sm rounded-xl font-medium"
+            disabled={isGeneratingReport}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs px-4 py-2 h-auto border-0 shadow-sm rounded-xl font-medium disabled:opacity-70"
           >
-            <Download className="h-3.5 w-3.5 mr-1.5" />
-            Download Report
+            {isGeneratingReport ? (
+              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <Download className="h-3.5 w-3.5 mr-1.5" />
+            )}
+            {isGeneratingReport ? reportStep || 'Generating...' : 'Download Report'}
           </Button>
         </div>
       </div>
@@ -1190,39 +1623,168 @@ const BrandAnalytics: React.FC = () => {
         </CardHeader>
         <CardContent className="pt-4">
           <div className="flex flex-wrap gap-2.5">
-            <Button 
-              variant="outline" 
-              onClick={handleDownloadReport}
-              className="border-gray-200/80 hover:bg-gray-50 text-gray-600 text-xs px-3.5 py-1.5 h-auto rounded-lg"
-            >
-              <Download className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
-              Download Full Report
-            </Button>
-            <Button 
+            <Button
               variant="outline"
+              onClick={handleDownloadReport}
+              disabled={isGeneratingReport}
+              className="border-gray-200/80 hover:bg-gray-50 text-gray-600 text-xs px-3.5 py-1.5 h-auto rounded-lg disabled:opacity-75"
+            >
+              {isGeneratingReport ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 text-indigo-500 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
+              )}
+              {isGeneratingReport ? reportStep || 'Generating...' : 'Download Full Report'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleShareAnalytics}
               className="border-gray-200/80 hover:bg-gray-50 text-gray-600 text-xs px-3.5 py-1.5 h-auto rounded-lg"
             >
               <Share2 className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
               Share Analytics
             </Button>
-            <Button 
+            <Button
               variant="outline"
+              onClick={() => setIsScheduleOpen(true)}
               className="border-gray-200/80 hover:bg-gray-50 text-gray-600 text-xs px-3.5 py-1.5 h-auto rounded-lg"
             >
               <Calendar className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
               Schedule Report
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={fetchAnalytics}
-              className="border-gray-200/80 hover:bg-gray-50 text-gray-600 text-xs px-3.5 py-1.5 h-auto rounded-lg"
+            <Button
+              variant="outline"
+              onClick={handleRefreshData}
+              disabled={isRefreshing}
+              className="border-gray-200/80 hover:bg-gray-50 text-gray-600 text-xs px-3.5 py-1.5 h-auto rounded-lg disabled:opacity-60"
             >
-              <Activity className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
-              Refresh Data
+              <Activity className={`h-3.5 w-3.5 mr-1.5 text-gray-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Schedule Report Dialog */}
+      {brand?.id && (
+        <ScheduleReportDialog
+          isOpen={isScheduleOpen}
+          onClose={() => setIsScheduleOpen(false)}
+          brandId={brand.id}
+        />
+      )}
+      {/* Offscreen DOM container specifically for high-fidelity chart capturing */}
+      {isGeneratingReport && (
+        <div 
+          id="pdf-render-container"
+          style={{ 
+            position: 'fixed', 
+            left: '-9999px', 
+            top: 0, 
+            width: '800px', 
+            background: 'white', 
+            padding: '20px' 
+          }}
+        >
+          {/* Overview Tab Charts */}
+          <div id="pdf-chart-overview" style={{ padding: '20px', background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#1f2937', marginBottom: '15px', fontFamily: 'sans-serif' }}>
+              Campaign Overview Analytics - Phase Distribution & Engagement Trends
+            </h3>
+            <div style={{ display: 'flex', gap: '20px' }}>
+              <div style={{ width: '380px', height: '240px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={campaignPhaseData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={65}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {campaignPhaseData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ width: '380px', height: '240px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={engagementTrendData}>
+                    <defs>
+                      <linearGradient id="colorReach" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorEngagement" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={9} />
+                    <YAxis stroke="#94a3b8" fontSize={9} />
+                    <Tooltip />
+                    <Area type="monotone" dataKey="reach" stroke="#3b82f6" fillOpacity={1} fill="url(#colorReach)" />
+                    <Area type="monotone" dataKey="engagement" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorEngagement)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ height: '30px' }} />
+
+          {/* Demographics Tab Charts */}
+          <div id="pdf-chart-demographics" style={{ padding: '20px', background: 'white', border: '1px solid #f3f4f6', borderRadius: '12px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#1f2937', marginBottom: '15px', fontFamily: 'sans-serif' }}>
+              Audience Demographics & Target Niche Distribution
+            </h3>
+            <div style={{ display: 'flex', gap: '20px' }}>
+              <div style={{ width: '380px', height: '240px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={demoData.age} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={9} tickLine={false} />
+                    <YAxis stroke="#94a3b8" fontSize={9} tickLine={false} axisLine={false} unit="%" />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                      {demoData.age.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={index === 2 ? '#4f46e5' : '#3b82f6'} fillOpacity={0.85} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ width: '380px', height: '240px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={demoData.niches}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={65}
+                      paddingAngle={3}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}%`}
+                    >
+                      {demoData.niches.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

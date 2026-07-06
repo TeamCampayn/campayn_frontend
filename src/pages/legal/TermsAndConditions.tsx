@@ -2,36 +2,48 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LandingHeader } from '../../components/landing/LandingHeader';
+import { Footer } from '../../components/landing/Footer';
 
 const TermsAndConditions: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="theme-landing min-h-screen bg-[#f4f6f7] text-[#18181b] font-sans">
+      <LandingHeader />
+      
+      <main className="max-w-4xl mx-auto px-4 pt-28 pb-12 md:pt-36 md:pb-16">
         <Button
-          variant="ghost"
+          variant="outline"
           onClick={() => navigate(-1)}
-          className="mb-6"
+          className="mb-8 rounded-full border-zinc-200 bg-white font-sans text-sm font-semibold text-zinc-700 hover:bg-zinc-50 shadow-sm"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="h-4 w-4 mr-2 text-zinc-500" />
           Back
         </Button>
 
-        <div className="bg-white rounded-lg shadow-sm p-8">
-          <h1 className="text-3xl font-bold mb-2">Terms and Conditions</h1>
-          <p className="text-gray-600 mb-8">Last updated: {new Date().toLocaleDateString()}</p>
+        <div className="grain rounded-[2rem] bg-panel p-8 md:p-12 border border-foreground/10 shadow-sm">
+          <h1 className="font-display text-4xl md:text-5xl font-extrabold text-zinc-900 mb-2 tracking-tight">
+            Terms and Conditions
+          </h1>
+          <p className="text-zinc-500 font-sans text-sm mb-8">
+            Last updated: {new Date().toLocaleDateString()}
+          </p>
 
-          <div className="space-y-6 text-gray-700">
+          <div className="space-y-8 font-sans text-zinc-600 leading-relaxed text-sm md:text-base">
             <section>
-              <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
-              <p className="mb-4">
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                1. Introduction
+              </h2>
+              <p>
                 Welcome to Campayn ("we," "our," or "us"). These Terms and Conditions govern your use of our influencer marketing platform and services. By accessing or using Campayn, you agree to be bound by these terms.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">2. Definitions</h2>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                2. Definitions
+              </h2>
               <ul className="list-disc pl-6 space-y-2">
                 <li><strong>Platform:</strong> The Campayn website and all related services</li>
                 <li><strong>Brand:</strong> Businesses or individuals who create campaigns</li>
@@ -42,7 +54,9 @@ const TermsAndConditions: React.FC = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">3. Account Registration</h2>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                3. Account Registration
+              </h2>
               <p className="mb-4">
                 To use our services, you must:
               </p>
@@ -55,8 +69,10 @@ const TermsAndConditions: React.FC = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">4. Services</h2>
-              <h3 className="text-xl font-semibold mb-3">4.1 For Brands</h3>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                4. Services
+              </h2>
+              <h3 className="font-heading text-lg font-bold text-zinc-900 mb-2 mt-4">4.1 For Brands</h3>
               <ul className="list-disc pl-6 space-y-2 mb-4">
                 <li>Create and manage influencer marketing campaigns</li>
                 <li>Browse and connect with verified creators</li>
@@ -64,7 +80,7 @@ const TermsAndConditions: React.FC = () => {
                 <li>Track campaign performance and analytics</li>
               </ul>
 
-              <h3 className="text-xl font-semibold mb-3">4.2 For Creators</h3>
+              <h3 className="font-heading text-lg font-bold text-zinc-900 mb-2 mt-4">4.2 For Creators</h3>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Get discovered by brands for campaigns</li>
                 <li>Submit content for brand approval</li>
@@ -74,8 +90,10 @@ const TermsAndConditions: React.FC = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">5. Payment Terms</h2>
-              <h3 className="text-xl font-semibold mb-3">5.1 Brand Payments</h3>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                5. Payment Terms
+              </h2>
+              <h3 className="font-heading text-lg font-bold text-zinc-900 mb-2 mt-4">5.1 Brand Payments</h3>
               <ul className="list-disc pl-6 space-y-2 mb-4">
                 <li>Brands must pay campaign fees upfront</li>
                 <li>All payments are processed securely through Razorpay</li>
@@ -83,7 +101,7 @@ const TermsAndConditions: React.FC = () => {
                 <li>Payments must be made within the specified timeframe</li>
               </ul>
 
-              <h3 className="text-xl font-semibold mb-3">5.2 Creator Payments</h3>
+              <h3 className="font-heading text-lg font-bold text-zinc-900 mb-2 mt-4">5.2 Creator Payments</h3>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Creators receive payment upon successful campaign completion</li>
                 <li>Payment is released after content approval and posting</li>
@@ -93,7 +111,9 @@ const TermsAndConditions: React.FC = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">6. Content Guidelines</h2>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                6. Content Guidelines
+              </h2>
               <p className="mb-4">
                 All content must:
               </p>
@@ -107,7 +127,9 @@ const TermsAndConditions: React.FC = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">7. Intellectual Property</h2>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                7. Intellectual Property
+              </h2>
               <p className="mb-4">
                 <strong>7.1 Platform Content:</strong> All platform features, designs, and technology are owned by Campayn.
               </p>
@@ -120,7 +142,9 @@ const TermsAndConditions: React.FC = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">8. Prohibited Activities</h2>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                8. Prohibited Activities
+              </h2>
               <p className="mb-4">Users must not:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Use the platform for fraudulent purposes</li>
@@ -134,7 +158,9 @@ const TermsAndConditions: React.FC = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">9. Dispute Resolution</h2>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                9. Dispute Resolution
+              </h2>
               <p className="mb-4">
                 <strong>9.1 Platform Mediation:</strong> Campayn administrators will mediate disputes between brands and creators.
               </p>
@@ -147,7 +173,9 @@ const TermsAndConditions: React.FC = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">10. Limitation of Liability</h2>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                10. Limitation of Liability
+              </h2>
               <p className="mb-4">
                 Campayn is not liable for:
               </p>
@@ -161,7 +189,9 @@ const TermsAndConditions: React.FC = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">11. Service Modifications</h2>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                11. Service Modifications
+              </h2>
               <p className="mb-4">
                 We reserve the right to:
               </p>
@@ -174,7 +204,9 @@ const TermsAndConditions: React.FC = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">12. Termination</h2>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                12. Termination
+              </h2>
               <p className="mb-4">
                 <strong>12.1 By Users:</strong> You may terminate your account at any time through account settings.
               </p>
@@ -187,25 +219,31 @@ const TermsAndConditions: React.FC = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">13. Data Protection</h2>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                13. Data Protection
+              </h2>
               <p className="mb-4">
                 Your use of the platform is also governed by our Privacy Policy. We collect, use, and protect your data in accordance with applicable data protection laws.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">14. Changes to Terms</h2>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                14. Changes to Terms
+              </h2>
               <p className="mb-4">
                 We may update these Terms and Conditions periodically. Continued use of the platform after changes constitutes acceptance of the new terms. We will notify users of significant changes via email or platform notifications.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">15. Contact Information</h2>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                15. Contact Information
+              </h2>
               <p className="mb-4">
                 For questions about these Terms and Conditions, please contact us:
               </p>
-              <ul className="list-none space-y-2">
+              <ul className="list-none space-y-2 pl-0">
                 <li><strong>Email:</strong> legal@campayn.com</li>
                 <li><strong>Address:</strong> Campayn India Pvt Ltd, Delhi, India</li>
                 <li><strong>Phone:</strong> +91-9165043258</li>
@@ -213,20 +251,24 @@ const TermsAndConditions: React.FC = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">16. Governing Law</h2>
+              <h2 className="font-heading text-xl md:text-2xl font-bold text-zinc-900 mb-4 tracking-tight">
+                16. Governing Law
+              </h2>
               <p className="mb-4">
                 These Terms and Conditions are governed by the laws of India. Any disputes arising from these terms shall be subject to the exclusive jurisdiction of the courts in Bangalore, India.
               </p>
             </section>
 
-            <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-900">
+            <div className="mt-8 p-5 bg-blue/5 border border-blue/20 rounded-2xl">
+              <p className="text-sm text-zinc-800">
                 <strong>Acceptance:</strong> By using Campayn, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.
               </p>
             </div>
           </div>
         </div>
-      </div>
+      </main>
+
+      <Footer />
     </div>
   );
 };

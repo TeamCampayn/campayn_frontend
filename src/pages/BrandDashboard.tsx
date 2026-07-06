@@ -45,7 +45,12 @@ const BrandDashboard: React.FC = () => {
     social_handles: '',
   })
 
-  const [wallet, setWallet] = useState<{ balance: number; currency: string } | null>(null)
+  const [wallet, setWallet] = useState<{
+    balance: number;
+    currency: string;
+    escrow_locked?: number;
+    reserved_pending?: number;
+  } | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isWalletLoading, setIsWalletLoading] = useState(true)
   const [isDepositing, setIsDepositing] = useState(false)
@@ -596,25 +601,52 @@ const BrandDashboard: React.FC = () => {
             {/* Wallet Info Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Wallet Balance Display Card */}
-              <Card className="bg-gradient-to-br from-indigo-900 to-indigo-700 text-white shadow-xl relative overflow-hidden h-full">
+              <Card className="bg-gradient-to-br from-indigo-900 to-indigo-700 text-white shadow-xl relative overflow-hidden h-full flex flex-col justify-between">
                 <div className="absolute top-0 right-0 p-6 opacity-10">
                   <Wallet size={120} />
                 </div>
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle className="text-indigo-200 text-xs font-semibold uppercase tracking-wider">
-                    Virtual Escrow Balance
+                    Virtual Escrow Balance Breakdown
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-4 pb-8 flex flex-col justify-between h-44">
+                <CardContent className="space-y-4 pt-2 flex-grow flex flex-col justify-between">
                   <div>
                     <span className="text-4xl font-extrabold tracking-tight">
-                      ₹{wallet?.balance?.toLocaleString() || '0.00'}
+                      ₹{wallet?.balance?.toLocaleString() || '0'}
                     </span>
-                    <p className="text-xs text-indigo-200 mt-2 font-medium">
-                      This balance is securely locked in platform escrow for payout releases.
+                    <p className="text-xs text-indigo-200 mt-1 font-medium">
+                      Total cash funds currently in your virtual wallet.
                     </p>
                   </div>
-                  <div className="flex items-center gap-1 text-[11px] font-bold bg-white/10 px-3 py-1 rounded-full w-fit">
+                  
+                  <div className="border-t border-indigo-500/30 pt-3 space-y-2 text-sm">
+                    <div className="flex justify-between items-center text-indigo-100">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-amber-400" />
+                        Reserved (Awaiting Funding)
+                      </span>
+                      <span className="font-bold">₹{(wallet?.reserved_pending || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-indigo-100">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-purple-400" />
+                        Escrow Locked (Active Campaigns)
+                      </span>
+                      <span className="font-bold">₹{(wallet?.escrow_locked || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-white border-t border-indigo-500/30 pt-2 font-semibold">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-green-400" />
+                        Available cash balance
+                      </span>
+                      <span className="font-black text-base text-green-300">
+                        ₹{Math.max(0, (wallet?.balance || 0) - (wallet?.reserved_pending || 0)).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 text-[11px] font-bold bg-white/10 px-3 py-1 rounded-full w-fit mt-3">
                     <CreditCard size={12} />
                     <span>Auto-created Virtual Wallet</span>
                   </div>

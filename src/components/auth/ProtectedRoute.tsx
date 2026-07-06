@@ -1,5 +1,5 @@
 import React from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { Loader2 } from 'lucide-react'
 
@@ -8,7 +8,8 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading } = useAuth()
+  const { user, brand, loading } = useAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -23,6 +24,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />
+  }
+
+  // Redirect users with incomplete or missing onboarding to /onboarding
+  const isAdmin = user.email === 'admin@campayn.local' || 
+                  user.user_metadata?.is_admin === true ||
+                  user.app_metadata?.is_admin === true
+
+  if (!isAdmin && location.pathname !== '/onboarding') {
+    if (!brand || brand.onboarding_completed === false) {
+      return <Navigate to="/onboarding" replace />
+    }
   }
 
   return <>{children}</>

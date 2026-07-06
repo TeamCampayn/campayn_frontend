@@ -31,6 +31,8 @@ interface DashboardStats {
   activeCreators: number;
   totalSpend: number;
   totalReach: number;
+  totalEngagement?: number;
+  avgEngagementRate?: number;
 }
 
 interface RecentCampaign {
@@ -167,6 +169,27 @@ const Overview: React.FC = () => {
     return 'Good evening';
   };
 
+  const getPhaseClasses = (phase: string) => {
+    switch (phase) {
+      case 'approval_pending': 
+        return 'bg-blue-50/70 text-blue-700 border border-blue-200/60';
+      case 'creator_selection': 
+        return 'bg-indigo-50/70 text-indigo-700 border border-indigo-200/60';
+      case 'approved_pending_funds':
+      case 'payment_pending': 
+        return 'bg-amber-50/70 text-amber-700 border border-amber-200/60';
+      case 'content_approval': 
+        return 'bg-purple-50/70 text-purple-700 border border-purple-200/60';
+      case 'campaign_active': 
+        return 'bg-emerald-50/70 text-emerald-700 border border-emerald-200/60';
+      case 'completed':
+      case 'campaign_complete': 
+        return 'bg-neutral-50 text-neutral-600 border border-neutral-200';
+      default: 
+        return 'bg-neutral-50 text-neutral-600 border border-neutral-200';
+    }
+  };
+
   return (
     <div className="bg-transparent">
       <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
@@ -174,137 +197,127 @@ const Overview: React.FC = () => {
         <div>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-gray-800">
-                {greeting()}, <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{brand?.brand_name || 'there'}</span>! 👋
+              <h1 className="text-2xl lg:text-3xl font-extrabold font-space tracking-tight text-neutral-900 uppercase">
+                {greeting()}, <span className="text-neutral-900 font-extrabold">{brand?.brand_name || 'Partner'}</span>! 👋
               </h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Here's what's happening with your influencer campaigns
+              <p className="text-xs font-space text-neutral-400 uppercase tracking-wider mt-1.5">
+                Real-time analytics & active campaign lifecycle manager
               </p>
             </div>
-            <Button 
+            <button 
               onClick={() => navigate('/create-campaign')}
-              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm transition-all duration-200 rounded-xl px-5 py-2 h-auto text-sm font-medium border-0"
+              className="btn-primary-pill shadow-sm transition-all duration-300"
             >
-              <Plus className="h-4 w-4" />
-              New Campaign
-            </Button>
+              <span className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                New Campaign
+              </span>
+            </button>
           </div>
         </div>
 
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Total Campaigns */}
-          <Card className="relative overflow-hidden bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all duration-300 rounded-2xl backdrop-blur-sm">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/5 to-transparent rounded-bl-full" />
+          {/* Total Investment */}
+          <Card className="bg-white border border-neutral-200 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl overflow-hidden group">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Total Campaigns</p>
+                  <p className="text-[10px] font-bold font-space text-neutral-400 uppercase tracking-wider mb-2">Total Investment</p>
                   {loading ? (
-                    <Skeleton className="h-8 w-16" />
+                    <Skeleton className="h-8 w-24" />
                   ) : (
-                    <p className="text-2xl font-bold text-gray-800">{stats?.totalCampaigns || 0}</p>
+                    <p className="text-3xl font-extrabold font-space text-neutral-800">{formatCurrency(stats?.totalSpend || 0)}</p>
                   )}
                 </div>
-                <div className="p-2.5 bg-blue-50/80 border border-blue-100/50 rounded-xl text-blue-600 shadow-sm">
-                  <Target className="h-5 w-5" />
-                </div>
-              </div>
-              {!loading && stats && stats.totalCampaigns > 0 && (
-                <div className="mt-4 flex items-center text-xs text-gray-500">
-                  <span className="inline-flex items-center text-blue-600 font-semibold cursor-pointer hover:underline" onClick={() => navigate('/campaigns')}>
-                    <ArrowUpRight className="h-3.5 w-3.5 mr-1" />
-                    View all
-                  </span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* In Progress */}
-          <Card className="relative overflow-hidden bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all duration-300 rounded-2xl backdrop-blur-sm">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/5 to-transparent rounded-bl-full" />
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">In Progress</p>
-                  {loading ? (
-                    <Skeleton className="h-8 w-16" />
-                  ) : (
-                    <p className="text-2xl font-bold text-gray-800">
-                      {(stats?.quotingCampaigns || 0) + (stats?.draftCampaigns || 0)}
-                    </p>
-                  )}
-                </div>
-                <div className="p-2.5 bg-amber-50/80 border border-amber-100/50 rounded-xl text-amber-600 shadow-sm">
-                  <Clock className="h-5 w-5" />
+                <div className="p-2.5 bg-neutral-50 border border-neutral-200/80 rounded-xl text-neutral-800 group-hover:scale-105 transition-transform duration-300">
+                  <IndianRupee className="h-5 w-5" />
                 </div>
               </div>
               {!loading && stats && (
-                <div className="mt-4 flex items-center gap-2 text-[10px]">
-                  <span className="px-2 py-0.5 bg-gray-100/60 border border-gray-200/30 rounded-full text-gray-500 font-medium">
-                    {stats.draftCampaigns} draft
+                <div className="mt-4 flex items-center justify-between text-[10px] uppercase font-bold tracking-wider font-space">
+                  <span className="inline-flex items-center text-neutral-950 hover:underline cursor-pointer" onClick={() => navigate('/wallet')}>
+                    <ArrowUpRight className="h-3.5 w-3.5 mr-1" />
+                    Manage Wallet
                   </span>
-                  <span className="px-2 py-0.5 bg-amber-50 border border-amber-100/30 rounded-full text-amber-700 font-medium">
-                    {stats.quotingCampaigns} quoting
-                  </span>
+                  <span className="text-neutral-400 font-medium font-sans lowercase">active spend</span>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Live Campaigns */}
-          <Card className="relative overflow-hidden bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all duration-300 rounded-2xl backdrop-blur-sm">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-500/5 to-transparent rounded-bl-full" />
+          {/* Estimated Reach */}
+          <Card className="bg-white border border-neutral-200 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl overflow-hidden group">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Live Campaigns</p>
+                  <p className="text-[10px] font-bold font-space text-neutral-400 uppercase tracking-wider mb-2">Estimated Reach</p>
                   {loading ? (
-                    <Skeleton className="h-8 w-16" />
+                    <Skeleton className="h-8 w-20" />
                   ) : (
-                    <p className="text-2xl font-bold text-gray-800">{stats?.liveCampaigns || 0}</p>
+                    <p className="text-3xl font-extrabold font-space text-neutral-800">{formatNumber(stats?.totalReach || 0)}</p>
                   )}
                 </div>
-                <div className="p-2.5 bg-green-50/80 border border-green-100/50 rounded-xl text-green-600 shadow-sm">
-                  <Rocket className="h-5 w-5" />
+                <div className="p-2.5 bg-neutral-50 border border-neutral-200/80 rounded-xl text-neutral-800 group-hover:scale-105 transition-transform duration-300">
+                  <Eye className="h-5 w-5" />
                 </div>
               </div>
-              {!loading && stats && stats.liveCampaigns > 0 && (
-                <div className="mt-4">
-                  <div className="flex items-center gap-1.5">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    <span className="text-[11px] text-green-600 font-semibold uppercase tracking-wider ml-0.5">Active now</span>
-                  </div>
+              {!loading && stats && (
+                <div className="mt-4 flex items-center justify-between text-[10px] uppercase font-bold tracking-wider font-space">
+                  <span className="text-neutral-800">Total impressions</span>
+                  <span className="text-neutral-400 font-medium font-sans lowercase">est. audience</span>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Active Creators */}
-          <Card className="relative overflow-hidden bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all duration-300 rounded-2xl backdrop-blur-sm">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-500/5 to-transparent rounded-bl-full" />
+          {/* Total Engagement */}
+          <Card className="bg-white border border-neutral-200 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl overflow-hidden group">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Active Creators</p>
+                  <p className="text-[10px] font-bold font-space text-neutral-400 uppercase tracking-wider mb-2">Total Engagement</p>
+                  {loading ? (
+                    <Skeleton className="h-8 w-20" />
+                  ) : (
+                    <p className="text-3xl font-extrabold font-space text-neutral-800">{formatNumber(stats?.totalEngagement || 0)}</p>
+                  )}
+                </div>
+                <div className="p-2.5 bg-neutral-50 border border-neutral-200/80 rounded-xl text-neutral-800 group-hover:scale-105 transition-transform duration-300">
+                  <TrendingUp className="h-5 w-5" />
+                </div>
+              </div>
+              {!loading && stats && (
+                <div className="mt-4 flex items-center justify-between text-[10px] uppercase font-bold tracking-wider font-space">
+                  <span className="text-neutral-800">Likes & Comments</span>
+                  <span className="text-neutral-400 font-medium font-sans lowercase">social feedback</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Engagement Rate */}
+          <Card className="bg-white border border-neutral-200 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl overflow-hidden group">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-bold font-space text-neutral-400 uppercase tracking-wider mb-2">Engagement Rate</p>
                   {loading ? (
                     <Skeleton className="h-8 w-16" />
                   ) : (
-                    <p className="text-2xl font-bold text-gray-800">{stats?.activeCreators || 0}</p>
+                    <p className="text-3xl font-extrabold font-space text-neutral-800">
+                      {(stats?.avgEngagementRate || 0).toFixed(1)}%
+                    </p>
                   )}
                 </div>
-                <div className="p-2.5 bg-purple-50/80 border border-purple-100/50 rounded-xl text-purple-600 shadow-sm">
+                <div className="p-2.5 bg-neutral-50 border border-neutral-200/80 rounded-xl text-neutral-800 group-hover:scale-105 transition-transform duration-300">
                   <Users className="h-5 w-5" />
                 </div>
               </div>
-              {!loading && stats && stats.completedCampaigns > 0 && (
-                <div className="mt-4 flex items-center text-xs text-gray-500">
-                  <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-purple-500" />
-                  <span>{stats.completedCampaigns} completed</span>
+              {!loading && stats && (
+                <div className="mt-4 flex items-center justify-between text-[10px] uppercase font-bold tracking-wider font-space">
+                  <span className="text-neutral-850">Avg creator ER</span>
+                  <span className="text-neutral-400 font-medium font-sans lowercase">industry standard</span>
                 </div>
               )}
             </CardContent>
@@ -313,79 +326,127 @@ const Overview: React.FC = () => {
 
         {/* Secondary Stats & Recent Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Performance Overview */}
-          <Card className="lg:col-span-1 border border-indigo-100/20 shadow-[0_4px_20px_rgba(0,0,0,0.01)] bg-gradient-to-br from-white/90 to-slate-50/60 rounded-2xl backdrop-blur-sm">
-            <CardHeader className="pb-3 border-b border-gray-100">
-              <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-indigo-500" />
-                Performance Snapshot
+          {/* Performance Overview (Campaign Lifecycles) */}
+          <Card className="lg:col-span-1 border border-neutral-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl overflow-hidden">
+            <CardHeader className="pb-3 border-b border-neutral-100 p-5">
+              <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-900 flex items-center gap-2">
+                <Target className="h-4 w-4 text-neutral-800" />
+                Campaign Lifecycles
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 pt-4">
-              <div className="flex items-center justify-between py-2.5 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
-                    <IndianRupee className="h-4 w-4" />
+            <CardContent className="p-5 space-y-5">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between py-2 border-b border-neutral-100">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-neutral-50 border border-neutral-200/60 rounded-lg text-neutral-700">
+                      <Target className="h-4 w-4" />
+                    </div>
+                    <span className="text-xs font-space font-bold text-neutral-500 uppercase tracking-wider">Total Campaigns</span>
                   </div>
-                  <span className="text-xs font-medium text-gray-500">Total Investment</span>
+                  {loading ? (
+                    <Skeleton className="h-5 w-16" />
+                  ) : (
+                    <span className="font-extrabold font-space text-sm text-neutral-800">{stats?.totalCampaigns || 0}</span>
+                  )}
                 </div>
-                {loading ? (
-                  <Skeleton className="h-5 w-20" />
-                ) : (
-                  <span className="font-bold text-sm text-gray-800">{formatCurrency(stats?.totalSpend || 0)}</span>
-                )}
-              </div>
-              <div className="flex items-center justify-between py-2.5 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                    <Eye className="h-4 w-4" />
+                
+                <div className="flex items-center justify-between py-2 border-b border-neutral-100">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-neutral-50 border border-neutral-200/60 rounded-lg text-neutral-700">
+                      <Rocket className="h-4 w-4" />
+                    </div>
+                    <span className="text-xs font-space font-bold text-neutral-500 uppercase tracking-wider">Live Now</span>
                   </div>
-                  <span className="text-xs font-medium text-gray-500">Est. Reach</span>
+                  {loading ? (
+                    <Skeleton className="h-5 w-16" />
+                  ) : (
+                    <span className="font-extrabold font-space text-sm text-neutral-800">{stats?.liveCampaigns || 0}</span>
+                  )}
                 </div>
-                {loading ? (
-                  <Skeleton className="h-5 w-20" />
-                ) : (
-                  <span className="font-bold text-sm text-gray-800">{formatNumber(stats?.totalReach || 0)}</span>
-                )}
-              </div>
-              <div className="flex items-center justify-between py-2.5">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
-                    <TrendingUp className="h-4 w-4" />
+
+                <div className="flex items-center justify-between py-2 border-b border-neutral-100">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-neutral-50 border border-neutral-200/60 rounded-lg text-neutral-700">
+                      <Clock className="h-4 w-4" />
+                    </div>
+                    <span className="text-xs font-space font-bold text-neutral-500 uppercase tracking-wider">In Progress</span>
                   </div>
-                  <span className="text-xs font-medium text-gray-500">Completion Rate</span>
+                  {loading ? (
+                    <Skeleton className="h-5 w-16" />
+                  ) : (
+                    <span className="font-extrabold font-space text-sm text-neutral-800">
+                      {(stats?.quotingCampaigns || 0) + (stats?.draftCampaigns || 0)}
+                    </span>
+                  )}
                 </div>
-                {loading ? (
-                  <Skeleton className="h-5 w-16" />
-                ) : (
-                  <span className="font-bold text-sm text-gray-800">
-                    {stats && stats.totalCampaigns > 0 
-                      ? Math.round((stats.completedCampaigns / stats.totalCampaigns) * 100) 
-                      : 0}%
-                  </span>
-                )}
+
+                <div className="flex items-center justify-between py-2 border-b border-neutral-100">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-neutral-50 border border-neutral-200/60 rounded-lg text-neutral-700">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <span className="text-xs font-space font-bold text-neutral-500 uppercase tracking-wider">Active Creators</span>
+                  </div>
+                  {loading ? (
+                    <Skeleton className="h-5 w-16" />
+                  ) : (
+                    <span className="font-extrabold font-space text-sm text-neutral-800">{stats?.activeCreators || 0}</span>
+                  )}
+                </div>
+                
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-neutral-50 border border-neutral-200/60 rounded-lg text-neutral-700">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <span className="text-xs font-space font-bold text-neutral-500 uppercase tracking-wider">Completion Rate</span>
+                  </div>
+                  {loading ? (
+                    <Skeleton className="h-5 w-16" />
+                  ) : (
+                    <span className="font-extrabold font-space text-sm text-neutral-800">
+                      {stats && stats.totalCampaigns > 0 
+                        ? Math.round((stats.completedCampaigns / stats.totalCampaigns) * 100) 
+                        : 0}%
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {/* Circular/Linear visual tracker for Completion Rate */}
+              {!loading && stats && stats.totalCampaigns > 0 && (
+                <div className="space-y-2 pt-2 border-t border-neutral-100">
+                  <div className="flex justify-between text-[9px] font-bold font-space uppercase text-neutral-400 tracking-wider">
+                    <span>Campaign Success Tracker</span>
+                    <span>{stats.completedCampaigns} / {stats.totalCampaigns} Done</span>
+                  </div>
+                  <div className="w-full bg-neutral-100 rounded-full h-1.5 overflow-hidden">
+                    <div 
+                      className="h-full bg-neutral-900 rounded-full"
+                      style={{ width: `${Math.round((stats.completedCampaigns / stats.totalCampaigns) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Recent Campaigns */}
-          <Card className="lg:col-span-2 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] bg-white/80 rounded-2xl backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-gray-100">
-              <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-gray-400" />
+          <Card className="lg:col-span-2 border border-neutral-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-neutral-100 p-5">
+              <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-900 flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-neutral-400" />
                 Recent Campaigns
               </CardTitle>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <button 
                 onClick={() => navigate('/campaigns')}
-                className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50/50 p-1.5 h-auto rounded-lg"
+                className="text-[10px] font-bold font-space uppercase tracking-wider text-neutral-950 hover:text-neutral-850 hover:underline flex items-center gap-1"
               >
                 View all
-                <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
-              </Button>
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </button>
             </CardHeader>
-            <CardContent className="pt-4">
+            <CardContent className="p-5">
               {loading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map(i => (
@@ -396,19 +457,19 @@ const Overview: React.FC = () => {
                 <div className="space-y-3">
                   {recentCampaigns.map((campaign) => (
                     <div 
-                      key={campaign.id}
-                      onClick={() => navigate(`/campaigns/${campaign.id}`)}
-                      className="flex items-center justify-between p-3.5 rounded-xl border border-gray-100 bg-white/60 hover:bg-slate-50/80 cursor-pointer transition-all duration-200 group"
+                       key={campaign.id}
+                       onClick={() => navigate(`/dashboard/campaigns/${campaign.id}`)}
+                       className="flex items-center justify-between p-3.5 rounded-xl border border-neutral-150 bg-neutral-50/40 hover:bg-neutral-50 hover:border-neutral-400 cursor-pointer transition-all duration-200 group"
                     >
                       <div className="flex items-center gap-3.5">
-                        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-indigo-100/30 flex items-center justify-center text-indigo-600 font-bold text-sm">
+                        <div className="h-9 w-9 rounded-xl bg-white border border-neutral-200 flex items-center justify-center text-neutral-800 font-space font-extrabold text-xs uppercase shadow-sm group-hover:border-neutral-900 group-hover:text-neutral-900 transition-colors">
                           {campaign.campaign_name?.charAt(0)?.toUpperCase() || 'C'}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+                          <p className="text-xs font-bold font-space text-neutral-800 uppercase tracking-wide group-hover:text-neutral-900 transition-colors">
                             {campaign.campaign_name}
                           </p>
-                          <p className="text-xs text-gray-400 mt-0.5">
+                          <p className="text-[9px] font-bold font-space text-neutral-400 mt-0.5 uppercase tracking-wider">
                             {new Date(campaign.created_at).toLocaleDateString('en-IN', { 
                               month: 'short', 
                               day: 'numeric',
@@ -418,28 +479,28 @@ const Overview: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Badge className={`${getPhaseColor(campaign.phase)} border-0 text-[10px] py-0.5 px-2 rounded-full font-medium shadow-none`}>
+                        <span className={`${getPhaseClasses(campaign.phase)} font-space text-[9px] uppercase tracking-wider py-0.5 px-2.5 rounded-full font-bold`}>
                           {getPhaseLabel(campaign.phase)}
-                        </Badge>
-                        <ArrowUpRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-blue-600 transition-colors" />
+                        </span>
+                        <ArrowUpRight className="h-3.5 w-3.5 text-neutral-300 group-hover:text-neutral-900 transition-colors" />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <div className="mx-auto w-12 h-12 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mb-3">
-                    <Sparkles className="h-6 w-6 text-gray-400" />
+                  <div className="mx-auto w-12 h-12 bg-neutral-50 border border-neutral-200/80 rounded-xl flex items-center justify-center mb-3">
+                    <Sparkles className="h-6 w-6 text-neutral-400" />
                   </div>
-                  <h3 className="text-sm font-semibold text-gray-800 mb-1">No campaigns yet</h3>
-                  <p className="text-xs text-gray-400 mb-4">Create your first influencer campaign to get started</p>
-                  <Button 
+                  <h3 className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800 mb-1">No campaigns yet</h3>
+                  <p className="text-[10px] text-neutral-400 mb-4 uppercase tracking-wider">Create your first influencer campaign to get started</p>
+                  <button 
                     onClick={() => navigate('/create-campaign')}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs rounded-xl h-auto py-2 px-4 border-0"
+                    className="btn-primary-pill py-1.5 px-4"
                   >
-                    <Plus className="h-3.5 w-3.5 mr-1.5" />
+                    <Plus className="h-3.5 w-3.5 mr-1" />
                     Create Campaign
-                  </Button>
+                  </button>
                 </div>
               )}
             </CardContent>
@@ -447,29 +508,37 @@ const Overview: React.FC = () => {
         </div>
 
         {/* Quick Actions */}
-        <Card className="border border-indigo-100/20 bg-gradient-to-r from-blue-600/5 to-purple-600/5 backdrop-blur-sm rounded-2xl shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="text-center md:text-left">
-                <h3 className="text-base font-semibold text-slate-800 mb-1">Ready to scale your brand?</h3>
-                <p className="text-xs text-slate-500">Launch a new influencer campaign and reach millions of engaged audiences</p>
+        <Card className="border border-neutral-800 bg-neutral-900 text-white rounded-2xl shadow-sm overflow-hidden relative">
+          {/* Ambient Glow Graphic Overlay */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+          
+          <CardContent className="p-8 relative z-10">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="text-center md:text-left space-y-1">
+                <h3 className="text-lg font-bold font-space uppercase tracking-wider text-white">Ready to scale your brand?</h3>
+                <p className="text-xs text-neutral-400 font-sans leading-relaxed max-w-xl">
+                  Launch a new targeted influencer campaign, recruit creators dynamically, and reach millions of engaged local consumers in Indore, Bhopal, and across MP.
+                </p>
               </div>
-              <div className="flex gap-3">
-                <Button 
+              <div className="flex gap-3 shrink-0">
+                <button 
                   onClick={() => navigate('/campaigns')}
-                  variant="outline"
-                  className="border-gray-200/80 hover:bg-gray-50 text-gray-600 text-xs px-4 py-2 h-auto rounded-xl"
+                  className="bg-transparent border border-white/20 hover:border-white hover:bg-white/5 text-white rounded-full py-2.5 px-6 transition-all duration-200 uppercase tracking-wider text-xs font-extrabold font-space"
                 >
-                  <Target className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
-                  My Campaigns
-                </Button>
-                <Button 
+                  <span className="flex items-center gap-1.5">
+                    <Target className="h-4 w-4" />
+                    My Campaigns
+                  </span>
+                </button>
+                <button 
                   onClick={() => navigate('/create-campaign')}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs px-4 py-2 h-auto border-0 shadow-sm rounded-xl"
+                  className="bg-white text-black hover:bg-neutral-250 border border-transparent rounded-full py-2.5 px-6 transition-all duration-200 uppercase tracking-wider text-xs font-extrabold font-space"
                 >
-                  <Plus className="h-3.5 w-3.5 mr-1.5" />
-                  New Campaign
-                </Button>
+                  <span className="flex items-center gap-1.5">
+                    <Plus className="h-4 w-4" />
+                    New Campaign
+                  </span>
+                </button>
               </div>
             </div>
           </CardContent>

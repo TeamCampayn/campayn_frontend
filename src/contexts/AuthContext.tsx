@@ -15,6 +15,7 @@ interface Brand {
   marketing_goals?: string[]
   monthly_budget?: string
   experience_level?: string
+  onboarding_completed?: boolean
   created_at: string
   updated_at: string
 }
@@ -72,6 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(session?.user ?? null)
       
       if (session?.user) {
+        setLoading(true)
         fetchBrandData(session.user.id)
       } else {
         setBrand(null)
@@ -110,8 +112,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             niches: [],
             company_size: '1-10',
             industry: 'other',
-            description: '',
+            brand_description: '',
             experience_level: 'beginner',
+            onboarding_completed: false,
           })
           .select('*')
           .single()

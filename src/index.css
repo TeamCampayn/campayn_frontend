@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Space+Grotesk:wght@300..700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,51 +9,46 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 180 5% 96%;
+    --foreground: 210 9% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 210 9% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 210 9% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 210 9% 15%;
+    --primary-foreground: 180 5% 96%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 9% 15% / 0.05;
+    --secondary-foreground: 210 9% 15%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 9% 15% / 0.05;
+    --muted-foreground: 210 9% 50%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 71 97% 53%;
+    --accent-foreground: 210 9% 15%;
+
+    --blue: 71 97% 53%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 210 9% 15% / 0.08;
+    --input: 210 9% 15% / 0.08;
+    --ring: 210 9% 15%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 180 5% 96%;
+    --sidebar-foreground: 210 9% 15%;
+    --sidebar-primary: 210 9% 15%;
+    --sidebar-primary-foreground: 180 5% 96%;
+    --sidebar-accent: 210 9% 15% / 0.05;
+    --sidebar-accent-foreground: 210 9% 15%;
+    --sidebar-border: 210 9% 15% / 0.08;
+    --sidebar-ring: 210 9% 15%;
   }
 
   .dark {
@@ -230,3 +227,93 @@
   border-radius: 4px;
   border: none;
 }
+
+/* Minimal design system utilities */
+.bg-grid-dots {
+  background-size: 24px 24px;
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-color: #fafafa;
+}
+
+.font-space {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+}
+
+.btn-primary-pill {
+  @apply bg-black text-white hover:bg-neutral-900 rounded-full py-2 px-5 transition-all duration-200 uppercase tracking-wider text-[10px] sm:text-xs font-bold border border-transparent;
+}
+
+.btn-secondary-pill {
+  @apply bg-white text-black hover:bg-neutral-50 border border-black/10 rounded-full py-2 px-5 transition-all duration-200 uppercase tracking-wider text-[10px] sm:text-xs font-bold;
+}
+
+.theme-landing {
+  --background: 180 5% 96%;
+  --foreground: 210 9% 15%;
+  --panel: 200 15% 98%;
+  --card: 0 0% 100%;
+  --card-foreground: 210 9% 15%;
+  --ink: 204 8% 16%;
+  --ink-foreground: 210 8% 97%;
+  --muted-foreground: 210 9% 50%;
+  --accent: 192 88% 76%;
+  --accent-foreground: 204 11% 17%;
+  --blue: 210 100% 56%;
+  --border: 210 9% 15% / 0.12;
+  font-family: 'Inter', 'Inter Fallback', sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.theme-landing ::selection {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.font-display {
+  font-family: 'Archivo', 'Archivo Fallback', sans-serif !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 0.95 !important;
+}
+
+.grain {
+  background-image: radial-gradient(
+    rgba(35, 39, 42, 0.05) 1px,
+    transparent 1px
+  );
+  background-size: 4px 4px;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 26s linear infinite;
+}
+
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 6%,
+    black 94%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 6%,
+    black 94%,
+    transparent
+  );
+}
+
+
+

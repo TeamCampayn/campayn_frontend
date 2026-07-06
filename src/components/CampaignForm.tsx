@@ -40,6 +40,7 @@ interface CampaignFormData {
   donts: string;
   requiredHashtags: string;
   timelineDays: string;
+  requiresScript: boolean;
 }
 
 const CampaignForm: React.FC = () => {
@@ -91,6 +92,7 @@ const CampaignForm: React.FC = () => {
     donts: '',
     requiredHashtags: '',
     timelineDays: '14',
+    requiresScript: true,
   });
 
   // State for recommendation system
@@ -216,8 +218,21 @@ const CampaignForm: React.FC = () => {
     }
   }, [formData.targetCategory, formData.targetSubcategory]);
 
+  // Pre-fill campaign details from brand profile (onboarding scrapings)
+  React.useEffect(() => {
+    if (brand) {
+      setFormData(prev => ({
+        ...prev,
+        productName: prev.productName || brand.brand_name || '',
+        productLink: prev.productLink || brand.brand_website || '',
+        category: prev.category || brand.industry || '',
+        brief: prev.brief || brand.brand_description || '',
+      }));
+    }
+  }, [brand]);
+
   const nextStep = () => {
-    if (currentStep < 6) {
+    if (currentStep < 5) {
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -296,6 +311,19 @@ const CampaignForm: React.FC = () => {
         setIsSubmitting(false);
         return;
       }
+
+      // Show AI Matchmaking loader first
+      setShowAIProcessing(true);
+      setAIProcessingStage(0);
+
+      // Animate stages for AI loader
+      for (let stage = 1; stage <= 5; stage++) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setAIProcessingStage(stage);
+      }
+
+      // Keep it complete for 500ms
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Calculate optimal creator count based on budget and tier
       const budgetRecommendation = getRecommendedCreatorCount(
@@ -380,7 +408,7 @@ const CampaignForm: React.FC = () => {
           max_payout_per_creator: maxPayoutVal,
           slots_total: maxAffordableByCap,
           slots_filled: 0,
-          requires_script: true, // Requires script approval before starting work
+          requires_script: formData.requiresScript ?? true, // Requires script approval before starting work
           deadline: new Date(Date.now() + (parseInt(formData.timelineDays) || 14) * 24 * 60 * 60 * 1000).toISOString(),
           status: 'paused',
           created_by: user.id,
@@ -436,6 +464,7 @@ const CampaignForm: React.FC = () => {
       navigate(`/dashboard/campaigns/${campaignData.id}`);
       
     } catch (error: any) {
+      setShowAIProcessing(false);
       toast({
         title: "Submission Failed",
         description: `Error: ${error.message || 'There was a problem submitting your campaign.'}`,
@@ -443,6 +472,7 @@ const CampaignForm: React.FC = () => {
         duration: 5000,
       });
     } finally {
+      setShowAIProcessing(false);
       setIsSubmitting(false);
     }
   };
@@ -450,16 +480,14 @@ const CampaignForm: React.FC = () => {
   const isStepValid = (step: number): boolean => {
     switch (step) {
       case 1:
-        return formData.budget !== '' && formData.cpvRate !== '';
+        return formData.productName !== '' && formData.category !== '' && formData.productValue !== '';
       case 2:
-        return formData.contentType !== '';
+        return formData.contentType !== '' && formData.brief !== '' && formData.keyMessages !== '' && formData.dos !== '' && formData.donts !== '' && formData.requiredHashtags !== '';
       case 3:
         return formData.creatorType !== '' && formData.creatorTier !== '' && formData.qualityLevel !== '' && formData.targetCategory !== '';
       case 4:
-        return formData.productName !== '' && formData.category !== '' && formData.productValue !== '';
+        return formData.budget !== '';
       case 5:
-        return formData.brief !== '' && formData.keyMessages !== '' && formData.dos !== '' && formData.donts !== '' && formData.requiredHashtags !== '';
-      case 6:
         return true;
       default:
         return false;
@@ -487,466 +515,537 @@ const CampaignForm: React.FC = () => {
 
   const categories = [
     'Beauty', 'Lifestyle', 'Finance', 'Entertainment', 
-    'Parenting', 'Health', 'Travel', 'Food', 'Tech'
+    'Parenting', 'Health', 'Travel', 'Food', 'Tech', 'Fashion'
   ];
 
   const renderStep = () => {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-8">
+          <div className="space-y-8 animate-fadeIn text-left">
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-4">
-                <DollarSign className="h-6 w-6 text-blue-600" />
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-50 rounded-full mb-4">
+                <Package className="h-6 w-6 text-black" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Choose campaign budget & CPV</h2>
-              <p className="text-gray-600 text-lg">Set your investment and cost-per-view for maximum impact</p>
+              <h2 className="text-2xl font-bold font-space tracking-tight text-neutral-900 uppercase mb-2">Product Details & Narrative</h2>
+              <p className="text-xs font-space uppercase tracking-wider text-zinc-500">Define the product you want to promote and its target category</p>
+              {brand && (
+                <div className="mt-3 inline-block bg-blue-50 border border-blue-100 rounded-full px-3.5 py-1 text-[10px] font-bold uppercase tracking-wider font-space text-black">
+                  ✨ Pre-filled from your Brand Profile
+                </div>
+              )}
             </div>
 
-            <div className="text-center">
-              <div className="text-5xl font-bold text-gray-900 mb-8">
-                {formatCurrency(formData.budget)}
-              </div>
-              
-              <div className="flex flex-wrap justify-center gap-4 mb-6">
-                {budgetOptions.map((option) => (
+            <div className="space-y-6">
+              <div>
+                <Label className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-500 mb-3 block">
+                  Product Type*
+                </Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button
-                    key={option.value}
-                    onClick={() => updateFormData('budget', option.value)}
+                    type="button"
+                    onClick={() => {
+                      updateFormData('productType', 'physical');
+                      updateFormData('shippingRequired', true);
+                    }}
                     className={cn(
-                      "px-4 py-2 text-sm font-medium rounded-lg transition-colors",
-                      formData.budget === option.value
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                      "p-5 rounded-2xl border-2 text-left transition-all duration-200 font-space",
+                      formData.productType === 'physical'
+                        ? "border-black bg-blue-50/20 text-neutral-900"
+                        : "border-zinc-200 hover:border-zinc-300 text-zinc-650"
                     )}
                   >
-                    {option.label}
+                    <Package className={cn("h-6 w-6 mb-2", formData.productType === 'physical' ? "text-black" : "text-zinc-400")} />
+                    <div className="font-bold text-xs uppercase tracking-wider">Physical Product</div>
+                    <p className="text-[10px] text-zinc-550 mt-1 leading-normal">Requires physical shipping to creators (e.g. fashion, devices, cosmetics)</p>
                   </button>
-                ))}
-              </div>
 
-              <div className="max-w-md mx-auto">
-                <div className="relative">
-                  <div className="relative">
-                    <input
-                      type="range"
-                      min="5000"
-                      max="1000000"
-                      step="5000"
-                      value={formData.budget}
-                      onChange={(e) => updateFormData('budget', e.target.value)}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                    />
-                    <div 
-                      className="absolute top-0 h-2 bg-blue-600 rounded-lg pointer-events-none"
-                      style={{
-                        width: `${Math.max(0, Math.min(100, ((parseInt(formData.budget) - 5000) / (1000000 - 5000)) * 100))}%`
-                      }}
-                    ></div>
-                    {/* Tick marks for budget options */}
-                    {budgetOptions.map((option, index) => {
-                      const position = ((parseInt(option.value) - 5000) / (1000000 - 5000)) * 100;
-                      return (
-                        <div
-                          key={option.value}
-                          className="absolute top-0 w-0.5 h-2 bg-gray-400 pointer-events-none"
-                          style={{ left: `${position}%` }}
-                        />
-                      );
-                    })}
-                  </div>
-                  <div className="flex justify-between text-xs text-gray-500 mt-3">
-                    <span>₹5K</span>
-                    <span>₹10L+</span>
-                  </div>
-                  <div className="text-center mt-2">
-                    <span className="text-sm text-gray-600">
-                      Current Budget: {formatCurrency(formData.budget)}
-                    </span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateFormData('productType', 'digital');
+                      updateFormData('shippingRequired', false);
+                    }}
+                    className={cn(
+                      "p-5 rounded-2xl border-2 text-left transition-all duration-200 font-space",
+                      formData.productType === 'digital'
+                        ? "border-black bg-blue-50/20 text-neutral-900"
+                        : "border-zinc-200 hover:border-zinc-300 text-zinc-650"
+                    )}
+                  >
+                    <Sparkles className={cn("h-6 w-6 mb-2", formData.productType === 'digital' ? "text-black" : "text-zinc-400")} />
+                    <div className="font-bold text-xs uppercase tracking-wider">Software / Digital</div>
+                    <p className="text-[10px] text-zinc-550 mt-1 leading-normal">Accessed via download link, access codes, or licenses</p>
+                  </button>
                 </div>
               </div>
-            </div>
 
-            {/* CPV Rate & Reach Information */}
-            <div className="border-t pt-6 space-y-4 max-w-md mx-auto">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 shadow-sm space-y-4 text-left">
-                <div className="flex items-start space-x-3">
-                  <Sparkles className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-blue-900 text-sm">Estimated Campaign Reach</h4>
-                    <p className="text-xs text-blue-700 mt-1">
-                      Based on a standard CPV of 50 Paise, your budget of <strong>{formatCurrency(formData.budget)}</strong> yields approximately:
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center bg-white/60 rounded-lg p-3 border border-blue-100">
-                  <div>
-                    <span className="text-2xl font-black text-blue-900">
-                      {Math.round(parseInt(formData.budget) / 0.50).toLocaleString('en-IN')}
-                    </span>
-                    <span className="text-xs text-blue-700 ml-1">Est. Views</span>
-                  </div>
-                  <Badge variant="outline" className="bg-blue-50 border-blue-200 text-[10px] text-blue-800 uppercase font-bold py-0.5 px-2">
-                    Subject to Admin Review
-                  </Badge>
-                </div>
-
-                <div className="flex items-start space-x-2 text-[10px] text-gray-500 leading-normal border-t border-blue-100 pt-3">
-                  <Info className="h-3.5 w-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
-                  <p>
-                    Your campaign will be sent to the Admin queue. The Admin will assign the exact CPV rate based on your budget, target category, and niche before publication.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Hybrid Payout Settings */}
-            <div className="border-t pt-6 space-y-6 max-w-md mx-auto">
-              <div className="text-left">
-                <h3 className="text-lg font-bold text-gray-900">Creator Payout Caps & Safety Guarantees</h3>
-                <p className="text-xs text-gray-500">Protect your budget while guaranteeing fair pay for creator production costs.</p>
-              </div>
-
-              {/* Minimum Guarantee */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <div className="text-left">
-                    <Label htmlFor="minGuarantee" className="text-sm font-semibold text-gray-700">Minimum Guarantee per Creator</Label>
-                    <p className="text-[10px] text-gray-400">Fixed amount paid to creator regardless of views (covers raw creation/editing costs)</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-lg font-bold text-gray-900">₹{parseInt(formData.minGuarantee).toLocaleString()}</span>
-                  </div>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="10000"
-                  step="500"
-                  value={formData.minGuarantee}
-                  onChange={(e) => updateFormData('minGuarantee', e.target.value)}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+              <div>
+                <Label htmlFor="productName" className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-500 mb-2 block">
+                  Product Name*
+                </Label>
+                <Input
+                  id="productName"
+                  type="text"
+                  placeholder="Enter your product name"
+                  value={formData.productName}
+                  onChange={(e) => updateFormData('productName', e.target.value)}
+                  className="w-full h-11 rounded-xl border-zinc-200 focus:border-black focus:ring-black"
                 />
-                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                  <span>₹0 (No base fee)</span>
-                  <span>₹5K</span>
-                  <span>₹10K (Premium base)</span>
-                </div>
               </div>
 
-              {/* Maximum Payout Cap */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <div className="text-left">
-                    <Label htmlFor="maxPayout" className="text-sm font-semibold text-gray-700">Maximum Payout Cap per Creator*</Label>
-                    <p className="text-[10px] text-gray-400">Hard limit on what one creator can earn (limits brand risk if content goes viral)</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-lg font-bold text-blue-600">₹{parseInt(formData.maxPayout).toLocaleString()}</span>
-                  </div>
-                </div>
-                <input
-                  type="range"
-                  min="1000"
-                  max="50000"
-                  step="1000"
-                  value={formData.maxPayout}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    updateFormData('maxPayout', val);
-                    // Ensure minGuarantee <= maxPayout
-                    if (parseInt(formData.minGuarantee) > parseInt(val)) {
-                      updateFormData('minGuarantee', val);
-                    }
-                  }}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+              <div>
+                <Label htmlFor="productLink" className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-500 mb-2 block">
+                  Product Link (Optional)
+                </Label>
+                <Input
+                  id="productLink"
+                  type="url"
+                  placeholder="https://your-product-link.com"
+                  value={formData.productLink}
+                  onChange={(e) => updateFormData('productLink', e.target.value)}
+                  className="w-full h-11 rounded-xl border-zinc-200 focus:border-black focus:ring-black"
                 />
-                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                  <span>₹1K</span>
-                  <span>₹25K</span>
-                  <span>₹50K (High ceiling)</span>
+              </div>
+
+              <div>
+                <Label htmlFor="productValue" className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-500 mb-2 block">
+                  Product Value (₹)*
+                </Label>
+                <Input
+                  id="productValue"
+                  type="text"
+                  placeholder="Enter product value"
+                  value={formData.productValue}
+                  onChange={(e) => updateFormData('productValue', e.target.value)}
+                  className="w-full h-11 rounded-xl border-zinc-200 focus:border-black focus:ring-black"
+                />
+                <p className="text-[10px] text-zinc-400 mt-1 uppercase font-space tracking-wider">This is the retail value of your product</p>
+              </div>
+
+              <div>
+                <Label className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-500 mb-3 block">
+                  Product Category*
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => updateFormData('category', category)}
+                      className={cn(
+                        "px-4 py-2 rounded-full text-xs font-bold font-space uppercase tracking-wider transition-colors",
+                        formData.category === category
+                          ? "bg-black text-white border border-black"
+                          : "bg-zinc-50 text-zinc-600 border border-zinc-200 hover:bg-zinc-100"
+                      )}
+                    >
+                      {category}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Creator Limit Indicator */}
-              {formData.budget && formData.maxPayout && (
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 flex items-center justify-between shadow-sm animate-fadeIn">
-                  <div className="flex items-center space-x-3 text-left">
-                    <Users className="h-5 w-5 text-green-600 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-green-900 text-sm">Max Onboarded Creators</p>
-                      <p className="text-[10px] text-green-700">Formula: Budget ÷ Max Payout per Creator</p>
-                    </div>
+              {formData.productType === 'physical' ? (
+                <div>
+                  <Label className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-500 mb-3 block">
+                    Shipping Details
+                  </Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card
+                      className={cn(
+                        "cursor-pointer transition-all duration-200 bg-white border rounded-2xl shadow-none",
+                        formData.shippingRequired 
+                          ? "border-black bg-blue-50/10" 
+                          : "border-zinc-200 hover:border-zinc-350"
+                      )}
+                      onClick={() => updateFormData('shippingRequired', true)}
+                    >
+                      <CardContent className="p-6 text-center">
+                        <Package className={cn("h-8 w-8 mx-auto mb-3", formData.shippingRequired ? "text-black" : "text-zinc-450")} />
+                        <h3 className={cn("text-xs font-bold font-space uppercase tracking-wider mb-2", formData.shippingRequired ? "text-neutral-900" : "text-zinc-700")}>
+                          Shipping Required
+                        </h3>
+                        <p className="text-[10px] text-zinc-500 leading-normal">
+                          You will send physical products to creators for content creation.
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card
+                      className={cn(
+                        "cursor-pointer transition-all duration-200 bg-white border rounded-2xl shadow-none",
+                        !formData.shippingRequired 
+                          ? "border-black bg-blue-50/10" 
+                          : "border-zinc-200 hover:border-zinc-350"
+                      )}
+                      onClick={() => updateFormData('shippingRequired', false)}
+                    >
+                      <CardContent className="p-6 text-center">
+                        <X className={cn("h-8 w-8 mx-auto mb-3", !formData.shippingRequired ? "text-black" : "text-zinc-450")} />
+                        <h3 className={cn("text-xs font-bold font-space uppercase tracking-wider mb-2", !formData.shippingRequired ? "text-neutral-900" : "text-zinc-700")}>
+                          No Shipping
+                        </h3>
+                        <p className="text-[10px] text-zinc-500 leading-normal">
+                          Creators already own your physical product or buy it locally.
+                        </p>
+                      </CardContent>
+                    </Card>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xl font-bold text-green-900">
-                      {Math.floor(parseInt(formData.budget) / (parseInt(formData.maxPayout) || 10000)) || 1}
+                </div>
+              ) : (
+                <div className="bg-blue-50/30 border border-blue-100 rounded-2xl p-4 flex items-start space-x-3 text-left">
+                  <Info className="h-5 w-5 text-black mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold font-space uppercase tracking-wider text-blue-905">Digital Access Delivery</p>
+                    <p className="text-[10px] text-blue-800 mt-1 leading-normal">
+                      No physical shipping is required. Once you accept a creator, you can share SaaS links, credentials, or licenses on the dashboard.
                     </p>
-                    <p className="text-[10px] text-green-700">Creators Max</p>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-start space-x-3">
-                <Checkbox
-                  id="budgetFlexible"
-                  checked={formData.budgetFlexible}
-                  onCheckedChange={(checked) => updateFormData('budgetFlexible', checked as boolean)}
-                  className="mt-1"
-                />
-                <div className="text-left">
-                  <label htmlFor="budgetFlexible" className="text-sm font-medium text-gray-900 cursor-pointer">
-                    My budget is slightly flexible (this will allow you to get more creators in your campaign)
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-              <div className="flex items-start space-x-3">
-                <Zap className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div className="text-left">
-                  <p className="font-semibold text-blue-900">Pro Tip: Higher budgets attract premium creators</p>
-                  <p className="text-sm text-blue-700 mt-1">Campaign available for purchase with flexible payment options.</p>
-                </div>
-              </div>
+            <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 text-left flex items-start space-x-2.5">
+              <Check className="h-4.5 w-4.5 text-emerald-600 mt-0.5 flex-shrink-0" />
+              <p className="text-[11px] text-emerald-800 font-semibold font-space uppercase tracking-wider leading-relaxed">
+                ✓ 100% refund policy: Get a full refund if creators don't deliver or meet quality standards.
+              </p>
             </div>
           </div>
         );
 
       case 2:
         return (
-          <div className="space-y-8">
+          <div className="space-y-8 animate-fadeIn text-left">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2 flex items-center justify-center">
-                Choose content requirements per creator
-                <Info className="ml-2 h-5 w-5 text-gray-400" />
-              </h2>
-              <p className="text-gray-600 text-lg">Our pricing is dynamic and is always based on the topics selected.</p>
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-50 rounded-full mb-4">
+                <FileText className="h-6 w-6 text-black" />
+              </div>
+              <h2 className="text-2xl font-bold font-space tracking-tight text-neutral-900 uppercase mb-2">Content Requirements & Guidelines</h2>
+              <p className="text-xs font-space uppercase tracking-wider text-zinc-500">Select content format and write clear instructions for creators</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* 30 seconds Reel Card */}
-              <Card
-                className={cn(
-                  "cursor-pointer transition-all duration-200 hover:shadow-lg",
-                  formData.contentType === '30 seconds Reel' 
-                    ? "border-blue-500 bg-blue-50 shadow-lg" 
-                    : "border-gray-200 hover:border-blue-300"
-                )}
-                onClick={() => updateFormData('contentType', '30 seconds Reel')}
-              >
-                <CardContent className="p-6 relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <Play className={cn("h-8 w-8", formData.contentType === '30 seconds Reel' ? "text-blue-600" : "text-gray-400")} />
-                    {formData.contentType === '30 seconds Reel' && (
-                      <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium">Hot</span>
-                    )}
-                  </div>
-                  <h3 className={cn("text-xl font-semibold mb-2", formData.contentType === '30 seconds Reel' ? "text-blue-900" : "text-gray-900")}>
-                    30 seconds Reel
-                  </h3>
-                  <p className="text-sm text-gray-500">Add video log</p>
-                </CardContent>
-              </Card>
+            {/* Content Formats */}
+            <div className="space-y-4">
+              <Label className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-500 mb-2 block">
+                Choose Content Format per Creator*
+              </Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left font-space">
+                {/* 30 seconds Reel Card */}
+                <Card
+                  className={cn(
+                    "cursor-pointer transition-all duration-200 bg-white border rounded-2xl shadow-none",
+                    formData.contentType === '30 seconds Reel' 
+                      ? "border-black bg-blue-50/10" 
+                      : "border-zinc-200 hover:border-zinc-300"
+                  )}
+                  onClick={() => updateFormData('contentType', '30 seconds Reel')}
+                >
+                  <CardContent className="p-5 relative">
+                    <div className="flex items-center justify-between mb-4">
+                      <Play className={cn("h-8 w-8", formData.contentType === '30 seconds Reel' ? "text-black" : "text-zinc-400")} />
+                      {formData.contentType === '30 seconds Reel' && (
+                        <span className="bg-orange-500 text-white text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold">Hot</span>
+                      )}
+                    </div>
+                    <h3 className={cn("text-xs font-bold uppercase tracking-wider mb-2", formData.contentType === '30 seconds Reel' ? "text-neutral-900" : "text-zinc-700")}>
+                      30 seconds Reel
+                    </h3>
+                    <p className="text-[10px] text-zinc-500">Add video log</p>
+                  </CardContent>
+                </Card>
 
-              {/* Video Story Card */}
-              <Card
-                className={cn(
-                  "cursor-pointer transition-all duration-200 hover:shadow-lg",
-                  formData.contentType === 'Video Story' 
-                    ? "border-blue-500 bg-blue-50 shadow-lg" 
-                    : "border-gray-200 hover:border-blue-300"
-                )}
-                onClick={() => updateFormData('contentType', 'Video Story')}
-              >
-                <CardContent className="p-6">
-                  <Play className={cn("h-8 w-8 mb-4", formData.contentType === 'Video Story' ? "text-blue-600" : "text-gray-400")} />
-                  <h3 className={cn("text-xl font-semibold mb-2", formData.contentType === 'Video Story' ? "text-blue-900" : "text-gray-900")}>
-                    Video Story
-                  </h3>
-                  <p className="text-sm text-gray-500">Short, engaging video</p>
-                </CardContent>
-              </Card>
+                {/* Video Story Card */}
+                <Card
+                  className={cn(
+                    "cursor-pointer transition-all duration-200 bg-white border rounded-2xl shadow-none",
+                    formData.contentType === 'Video Story' 
+                      ? "border-black bg-blue-50/10" 
+                      : "border-zinc-200 hover:border-zinc-300"
+                  )}
+                  onClick={() => updateFormData('contentType', 'Video Story')}
+                >
+                  <CardContent className="p-5">
+                    <Play className={cn("h-8 w-8 mb-4", formData.contentType === 'Video Story' ? "text-black" : "text-zinc-400")} />
+                    <h3 className={cn("text-xs font-bold uppercase tracking-wider mb-2", formData.contentType === 'Video Story' ? "text-neutral-900" : "text-zinc-700")}>
+                      Video Story
+                    </h3>
+                    <p className="text-[10px] text-zinc-500">Short, engaging video</p>
+                  </CardContent>
+                </Card>
 
-              {/* Static Post Card */}
-              <Card
-                className={cn(
-                  "cursor-pointer transition-all duration-200 hover:shadow-lg",
-                  formData.contentType === 'Static Post' 
-                    ? "border-blue-500 bg-blue-50 shadow-lg" 
-                    : "border-gray-200 hover:border-blue-300"
-                )}
-                onClick={() => updateFormData('contentType', 'Static Post')}
-              >
-                <CardContent className="p-6">
-                  <Image className={cn("h-8 w-8 mb-4", formData.contentType === 'Static Post' ? "text-blue-600" : "text-gray-400")} />
-                  <h3 className={cn("text-xl font-semibold mb-2", formData.contentType === 'Static Post' ? "text-blue-900" : "text-gray-900")}>
-                    Static Post
-                  </h3>
-                  <p className="text-sm text-gray-500">Image or carousel post</p>
-                </CardContent>
-              </Card>
+                {/* Static Post Card */}
+                <Card
+                  className={cn(
+                    "cursor-pointer transition-all duration-200 bg-white border rounded-2xl shadow-none",
+                    formData.contentType === 'Static Post' 
+                      ? "border-black bg-blue-50/10" 
+                      : "border-zinc-200 hover:border-zinc-300"
+                  )}
+                  onClick={() => updateFormData('contentType', 'Static Post')}
+                >
+                  <CardContent className="p-5">
+                    <Image className={cn("h-8 w-8 mb-4", formData.contentType === 'Static Post' ? "text-black" : "text-zinc-400")} />
+                    <h3 className={cn("text-xs font-bold uppercase tracking-wider mb-2", formData.contentType === 'Static Post' ? "text-neutral-900" : "text-zinc-700")}>
+                      Static Post
+                    </h3>
+                    <p className="text-[10px] text-zinc-500">Image or carousel post</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Creator Guidelines */}
+            <div className="space-y-6 text-left border-t border-zinc-105 pt-6">
+              <div>
+                <Label htmlFor="brief" className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-505 mb-2 block">
+                  Campaign / Brand Brief*
+                </Label>
+                <textarea
+                  id="brief"
+                  rows={4}
+                  placeholder="Explain what your brand stands for, what this campaign is about, and the main story you want creators to tell..."
+                  value={formData.brief}
+                  onChange={(e) => updateFormData('brief', e.target.value)}
+                  className="w-full rounded-xl border border-zinc-200 p-3 shadow-none focus:border-black focus:ring-black text-xs font-sans"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="keyMessages" className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-505 mb-2 block">
+                  Key Messages (One message per line)*
+                </Label>
+                <textarea
+                  id="keyMessages"
+                  rows={3}
+                  placeholder="e.g. 100% natural and vegan ingredients&#10;Use my promo code CAMPA15 for 15% discount&#10;Delivered in just 15 minutes in Indore"
+                  value={formData.keyMessages}
+                  onChange={(e) => updateFormData('keyMessages', e.target.value)}
+                  className="w-full rounded-xl border border-zinc-200 p-3 shadow-none focus:border-black focus:ring-black text-xs font-sans"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="dos" className="text-[10px] font-bold font-space uppercase tracking-wider text-emerald-700 mb-2 block font-semibold">
+                    Do's (What to do)*
+                  </Label>
+                  <textarea
+                    id="dos"
+                    rows={4}
+                    placeholder="e.g. Show product texture clearly&#10;Show the onboarding process&#10;Keep background minimal and clean"
+                    value={formData.dos}
+                    onChange={(e) => updateFormData('dos', e.target.value)}
+                    className="w-full rounded-xl border border-zinc-200 p-3 shadow-none focus:border-black focus:ring-black text-xs font-sans"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="donts" className="text-[10px] font-bold font-space uppercase tracking-wider text-red-750 mb-2 block font-semibold">
+                    Don'ts (What to avoid)*
+                  </Label>
+                  <textarea
+                    id="donts"
+                    rows={4}
+                    placeholder="e.g. Don't show competitor logos&#10;Don't use low light/blurry video&#10;Don't forget the call-to-action link"
+                    value={formData.donts}
+                    onChange={(e) => updateFormData('donts', e.target.value)}
+                    className="w-full rounded-xl border border-zinc-200 p-3 shadow-none focus:border-black focus:ring-black text-xs font-sans"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="requiredHashtags" className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-505 mb-2 block">
+                  Required Hashtags (Comma separated)*
+                </Label>
+                <Input
+                  id="requiredHashtags"
+                  type="text"
+                  placeholder="#YourBrand, #Ad, #HealthyLifestyle"
+                  value={formData.requiredHashtags}
+                  onChange={(e) => updateFormData('requiredHashtags', e.target.value)}
+                  className="w-full h-11 rounded-xl border-zinc-200 focus:border-black focus:ring-black"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="timelineDays" className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-505 mb-2 block">
+                  Creator Timeline (Days allowed to post after approval)*
+                </Label>
+                <Select
+                  value={formData.timelineDays}
+                  onValueChange={(value) => updateFormData('timelineDays', value)}
+                >
+                  <SelectTrigger className="w-full h-11 rounded-xl border-zinc-200 focus:border-black focus:ring-black">
+                    <SelectValue placeholder="Select delivery timeline" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="7">7 Days (Fast turnaround)</SelectItem>
+                    <SelectItem value="14">14 Days (Standard)</SelectItem>
+                    <SelectItem value="21">21 Days (Detailed product test)</SelectItem>
+                    <SelectItem value="30">30 Days (Flexible)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center space-x-3 pt-2">
+                <Checkbox
+                  id="requiresScript"
+                  checked={formData.requiresScript ?? true}
+                  onCheckedChange={(checked) => updateFormData('requiresScript', !!checked)}
+                  className="border-zinc-300 text-black focus:ring-black w-4.5 h-4.5 rounded"
+                />
+                <div className="grid gap-1 leading-tight">
+                  <Label
+                    htmlFor="requiresScript"
+                    className="text-xs font-bold font-space uppercase tracking-wider text-zinc-700 cursor-pointer"
+                  >
+                    Require Script Approval
+                  </Label>
+                  <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-space">
+                    If checked, creators must submit a script and receive your approval before filming.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         );
 
       case 3:
         return (
-          <div className="space-y-8">
+          <div className="space-y-8 animate-fadeIn text-left">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Select creator types</h2>
-              <p className="text-gray-600 text-lg">Choose the type of creators you want to work with for your campaign.</p>
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-50 rounded-full mb-4">
+                <Users className="h-6 w-6 text-black" />
+              </div>
+              <h2 className="text-2xl font-bold font-space tracking-tight text-neutral-900 uppercase mb-2">Select Target Creator Tiers</h2>
+              <p className="text-xs font-space uppercase tracking-wider text-zinc-505">Choose the tier and category of creators for your campaign.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left font-space">
               {/* Nano creators */}
               <Card
                 className={cn(
-                  "cursor-pointer transition-all duration-200 hover:shadow-lg",
+                  "cursor-pointer transition-all duration-200 bg-white border rounded-2xl shadow-none",
                   formData.creatorType === 'Nano creators' 
-                    ? "border-blue-500 bg-blue-50 shadow-lg" 
-                    : "border-gray-200 hover:border-blue-300"
+                    ? "border-black bg-blue-50/10" 
+                    : "border-zinc-200 hover:border-zinc-300"
                 )}
                 onClick={() => {
                   updateFormData('creatorType', 'Nano creators');
                   updateFormData('creatorTier', 'micro');
                 }}
               >
-                <CardContent className="p-6 text-center">
-                  <div className="flex justify-center mb-4">
-                    <Users className={cn("h-8 w-8", formData.creatorType === 'Nano creators' ? "text-blue-600" : "text-gray-400")} />
+                <CardContent className="p-5 text-center">
+                  <div className="flex justify-center mb-3">
+                    <Users className={cn("h-8 w-8", formData.creatorType === 'Nano creators' ? "text-black" : "text-zinc-400")} />
                   </div>
-                  <h3 className={cn("text-xl font-semibold mb-2", formData.creatorType === 'Nano creators' ? "text-blue-900" : "text-gray-900")}>
+                  <h3 className={cn("text-xs font-bold uppercase tracking-wider mb-1", formData.creatorType === 'Nano creators' ? "text-neutral-900" : "text-zinc-700")}>
                     Nano creators
                   </h3>
-                  <p className="text-sm text-gray-500 mb-2">1K - 10K followers</p>
-                  <p className="text-sm text-gray-600">High engagement, authentic content</p>
+                  <p className="text-[10px] text-zinc-450 uppercase mb-2">1K - 10K followers</p>
+                  <p className="text-[10px] text-zinc-500 leading-normal">High engagement, authentic content</p>
                 </CardContent>
               </Card>
 
               {/* Micro creators */}
               <Card
                 className={cn(
-                  "cursor-pointer transition-all duration-200 hover:shadow-lg",
+                  "cursor-pointer transition-all duration-200 bg-white border rounded-2xl shadow-none",
                   formData.creatorType === 'Micro creators' 
-                    ? "border-blue-500 bg-blue-50 shadow-lg" 
-                    : "border-gray-200 hover:border-blue-300"
+                    ? "border-black bg-blue-50/10" 
+                    : "border-zinc-200 hover:border-zinc-300"
                 )}
                 onClick={() => {
                   updateFormData('creatorType', 'Micro creators');
                   updateFormData('creatorTier', 'macro');
                 }}
               >
-                <CardContent className="p-6 text-center">
-                  <div className="flex justify-center mb-4">
-                    <div className={cn("h-8 w-8 rounded flex items-center justify-center", formData.creatorType === 'Micro creators' ? "bg-blue-600" : "bg-gray-400")}>
-                      <div className="w-4 h-4 bg-white rounded-sm"></div>
+                <CardContent className="p-5 text-center">
+                  <div className="flex justify-center mb-3">
+                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", formData.creatorType === 'Micro creators' ? "bg-black" : "bg-zinc-250")}>
+                      <span className="text-white text-xs font-bold leading-none">+</span>
                     </div>
                   </div>
-                  <h3 className={cn("text-xl font-semibold mb-2", formData.creatorType === 'Micro creators' ? "text-blue-900" : "text-gray-900")}>
+                  <h3 className={cn("text-xs font-bold uppercase tracking-wider mb-1", formData.creatorType === 'Micro creators' ? "text-neutral-900" : "text-zinc-700")}>
                     Micro creators
                   </h3>
-                  <p className="text-sm text-gray-500 mb-2">10K - 100K followers</p>
-                  <p className="text-sm text-gray-600">Balanced reach and engagement</p>
+                  <p className="text-[10px] text-zinc-455 uppercase mb-2">10K - 100K followers</p>
+                  <p className="text-[10px] text-zinc-500 leading-normal">Balanced reach and engagement</p>
                 </CardContent>
               </Card>
 
               {/* Macro creators */}
               <Card
                 className={cn(
-                  "cursor-pointer transition-all duration-200 hover:shadow-lg",
+                  "cursor-pointer transition-all duration-200 bg-white border rounded-2xl shadow-none",
                   formData.creatorType === 'Macro creators' 
-                    ? "border-blue-500 bg-blue-50 shadow-lg" 
-                    : "border-gray-200 hover:border-blue-300"
+                    ? "border-black bg-blue-50/10" 
+                    : "border-zinc-200 hover:border-zinc-300"
                 )}
                 onClick={() => {
                   updateFormData('creatorType', 'Macro creators');
                   updateFormData('creatorTier', 'mega');
                 }}
               >
-                <CardContent className="p-6 text-center">
-                  <div className="flex justify-center mb-4">
-                    <Star className={cn("h-8 w-8", formData.creatorType === 'Macro creators' ? "text-blue-600" : "text-gray-400")} />
+                <CardContent className="p-5 text-center">
+                  <div className="flex justify-center mb-3">
+                    <Star className={cn("h-8 w-8", formData.creatorType === 'Macro creators' ? "text-black" : "text-zinc-400")} />
                   </div>
-                  <h3 className={cn("text-xl font-semibold mb-2", formData.creatorType === 'Macro creators' ? "text-blue-900" : "text-gray-900")}>
+                  <h3 className={cn("text-xs font-bold uppercase tracking-wider mb-1", formData.creatorType === 'Macro creators' ? "text-neutral-900" : "text-zinc-700")}>
                     Macro creators
                   </h3>
-                  <p className="text-sm text-gray-500 mb-2">100K+ followers</p>
-                  <p className="text-sm text-gray-600">Maximum reach and visibility</p>
+                  <p className="text-[10px] text-zinc-455 uppercase mb-2">100K+ followers</p>
+                  <p className="text-[10px] text-zinc-500 leading-normal">Maximum reach and visibility</p>
                 </CardContent>
               </Card>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-gray-900">Creator Quality</h3>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => updateFormData('qualityLevel', 'Standard Quality')}
-                  className={cn(
-                    "px-6 py-3 rounded-lg border-2 transition-colors",
-                    formData.qualityLevel === 'Standard Quality'
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-300 text-gray-600 hover:border-blue-300"
-                  )}
-                >
-                  <div className="text-left">
-                    <div className="font-semibold">Standard Quality</div>
-                    <div className="text-sm">Budget friendly</div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => updateFormData('qualityLevel', 'Premium Quality')}
-                  className={cn(
-                    "px-6 py-3 rounded-lg border-2 transition-colors",
-                    formData.qualityLevel === 'Premium Quality'
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-300 text-gray-600 hover:border-blue-300"
-                  )}
-                >
-                  <div className="text-left">
-                    <div className="font-semibold">Premium Quality</div>
-                    <div className="text-sm">Higher engagement</div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => updateFormData('qualityLevel', 'Elite Quality')}
-                  className={cn(
-                    "px-6 py-3 rounded-lg border-2 transition-colors",
-                    formData.qualityLevel === 'Elite Quality'
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-300 text-gray-600 hover:border-blue-300"
-                  )}
-                >
-                  <div className="text-left">
-                    <div className="font-semibold">Elite Quality</div>
-                    <div className="text-sm">Top tier creators</div>
-                  </div>
-                </button>
+            <div className="space-y-4 text-left border-t border-zinc-100 pt-6">
+              <h3 className="text-xs font-bold font-space uppercase tracking-wider text-zinc-505">Creator Quality</h3>
+              <div className="flex flex-wrap gap-3 font-space">
+                {['Standard Quality', 'Premium Quality', 'Elite Quality'].map((quality) => (
+                  <button
+                    key={quality}
+                    onClick={() => updateFormData('qualityLevel', quality)}
+                    className={cn(
+                      "px-5 py-3.5 rounded-2xl border-2 transition-all duration-200 text-left min-w-[140px] flex-1",
+                      formData.qualityLevel === quality
+                        ? "border-black bg-blue-50/10 text-neutral-900 font-bold"
+                        : "border-zinc-200 text-zinc-650 hover:border-zinc-300"
+                    )}
+                  >
+                    <div>
+                      <div className="text-xs font-bold uppercase tracking-wider">{quality.split(' ')[0]}</div>
+                      <div className="text-[9px] uppercase tracking-wider text-zinc-455 mt-1">
+                        {quality === 'Standard Quality' && "Budget friendly"}
+                        {quality === 'Premium Quality' && "Higher reach"}
+                        {quality === 'Elite Quality' && "Top tier ROI"}
+                      </div>
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* Automated Creator Matching Section */}
-            <div className="space-y-6 mt-8 pt-8 border-t">
+            <div className="space-y-6 mt-8 pt-8 border-t border-zinc-100 text-left">
               <div className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full mb-4">
-                  <Sparkles className="h-6 w-6 text-purple-600" />
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-50 rounded-full mb-4">
+                  <Sparkles className="h-6 w-6 text-black" />
                 </div>
-                <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+                <h3 className="text-2xl font-bold font-space tracking-tight text-neutral-900 uppercase mb-2">
                   Automated Creator Matching
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-xs font-space uppercase tracking-wider text-zinc-505">
                   Select creator category to receive AI-powered recommendations
                 </p>
               </div>
 
               {/* Target Category Selection */}
               <div>
-                <Label htmlFor="targetCategory" className="block text-sm font-medium text-gray-700 mb-2">
+                <Label htmlFor="targetCategory" className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-505 mb-2 block">
                   Target Creator Category*
                 </Label>
                 <Select
@@ -957,10 +1056,10 @@ const CampaignForm: React.FC = () => {
                     fetchSubcategories(value);
                   }}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full h-11 rounded-xl border-zinc-200 focus:border-black focus:ring-black">
                     <SelectValue placeholder="Select creator category" />
                   </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
+                  <SelectContent className="max-h-[300px] rounded-xl">
                     {loadingCategories ? (
                       <SelectItem value="loading" disabled>
                         Loading categories...
@@ -980,7 +1079,7 @@ const CampaignForm: React.FC = () => {
                     )}
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-[10px] text-zinc-400 mt-1 uppercase font-space tracking-wider">
                   We'll match you with creators in this category
                 </p>
               </div>
@@ -988,17 +1087,17 @@ const CampaignForm: React.FC = () => {
               {/* Subcategory Selection */}
               {formData.targetCategory && (
                 <div className="animate-fadeIn">
-                  <Label htmlFor="targetSubcategory" className="block text-sm font-medium text-gray-700 mb-2">
+                  <Label htmlFor="targetSubcategory" className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-505 mb-2 block">
                     Target Subcategory (Optional)
                   </Label>
                   <Select
                     value={formData.targetSubcategory || '__any__'}
                     onValueChange={(value) => updateFormData('targetSubcategory', value === '__any__' ? '' : value)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full h-11 rounded-xl border-zinc-200 focus:border-black focus:ring-black">
                       <SelectValue placeholder="Select subcategory (optional)" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
+                    <SelectContent className="max-h-[300px] rounded-xl">
                       <SelectItem value="__any__">Any Subcategory</SelectItem>
                       {creatorSubcategories
                         .filter((subcat) => subcat.name && subcat.name.trim() !== '')
@@ -1009,7 +1108,7 @@ const CampaignForm: React.FC = () => {
                         ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-[10px] text-zinc-400 mt-1 uppercase font-space tracking-wider">
                     Narrow down to specific creator niches for better targeting
                   </p>
                 </div>
@@ -1017,171 +1116,31 @@ const CampaignForm: React.FC = () => {
 
               {/* Creator Stats Display */}
               {formData.targetCategory && creatorStats && (
-                <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
-                  <div className="flex items-start space-x-3">
-                    <Info className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                    <div className="space-y-2">
-                      <p className="font-semibold text-purple-900">
+                <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-5 font-space">
+                  <div className="flex items-start space-x-3.5">
+                    <Info className="h-5 w-5 text-black mt-0.5 flex-shrink-0" />
+                    <div className="space-y-3 w-full">
+                      <p className="text-xs font-bold uppercase tracking-wider text-neutral-900">
                         Available Creators in {formData.targetCategory}
                       </p>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-3 gap-4 text-[10px] uppercase font-bold tracking-wider text-zinc-500 pt-1">
                         <div>
-                          <p className="text-gray-600">Nano (1K-10K)</p>
-                          <p className="font-bold text-purple-900">{creatorStats.by_tier?.micro || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Micro (10K-100K)</p>
-                          <p className="font-bold text-purple-900">{creatorStats.by_tier?.macro || 0}</p>
+                          <p className="text-zinc-400">Nano (1K-10K)</p>
+                          <p className="text-sm font-bold text-neutral-950 mt-0.5">{creatorStats.by_tier?.micro || 0}</p>
                         </div>
                         <div>
-                          <p className="text-gray-600">Mega (100K-2M)</p>
-                          <p className="font-bold text-purple-900">{creatorStats.by_tier?.mega || 0}</p>
+                          <p className="text-zinc-400">Micro (10K-100K)</p>
+                          <p className="text-sm font-bold text-neutral-950 mt-0.5">{creatorStats.by_tier?.macro || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-zinc-400">Mega (100K-2M)</p>
+                          <p className="text-sm font-bold text-neutral-950 mt-0.5">{creatorStats.by_tier?.mega || 0}</p>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-600">
-                        Avg. Engagement: {creatorStats.avg_engagement?.toFixed(2)}% | 
-                        Avg. Followers: {formatNumber(creatorStats.avg_followers)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Budget-Based Pricing Display */}
-              {formData.budget && formData.creatorTier && (
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-6 shadow-md">
-                  <div className="flex items-start space-x-3">
-                    <DollarSign className="h-6 w-6 text-green-600 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 space-y-4">
-                      <div>
-                        <p className="text-lg font-bold text-green-900 mb-1">
-                          Budget Analysis
-                        </p>
-                        <p className="text-sm text-gray-700">
-                          Based on your ₹{parseInt(formData.budget).toLocaleString('en-IN')} budget and selected creator tier
-                        </p>
+                      <div className="border-t border-zinc-200 pt-2.5 flex justify-between items-center text-[9px] uppercase tracking-wider font-bold text-zinc-450">
+                        <span>Avg. Engagement: {creatorStats.avg_engagement?.toFixed(2)}%</span>
+                        <span>Avg. Followers: {formatNumber(creatorStats.avg_followers)}</span>
                       </div>
-
-                      {/* Pricing Cards */}
-                      <div className="grid grid-cols-3 gap-3">
-                        {/* Nano/Micro Creators */}
-                        <div className={cn(
-                          "p-4 rounded-lg border-2 transition-all",
-                          formData.creatorTier === 'micro' 
-                            ? "bg-blue-100 border-blue-500 shadow-md" 
-                            : "bg-white border-gray-200"
-                        )}>
-                          <div className="text-xs font-medium text-gray-600 mb-1">Nano Creators</div>
-                          <div className="text-lg font-bold text-gray-900">
-                            {formatINR(CREATOR_PRICING.micro.pricePerCreator)}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {CREATOR_PRICING.micro.followerRange}
-                          </div>
-                          {formData.creatorTier === 'micro' && (
-                            <div className="mt-2 text-xs font-semibold text-blue-700">
-                              ✓ You can afford {calculateAffordableCreators(parseInt(formData.budget), 'micro')} creators
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Macro Creators */}
-                        <div className={cn(
-                          "p-4 rounded-lg border-2 transition-all",
-                          formData.creatorTier === 'macro' 
-                            ? "bg-blue-100 border-blue-500 shadow-md" 
-                            : "bg-white border-gray-200"
-                        )}>
-                          <div className="text-xs font-medium text-gray-600 mb-1">Macro Creators</div>
-                          <div className="text-lg font-bold text-gray-900">
-                            {formatINR(CREATOR_PRICING.macro.pricePerCreator)}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {CREATOR_PRICING.macro.followerRange}
-                          </div>
-                          {formData.creatorTier === 'macro' && (
-                            <div className="mt-2 text-xs font-semibold text-blue-700">
-                              ✓ You can afford {calculateAffordableCreators(parseInt(formData.budget), 'macro')} creators
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Mega Creators */}
-                        <div className={cn(
-                          "p-4 rounded-lg border-2 transition-all",
-                          formData.creatorTier === 'mega' 
-                            ? "bg-blue-100 border-blue-500 shadow-md" 
-                            : "bg-white border-gray-200"
-                        )}>
-                          <div className="text-xs font-medium text-gray-600 mb-1">Mega Creators</div>
-                          <div className="text-lg font-bold text-gray-900">
-                            {formatINR(CREATOR_PRICING.mega.pricePerCreator)}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {CREATOR_PRICING.mega.followerRange}
-                          </div>
-                          {formData.creatorTier === 'mega' && (
-                            <div className="mt-2 text-xs font-semibold text-blue-700">
-                              ✓ You can afford {calculateAffordableCreators(parseInt(formData.budget), 'mega')} creators
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Recommendation Summary */}
-                      {(() => {
-                        const recommendation = getRecommendedCreatorCount(
-                          parseInt(formData.budget), 
-                          formData.creatorTier as CreatorTier
-                        );
-                        return (
-                          <div className="bg-white rounded-lg p-4 border border-green-200">
-                            <div className="flex items-center justify-between mb-3">
-                              <div>
-                                <p className="font-semibold text-gray-900 text-base">
-                                  Recommended Creator Count
-                                </p>
-                                <p className="text-xs text-gray-600 mt-0.5">
-                                  Optimized for {recommendation.pricing.followerRange} followers
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-3xl font-bold text-green-600">
-                                  {recommendation.optimal}
-                                </div>
-                                <div className="text-xs text-gray-500">creators</div>
-                              </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-3 text-sm">
-                              <div className="bg-gray-50 rounded p-2">
-                                <p className="text-xs text-gray-600">Cost per creator</p>
-                                <p className="font-bold text-gray-900">
-                                  {formatINR(recommendation.pricing.pricePerCreator)}
-                                </p>
-                              </div>
-                              <div className="bg-gray-50 rounded p-2">
-                                <p className="text-xs text-gray-600">Maximum affordable</p>
-                                <p className="font-bold text-gray-900">
-                                  {recommendation.max} creators
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="mt-3 pt-3 border-t border-gray-200">
-                              <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-600">Estimated Total Cost:</span>
-                                <span className="font-bold text-gray-900 text-lg">
-                                  {formatINR(recommendation.optimal * recommendation.pricing.pricePerCreator)}
-                                </span>
-                              </div>
-                              <p className="text-xs text-gray-500 mt-1">
-                                Using {((recommendation.optimal * recommendation.pricing.pricePerCreator / parseInt(formData.budget)) * 100).toFixed(0)}% of your budget
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })()}
                     </div>
                   </div>
                 </div>
@@ -1192,357 +1151,401 @@ const CampaignForm: React.FC = () => {
 
       case 4:
         return (
-          <div className="space-y-8">
+          <div className="space-y-8 animate-fadeIn text-left">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Product Details</h2>
-              <p className="text-gray-600 text-lg">Tell us about the product you want to promote</p>
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-50 rounded-full mb-4">
+                <DollarSign className="h-6 w-6 text-black" />
+              </div>
+              <h2 className="text-2xl font-bold font-space tracking-tight text-neutral-900 uppercase mb-2">Campaign Budget & Commercials</h2>
+              <p className="text-xs font-space uppercase tracking-wider text-zinc-500">Set your total investment, pay caps, and view targets</p>
             </div>
 
-            <div className="space-y-6 text-left">
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-3">
-                  Product Type*
-                </Label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateFormData('productType', 'physical');
-                      updateFormData('shippingRequired', true);
-                    }}
-                    className={cn(
-                      "p-4 rounded-xl border-2 text-left transition-all duration-200",
-                      formData.productType === 'physical'
-                        ? "border-blue-500 bg-blue-50/50 shadow-md text-blue-900"
-                        : "border-gray-200 hover:border-blue-300 text-gray-700"
-                    )}
-                  >
-                    <Package className="h-6 w-6 mb-2 text-blue-600" />
-                    <div className="font-semibold text-sm">Physical Product</div>
-                    <p className="text-[10px] text-gray-500 mt-1">Requires physical shipping to creators (e.g. fashion, devices, cosmetics)</p>
-                  </button>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 font-space">
+              {/* Left Column: Budget Selection & Payout Caps */}
+              <div className="space-y-6">
+                <div className="bg-white border border-zinc-200 rounded-2xl p-6 space-y-6">
+                  <div>
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-4 block">
+                      Campaign Total Budget*
+                    </Label>
+                    <div className="text-4xl font-bold text-neutral-900 tracking-tight mb-6">
+                      {formatCurrency(formData.budget)}
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateFormData('productType', 'digital');
-                      updateFormData('shippingRequired', false);
-                    }}
-                    className={cn(
-                      "p-4 rounded-xl border-2 text-left transition-all duration-200",
-                      formData.productType === 'digital'
-                        ? "border-blue-500 bg-blue-50/50 shadow-md text-blue-900"
-                        : "border-gray-200 hover:border-blue-300 text-gray-700"
-                    )}
-                  >
-                    <Sparkles className="h-6 w-6 mb-2 text-purple-600" />
-                    <div className="font-semibold text-sm">Software / Digital</div>
-                    <p className="text-[10px] text-gray-500 mt-1">Accessed via download link, access codes, or licenses</p>
-                  </button>
-                </div>
-              </div>
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {budgetOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => updateFormData('budget', option.value)}
+                          className={cn(
+                            "px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all duration-200 border",
+                            formData.budget === option.value
+                              ? "bg-black text-white border-black"
+                              : "bg-zinc-50 text-zinc-650 border-zinc-200 hover:bg-zinc-100"
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
 
-              <div>
-                <Label htmlFor="productName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Name*
-                </Label>
-                <Input
-                  id="productName"
-                  type="text"
-                  placeholder="Enter your product name"
-                  value={formData.productName}
-                  onChange={(e) => updateFormData('productName', e.target.value)}
-                  className="w-full"
-                />
-              </div>
+                    <div className="relative mt-2">
+                      <input
+                        type="range"
+                        min="5000"
+                        max="1000000"
+                        step="5000"
+                        value={formData.budget}
+                        onChange={(e) => updateFormData('budget', e.target.value)}
+                        className="w-full h-1.5 bg-zinc-100 rounded-lg appearance-none cursor-pointer accent-[#000000]"
+                      />
+                      <div className="flex justify-between text-[9px] uppercase tracking-wider text-zinc-400 font-bold mt-2">
+                        <span>₹5K</span>
+                        <span>₹10L+</span>
+                      </div>
+                    </div>
+                  </div>
 
-              <div>
-                <Label htmlFor="productLink" className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Link (Optional)
-                </Label>
-                <Input
-                  id="productLink"
-                  type="url"
-                  placeholder="https://your-product-link.com"
-                  value={formData.productLink}
-                  onChange={(e) => updateFormData('productLink', e.target.value)}
-                  className="w-full"
-                />
-              </div>
+                  {/* Minimum Guarantee */}
+                  <div className="border-t border-zinc-100 pt-6 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <Label htmlFor="minGuarantee" className="text-xs font-bold uppercase tracking-wider text-neutral-900 block">
+                          Minimum Guarantee per Creator
+                        </Label>
+                        <span className="text-[9px] uppercase tracking-wider text-zinc-450 block mt-0.5">
+                          Fixed amount paid to creator regardless of views (covers raw creation/editing costs)
+                        </span>
+                      </div>
+                      <span className="text-sm font-bold text-neutral-950">₹{parseInt(formData.minGuarantee).toLocaleString()}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="10000"
+                      step="500"
+                      value={formData.minGuarantee}
+                      onChange={(e) => updateFormData('minGuarantee', e.target.value)}
+                      className="w-full h-1.5 bg-zinc-100 rounded-lg appearance-none cursor-pointer accent-[#000000]"
+                    />
+                    <div className="flex justify-between text-[9px] uppercase tracking-wider text-zinc-400 font-bold">
+                      <span>₹0 (No base fee)</span>
+                      <span>₹5K</span>
+                      <span>₹10K</span>
+                    </div>
+                  </div>
 
-              <div>
-                <Label htmlFor="productValue" className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Value (₹)*
-                </Label>
-                <Input
-                  id="productValue"
-                  type="text"
-                  placeholder="Enter product value"
-                  value={formData.productValue}
-                  onChange={(e) => updateFormData('productValue', e.target.value)}
-                  className="w-full"
-                />
-                <p className="text-xs text-gray-500 mt-1">This is the retail value of your product</p>
-              </div>
-
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-3">
-                  Product Category*
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => updateFormData('category', category)}
-                      className={cn(
-                        "px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                        formData.category === category
-                          ? "bg-blue-100 text-blue-700 border-2 border-blue-300"
-                          : "bg-gray-100 text-gray-700 border-2 border-gray-200 hover:border-blue-300"
-                      )}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {formData.productType === 'physical' ? (
-                <div>
-                  <Label className="block text-sm font-medium text-gray-700 mb-3">
-                    Shipping Details
-                  </Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card
-                      className={cn(
-                        "cursor-pointer transition-all duration-200",
-                        formData.shippingRequired 
-                          ? "border-blue-500 bg-blue-50" 
-                          : "border-gray-200 hover:border-blue-300"
-                      )}
-                      onClick={() => updateFormData('shippingRequired', true)}
-                    >
-                      <CardContent className="p-6 text-center">
-                        <Package className={cn("h-8 w-8 mx-auto mb-3", formData.shippingRequired ? "text-blue-600" : "text-gray-400")} />
-                        <h3 className={cn("font-semibold mb-2 text-sm", formData.shippingRequired ? "text-blue-900" : "text-gray-900")}>
-                          Shipping Required
-                        </h3>
-                        <p className="text-xs text-gray-600">
-                          You will send physical products to creators for content creation.
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card
-                      className={cn(
-                        "cursor-pointer transition-all duration-200",
-                        !formData.shippingRequired 
-                          ? "border-blue-500 bg-blue-50" 
-                          : "border-gray-200 hover:border-blue-300"
-                      )}
-                      onClick={() => updateFormData('shippingRequired', false)}
-                    >
-                      <CardContent className="p-6 text-center">
-                        <X className={cn("h-8 w-8 mx-auto mb-3", !formData.shippingRequired ? "text-blue-600" : "text-gray-400")} />
-                        <h3 className={cn("font-semibold mb-2 text-sm", !formData.shippingRequired ? "text-blue-900" : "text-gray-900")}>
-                          No Shipping
-                        </h3>
-                        <p className="text-xs text-gray-600">
-                          Creators already own your physical product or buy it locally.
-                        </p>
-                      </CardContent>
-                    </Card>
+                  {/* Maximum Payout Cap */}
+                  <div className="border-t border-zinc-100 pt-6 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <Label htmlFor="maxPayout" className="text-xs font-bold uppercase tracking-wider text-neutral-900 block">
+                          Maximum Payout Cap per Creator*
+                        </Label>
+                        <span className="text-[9px] uppercase tracking-wider text-zinc-450 block mt-0.5">
+                          Hard limit on what one creator can earn (limits brand risk if content goes viral)
+                        </span>
+                      </div>
+                      <span className="text-sm font-bold text-black">₹{parseInt(formData.maxPayout).toLocaleString()}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1000"
+                      max="50000"
+                      step="1000"
+                      value={formData.maxPayout}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateFormData('maxPayout', val);
+                        if (parseInt(formData.minGuarantee) > parseInt(val)) {
+                          updateFormData('minGuarantee', val);
+                        }
+                      }}
+                      className="w-full h-1.5 bg-zinc-100 rounded-lg appearance-none cursor-pointer accent-[#000000]"
+                    />
+                    <div className="flex justify-between text-[9px] uppercase tracking-wider text-zinc-400 font-bold">
+                      <span>₹1K</span>
+                      <span>₹25K</span>
+                      <span>₹50K (High cap)</span>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start space-x-3 text-left">
-                  <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-blue-950 text-sm">Digital Access Delivery</p>
-                    <p className="text-xs text-blue-800 mt-1">
-                      No physical shipping is required. Once you accept a creator, you can share SaaS links, credentials, or licenses on the dashboard.
+              </div>
+
+              {/* Right Column: Calculations & Estimates */}
+              <div className="space-y-6">
+                {/* Estimated Reach Card */}
+                <div className="bg-white border border-zinc-200 rounded-2xl p-6 space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <Sparkles className="h-5 w-5 text-black mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-bold text-neutral-950 text-xs uppercase tracking-wider">Estimated Campaign Reach</h4>
+                      <p className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Based on standard CPV of 50 Paise</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center bg-zinc-50 border border-zinc-100 rounded-2xl p-4">
+                    <div>
+                      <span className="text-3xl font-bold text-neutral-950 tracking-tight">
+                        {Math.round(parseInt(formData.budget) / 0.50).toLocaleString('en-IN')}
+                      </span>
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider ml-1.5">Est. Views</span>
+                    </div>
+                    <span className="bg-blue-50 border border-blue-100 text-black text-[9px] uppercase tracking-wider font-bold py-1 px-2.5 rounded-full">
+                      Subject to Admin Review
+                    </span>
+                  </div>
+
+                  <div className="flex items-start space-x-2 text-[10px] text-zinc-500 leading-normal pt-1">
+                    <Info className="h-4 w-4 text-black flex-shrink-0 mt-0.5" />
+                    <p className="uppercase tracking-wider">
+                      The platform Admin will set the final CPV rate depending on your niche category and selected creator tiers prior to publication.
                     </p>
                   </div>
                 </div>
-              )}
-            </div>
 
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-left">
-              <p className="text-sm text-green-800 font-medium">
-                ✓ 100% refund policy: Get a full refund if creators don't deliver or meet quality standards.
-              </p>
+                {/* Creator Count & Pricing Breakdown */}
+                {formData.budget && formData.creatorTier && (
+                  <div className="bg-white border border-zinc-200 rounded-2xl p-6 space-y-4">
+                    {(() => {
+                      const recommendation = getRecommendedCreatorCount(
+                        parseInt(formData.budget), 
+                        formData.creatorTier as CreatorTier
+                      );
+                      return (
+                        <>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h4 className="font-bold text-neutral-950 text-xs uppercase tracking-wider">Recommended Matching</h4>
+                              <p className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">
+                                Targeting {recommendation.pricing.followerRange} followers
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-3xl font-bold text-black tracking-tight">{recommendation.optimal}</span>
+                              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider ml-1">creators</span>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 text-[10px] uppercase font-bold tracking-wider">
+                            <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-3">
+                              <p className="text-zinc-400">Est. cost per creator</p>
+                              <p className="text-sm font-bold text-neutral-950 mt-1">{formatINR(recommendation.pricing.pricePerCreator)}</p>
+                            </div>
+                            <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-3">
+                              <p className="text-zinc-400">Max limit count</p>
+                              <p className="text-sm font-bold text-neutral-950 mt-1">{recommendation.max} creators</p>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-zinc-100 pt-3 flex justify-between items-center text-[10px] uppercase font-bold tracking-wider">
+                            <span className="text-zinc-500">Estimated Total Cost:</span>
+                            <span className="text-base font-bold text-neutral-950">
+                              {formatINR(recommendation.optimal * recommendation.pricing.pricePerCreator)}
+                            </span>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* Maximum Onboarded Creators Indicator */}
+                {formData.budget && formData.maxPayout && (
+                  <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex items-center space-x-3 text-left">
+                      <Users className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+                      <div>
+                        <p className="font-bold text-emerald-950 text-xs uppercase tracking-wider">Max Onboarded Creators</p>
+                        <p className="text-[9px] text-emerald-700 uppercase tracking-wider mt-0.5">Budget ÷ Max Payout per Creator</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-emerald-950">
+                        {Math.floor(parseInt(formData.budget) / (parseInt(formData.maxPayout) || 10000)) || 1}
+                      </p>
+                      <p className="text-[9px] text-emerald-700 uppercase tracking-wider font-bold">Creators Max</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Flexibility Option */}
+                <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-4">
+                  <div className="flex items-start space-x-3">
+                    <Checkbox
+                      id="budgetFlexible"
+                      checked={formData.budgetFlexible}
+                      onCheckedChange={(checked) => updateFormData('budgetFlexible', checked as boolean)}
+                      className="mt-0.5 border-zinc-300 text-black focus:ring-black"
+                    />
+                    <div className="grid gap-0.5">
+                      <label htmlFor="budgetFlexible" className="text-xs font-bold uppercase tracking-wider text-neutral-900 cursor-pointer">
+                        Budget Flexibility
+                      </label>
+                      <p className="text-[10px] text-zinc-455 uppercase tracking-wider leading-relaxed">
+                        Allow minor budget adjustments to onboard optimal creators matching your niche.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         );
 
       case 5:
         return (
-          <div className="space-y-8">
+          <div className="space-y-8 animate-fadeIn text-left">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Creator Instructions</h2>
-              <p className="text-gray-600 text-lg">Define clear instructions and expectations to guide accepted creators</p>
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-50 rounded-full mb-4">
+                <Check className="h-6 w-6 text-black" />
+              </div>
+              <h2 className="text-2xl font-bold font-space tracking-tight text-neutral-900 uppercase mb-2">Review & Launch</h2>
+              <p className="text-xs font-space uppercase tracking-wider text-zinc-500">Double check your campaign details before launching matching queue</p>
             </div>
 
-            <div className="space-y-6 text-left">
-              <div>
-                <Label htmlFor="brief" className="block text-sm font-medium text-gray-700 mb-2">
-                  Campaign / Brand Brief*
-                </Label>
-                <textarea
-                  id="brief"
-                  rows={4}
-                  placeholder="Explain what your brand stands for, what this campaign is about, and the main story you want creators to tell..."
-                  value={formData.brief}
-                  onChange={(e) => updateFormData('brief', e.target.value)}
-                  className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="keyMessages" className="block text-sm font-medium text-gray-700 mb-2">
-                  Key Messages (One message per line)*
-                </Label>
-                <textarea
-                  id="keyMessages"
-                  rows={3}
-                  placeholder="e.g. 100% natural and vegan ingredients&#10;Use my promo code CAMPA15 for 15% discount&#10;Delivered in just 15 minutes in Indore"
-                  value={formData.keyMessages}
-                  onChange={(e) => updateFormData('keyMessages', e.target.value)}
-                  className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="dos" className="block text-sm font-medium text-green-700 mb-2 font-semibold">
-                    Do's (What to do)*
-                  </Label>
-                  <textarea
-                    id="dos"
-                    rows={4}
-                    placeholder="e.g. Show product texture clearly&#10;Show the onboarding process&#10;Keep background minimal and clean"
-                    value={formData.dos}
-                    onChange={(e) => updateFormData('dos', e.target.value)}
-                    className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                  />
+            <div className="space-y-6 font-space">
+              {/* Product Card */}
+              <div className="bg-white border border-zinc-200 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center space-x-2 border-b border-zinc-100 pb-3">
+                  <Package className="h-4.5 w-4.5 text-black" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">1. Product & Narrative</h3>
                 </div>
-
-                <div>
-                  <Label htmlFor="donts" className="block text-sm font-medium text-red-700 mb-2 font-semibold">
-                    Don'ts (What to avoid)*
-                  </Label>
-                  <textarea
-                    id="donts"
-                    rows={4}
-                    placeholder="e.g. Don't show competitor logos&#10;Don't use low light/blurry video&#10;Don't forget the call-to-action link"
-                    value={formData.donts}
-                    onChange={(e) => updateFormData('donts', e.target.value)}
-                    className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="requiredHashtags" className="block text-sm font-medium text-gray-700 mb-2">
-                  Required Hashtags (Comma separated)*
-                </Label>
-                <Input
-                  id="requiredHashtags"
-                  type="text"
-                  placeholder="#YourBrand, #Ad, #HealthyLifestyle"
-                  value={formData.requiredHashtags}
-                  onChange={(e) => updateFormData('requiredHashtags', e.target.value)}
-                  className="w-full"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="timelineDays" className="block text-sm font-medium text-gray-700 mb-2">
-                  Creator Timeline (Days allowed to post after script approval)*
-                </Label>
-                <Select
-                  value={formData.timelineDays}
-                  onValueChange={(value) => updateFormData('timelineDays', value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select delivery timeline" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7">7 Days (Fast turnaround)</SelectItem>
-                    <SelectItem value="14">14 Days (Standard)</SelectItem>
-                    <SelectItem value="21">21 Days (Detailed product test)</SelectItem>
-                    <SelectItem value="30">30 Days (Flexible)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 6:
-        return (
-          <div className="space-y-8">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Review & Submit Campaign</h2>
-              <p className="text-gray-600 text-lg">Review your campaign details before submitting to match creators.</p>
-            </div>
-
-            <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6 text-left">
-              <div>
-                <h3 className="text-base font-bold text-gray-900 mb-3 border-b pb-2">1. Budget & Targeting</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-[10px] uppercase font-bold tracking-wider">
                   <div>
-                    <span className="text-gray-500">Budget:</span> <span className="font-semibold">{formatCurrency(formData.budget)}</span>
+                    <span className="text-zinc-400 block">Product Name</span>
+                    <span className="text-xs font-bold text-neutral-955 mt-1 block">{formData.productName || '-'}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Cost Per View (CPV):</span> <span className="font-semibold text-blue-600">Pending Review (Admin set)</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Niche Category:</span> <span className="font-semibold">{formData.targetCategory || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Creator Tier:</span> <span className="font-semibold text-capitalize">{formData.creatorTier || '-'} ({formData.creatorType})</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-base font-bold text-gray-900 mb-3 border-b pb-2">2. Product Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500">Product Name:</span> <span className="font-semibold">{formData.productName || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Product Type:</span> <span className="font-semibold text-capitalize">{formData.productType || '-'}</span>
+                    <span className="text-zinc-400 block">Product Type</span>
+                    <span className="text-xs font-bold text-neutral-955 mt-1 block">{formData.productType || '-'}</span>
                   </div>
                   {formData.productLink && (
                     <div className="md:col-span-2">
-                      <span className="text-gray-500">Product Link:</span> <a href={formData.productLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline font-medium">{formData.productLink}</a>
+                      <span className="text-zinc-400 block">Product Link</span>
+                      <a href={formData.productLink} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-black hover:underline mt-1 block truncate normal-case">
+                        {formData.productLink}
+                      </a>
                     </div>
                   )}
                   <div>
-                    <span className="text-gray-500">Product Value:</span> <span className="font-semibold">₹{formData.productValue || '-'}</span>
+                    <span className="text-zinc-400 block">Retail Value</span>
+                    <span className="text-xs font-bold text-neutral-955 mt-1 block">₹{formData.productValue || '-'}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Shipping Required:</span> <span className="font-semibold">{formData.shippingRequired ? 'Yes' : 'No'}</span>
+                    <span className="text-zinc-400 block">Shipping Required</span>
+                    <span className="text-xs font-bold text-neutral-955 mt-1 block">{formData.shippingRequired ? 'Yes' : 'No'}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-400 block">Category</span>
+                    <span className="text-xs font-bold text-neutral-955 mt-1 block">{formData.category || '-'}</span>
                   </div>
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-base font-bold text-gray-900 mb-3 border-b pb-2">3. Creator Instructions & Timeline</h3>
-                <div className="space-y-3 text-sm">
+              {/* Requirements & Brief Card */}
+              <div className="bg-white border border-zinc-200 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center space-x-2 border-b border-zinc-100 pb-3">
+                  <FileText className="h-4.5 w-4.5 text-black" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">2. Guidelines & Brief</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-[10px] uppercase font-bold tracking-wider">
                   <div>
-                    <span className="text-gray-500 block font-semibold mb-1">Campaign Brief:</span>
-                    <p className="bg-gray-50 p-3 rounded text-gray-700 italic whitespace-pre-wrap">{formData.brief || '-'}</p>
+                    <span className="text-zinc-400 block">Content Format</span>
+                    <span className="text-xs font-bold text-neutral-955 mt-1 block">{formData.contentType || '-'}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500 block font-semibold mb-1">Required Hashtags:</span>
-                    <p className="bg-gray-50 p-2 rounded text-gray-700 font-mono">{formData.requiredHashtags || '-'}</p>
+                    <span className="text-zinc-400 block">Submission Timeline</span>
+                    <span className="text-xs font-bold text-neutral-955 mt-1 block">{formData.timelineDays} Days after approval</span>
+                  </div>
+                  <div className="md:col-span-2">
+                    <span className="text-zinc-400 block">Script Approval Required</span>
+                    <span className="text-xs font-bold text-neutral-955 mt-1 block">{(formData.requiresScript ?? true) ? 'Yes (Mandatory script review)' : 'No'}</span>
+                  </div>
+                  <div className="md:col-span-2 border-t border-zinc-100 pt-4">
+                    <span className="text-zinc-400 block mb-1">Campaign Brief</span>
+                    <p className="bg-zinc-50 border border-zinc-100 p-4 rounded-xl text-xs font-sans text-zinc-700 italic normal-case font-normal whitespace-pre-wrap leading-relaxed">
+                      {formData.brief || '-'}
+                    </p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <span className="text-zinc-400 block mb-1">Key Messages</span>
+                    <p className="bg-zinc-50 border border-zinc-100 p-4 rounded-xl text-xs font-sans text-zinc-700 normal-case font-normal whitespace-pre-wrap leading-relaxed">
+                      {formData.keyMessages || '-'}
+                    </p>
                   </div>
                   <div>
-                    <span className="text-gray-500 block font-semibold mb-1">Creator Timeline:</span>
-                    <p className="bg-gray-50 p-2 rounded text-gray-700 font-semibold">{formData.timelineDays} Days allowed after script approval</p>
+                    <span className="text-emerald-700 block mb-1">Do's</span>
+                    <p className="bg-emerald-50/30 border border-emerald-100 p-4 rounded-xl text-xs font-sans text-emerald-905 normal-case font-normal whitespace-pre-wrap leading-relaxed">
+                      {formData.dos || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-red-750 block mb-1">Don'ts</span>
+                    <p className="bg-red-50/30 border border-red-100 p-4 rounded-xl text-xs font-sans text-red-905 normal-case font-normal whitespace-pre-wrap leading-relaxed">
+                      {formData.donts || '-'}
+                    </p>
+                  </div>
+                  <div className="md:col-span-2 border-t border-zinc-100 pt-4">
+                    <span className="text-zinc-400 block mb-1">Required Hashtags</span>
+                    <span className="text-xs font-mono text-neutral-955 bg-zinc-50 border border-zinc-100 px-3 py-1.5 rounded-lg inline-block normal-case font-medium">
+                      {formData.requiredHashtags || '-'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Creator Tiers Card */}
+              <div className="bg-white border border-zinc-200 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center space-x-2 border-b border-zinc-100 pb-3">
+                  <Users className="h-4.5 w-4.5 text-black" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">3. Target Creator Tiers & Niche</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-[10px] uppercase font-bold tracking-wider">
+                  <div>
+                    <span className="text-zinc-400 block">Creator Tier</span>
+                    <span className="text-xs font-bold text-neutral-955 mt-1 block">{formData.creatorTier || '-'} ({formData.creatorType})</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-400 block">Quality Level</span>
+                    <span className="text-xs font-bold text-neutral-955 mt-1 block">{formData.qualityLevel || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-405 block">Target Category</span>
+                    <span className="text-xs font-bold text-neutral-955 mt-1 block">{formData.targetCategory || '-'}</span>
+                  </div>
+                  {formData.targetSubcategory && (
+                    <div>
+                      <span className="text-zinc-405 block">Niche Subcategory</span>
+                      <span className="text-xs font-bold text-neutral-955 mt-1 block">{formData.targetSubcategory}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Budget & Payouts Card */}
+              <div className="bg-white border border-zinc-200 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center space-x-2 border-b border-zinc-100 pb-3">
+                  <DollarSign className="h-4.5 w-4.5 text-black" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">4. Budget & Payout Rules</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-[10px] uppercase font-bold tracking-wider">
+                  <div>
+                    <span className="text-zinc-400 block">Total Budget</span>
+                    <span className="text-sm font-bold text-neutral-955 mt-1 block">{formatCurrency(formData.budget)}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-400 block">Cost Per View (CPV)</span>
+                    <span className="text-xs font-bold text-black mt-1 block">Pending Review (Admin set)</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-400 block">Min Guarantee per Creator</span>
+                    <span className="text-xs font-bold text-neutral-955 mt-1 block">₹{parseInt(formData.minGuarantee).toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-400 block">Max Payout cap per Creator</span>
+                    <span className="text-xs font-bold text-neutral-955 mt-1 block">₹{parseInt(formData.maxPayout).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -1577,56 +1580,109 @@ const CampaignForm: React.FC = () => {
   const summary = getCampaignSummary();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-grid-dots flex flex-col font-sans pb-12 text-left">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">C</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Campayn</h1>
-                <p className="text-sm text-gray-500">Creator Platform</p>
-              </div>
+      <header className="bg-white border-b border-zinc-200/80 px-4 md:px-8 py-4 flex-shrink-0">
+        <div className="max-w-7xl mx-auto flex justify-between items-center w-full">
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/dashboard')}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-black">
+              <span className="text-white font-space font-bold text-base leading-none">+</span>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex space-x-1">
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <div
-                    key={index}
+            <div>
+              <span className="text-xl font-bold font-space text-black tracking-tight">
+                Campayn<span className="text-black font-sans font-light ml-0.5">+</span>
+              </span>
+              <div className="text-[10px] text-zinc-400 font-space uppercase tracking-wider font-bold">Influencer Portal</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2 md:space-x-4">
+            {brand && (
+              <div className="hidden sm:flex items-center space-x-2 text-[10px] uppercase tracking-wider font-space font-semibold text-zinc-500 bg-white border border-zinc-200 px-3 py-1.5 rounded-full">
+                <span>Welcome, {brand.brand_name}</span>
+              </div>
+            )}
+            
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="btn-secondary-pill py-1.5 px-3.5 text-[10px] h-8 flex items-center"
+            >
+              Exit Wizard
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Step progress timeline */}
+      <div className="bg-white border-b border-zinc-200/80 py-6 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="relative flex items-center justify-between">
+            {/* Background Line */}
+            <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-zinc-250" />
+            {/* Active Highlight Line */}
+            <div 
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-black transition-all duration-300"
+              style={{ width: `${((currentStep - 1) / 4) * 100}%` }}
+            />
+            
+            {[
+              { number: 1, name: 'Product' },
+              { number: 2, name: 'Guidelines' },
+              { number: 3, name: 'Creators' },
+              { number: 4, name: 'Budget' },
+              { number: 5, name: 'Review' },
+            ].map((step) => {
+              const isCompleted = step.number < currentStep;
+              const isActive = step.number === currentStep;
+              return (
+                <div key={step.number} className="relative z-10 flex flex-col items-center">
+                  <div 
                     className={cn(
-                      "w-2 h-2 rounded-full",
-                      index < currentStep ? "bg-green-500" : "bg-gray-300"
+                      "w-8 h-8 rounded-full flex items-center justify-center font-space text-xs font-bold transition-all duration-200 border-2",
+                      isCompleted 
+                        ? "bg-black border-black text-white"
+                        : isActive
+                          ? "bg-white border-black text-black ring-4 ring-blue-50"
+                          : "bg-white border-zinc-200 text-zinc-400"
                     )}
-                  />
-                ))}
-              </div>
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-                Login
-              </Button>
-            </div>
+                  >
+                    {isCompleted ? (
+                      <Check className="h-3.5 w-3.5 stroke-[3]" />
+                    ) : (
+                      step.number
+                    )}
+                  </div>
+                  <span 
+                    className={cn(
+                      "absolute top-10 whitespace-nowrap text-[9px] font-bold font-space uppercase tracking-wider",
+                      isActive ? "text-black" : isCompleted ? "text-black" : "text-zinc-400"
+                    )}
+                  >
+                    {step.name}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-grow">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Form Content */}
           <div className="lg:col-span-2">
-            <Card className="shadow-lg">
-              <CardContent className="p-8">
+            <Card className="bg-white border border-zinc-200/80 shadow-none rounded-2xl">
+              <CardContent className="p-6 md:p-8">
                 {!brand ? (
                   <div className="space-y-8">
                     <div className="text-center">
-                      <h2 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Brand Profile</h2>
-                      <p className="text-gray-600 text-lg">Let's set up your brand information to get started with campaigns.</p>
+                      <h2 className="text-2xl font-bold font-space tracking-tight text-neutral-900 uppercase">Complete Your Brand Profile</h2>
+                      <p className="mt-1.5 text-xs font-space uppercase tracking-wider text-zinc-500">Let's set up your brand information to get started with campaigns.</p>
                     </div>
                     
                     <div className="space-y-6">
                       <div>
-                        <Label htmlFor="brand_name" className="block text-sm font-medium text-gray-700 mb-2">
+                        <Label htmlFor="brand_name" className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-500 mb-2 block">
                           Brand Name*
                         </Label>
                         <Input
@@ -1635,12 +1691,12 @@ const CampaignForm: React.FC = () => {
                           placeholder="Enter your brand name"
                           value={brandFormData.brand_name}
                           onChange={(e) => setBrandFormData(prev => ({ ...prev, brand_name: e.target.value }))}
-                          className="w-full"
+                          className="w-full h-11 rounded-xl border-zinc-200 focus:border-black focus:ring-black"
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="brand_website" className="block text-sm font-medium text-gray-700 mb-2">
+                        <Label htmlFor="brand_website" className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-500 mb-2 block">
                           Brand Website*
                         </Label>
                         <Input
@@ -1649,12 +1705,12 @@ const CampaignForm: React.FC = () => {
                           placeholder="https://yourbrand.com"
                           value={brandFormData.brand_website}
                           onChange={(e) => setBrandFormData(prev => ({ ...prev, brand_website: e.target.value }))}
-                          className="w-full"
+                          className="w-full h-11 rounded-xl border-zinc-200 focus:border-black focus:ring-black"
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="social_handles" className="block text-sm font-medium text-gray-700 mb-2">
+                        <Label htmlFor="social_handles" className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-505 mb-2 block">
                           Social Handles (Optional)
                         </Label>
                         <Input
@@ -1663,17 +1719,17 @@ const CampaignForm: React.FC = () => {
                           placeholder="@yourbrand, @other_handle"
                           value={brandFormData.social_handles}
                           onChange={(e) => setBrandFormData(prev => ({ ...prev, social_handles: e.target.value }))}
-                          className="w-full"
+                          className="w-full h-11 rounded-xl border-zinc-200 focus:border-black focus:ring-black"
                         />
                       </div>
 
-                      <Button 
+                      <button 
                         onClick={handleCreateProfile} 
                         disabled={isCreatingProfile}
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                        className="w-full btn-primary-pill py-3 h-auto"
                       >
                         {isCreatingProfile ? 'Creating Profile...' : 'Create Brand Profile'}
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -1681,33 +1737,35 @@ const CampaignForm: React.FC = () => {
                     {renderStep()}
                     
                     {/* Navigation Buttons */}
-                    <div className="flex justify-between mt-8 pt-6 border-t">
-                      <Button
-                        variant="outline"
+                    <div className="flex justify-between mt-8 pt-6 border-t border-zinc-100">
+                      <button
                         onClick={prevStep}
-                        className="flex items-center"
+                        className="btn-secondary-pill flex items-center h-10 px-6"
                       >
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         {currentStep === 1 ? 'Back to Dashboard' : 'Back'}
-                      </Button>
+                      </button>
 
-                      {currentStep < 6 ? (
-                        <Button
+                      {currentStep < 5 ? (
+                        <button
                           onClick={nextStep}
                           disabled={!isStepValid(currentStep)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          className={cn(
+                            "btn-primary-pill flex items-center h-10 px-6",
+                            !isStepValid(currentStep) && "opacity-50 cursor-not-allowed"
+                          )}
                         >
                           Continue
                           <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
+                        </button>
                       ) : (
-                        <Button
+                        <button
                           onClick={handleSubmit}
                           disabled={isSubmitting}
-                          className="bg-green-600 hover:bg-green-700 text-white"
+                          className="btn-primary-pill flex items-center h-10 px-6 bg-black hover:bg-blue-700 border-transparent text-white"
                         >
                           {isSubmitting ? 'Submitting...' : 'Submit for Review'}
-                        </Button>
+                        </button>
                       )}
                     </div>
                   </>
@@ -1718,30 +1776,30 @@ const CampaignForm: React.FC = () => {
 
           {/* Campaign Summary Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="shadow-lg sticky top-24">
-              <CardHeader>
-                <CardTitle className="text-lg font-bold">Campaign Summary</CardTitle>
+            <Card className="bg-white border border-zinc-200/80 shadow-none rounded-2xl sticky top-24">
+              <CardHeader className="border-b border-zinc-100 pb-4">
+                <CardTitle className="text-xs font-bold font-space uppercase tracking-wider text-neutral-800">Campaign Summary</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Budget</span>
-                  <span className="text-sm font-semibold">{summary.budget}</span>
+              <CardContent className="space-y-4 pt-4 text-left">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-450">Budget</span>
+                  <span className="text-sm font-bold font-space">{summary.budget}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Estimated creators</span>
-                  <span className="text-sm font-semibold">{summary.estimatedCreators}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-455">Estimated Creators</span>
+                  <span className="text-sm font-bold font-space">{summary.estimatedCreators}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Content types</span>
-                  <span className="text-sm font-semibold">{summary.contentTypes}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-455">Content Format</span>
+                  <span className="text-sm font-semibold text-zinc-800 truncate max-w-[120px]" title={formData.contentType}>{formData.contentType || 'Not selected'}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Creator quality</span>
-                  <span className="text-sm font-semibold">{summary.creatorQuality}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-455">Creator Quality</span>
+                  <span className="text-sm font-semibold text-zinc-800">{summary.creatorQuality}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-600">Categories</span>
-                  <span className="text-sm font-semibold">{summary.categories}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-455">Target Niche</span>
+                  <span className="text-sm font-semibold text-zinc-800">{formData.targetCategory || 'Not selected'}</span>
                 </div>
               </CardContent>
             </Card>
@@ -1751,66 +1809,67 @@ const CampaignForm: React.FC = () => {
 
       {/* AI Processing Modal */}
       {showAIProcessing && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full animate-in fade-in zoom-in duration-300">
-            <div className="text-center">
-              {/* AI Icon Animation */}
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-[#121214] rounded-3xl p-8 max-w-md w-full animate-in fade-in zoom-in-95 duration-300 border border-zinc-800/60 shadow-[0_0_50px_rgba(0,102,255,0.15)] text-left">
+            <div className="text-center font-space">
+              {/* Spinner */}
               <div className="relative mx-auto w-24 h-24 mb-6">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-blue-500 rounded-full animate-pulse"></div>
-                <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
-                  <Sparkles className="w-12 h-12 text-purple-600 animate-spin" style={{ animationDuration: '3s' }} />
+                <div className="absolute inset-0 bg-black/10 rounded-full animate-ping" style={{ animationDuration: '2.5s' }}></div>
+                <div className="absolute inset-2 border-2 border-dashed border-black rounded-full animate-spin" style={{ animationDuration: '6s' }}></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Sparkles className="w-8 h-8 text-black animate-pulse" />
                 </div>
               </div>
 
-              {/* Stage Text */}
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                {aiProcessingStage === 5 ? '✅ Complete!' : '🤖 AI Processing'}
+              {/* Stage Title */}
+              <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-2 font-space">
+                {aiProcessingStage === 5 ? 'Matching Complete' : 'AI Engine Search'}
               </h3>
               
-              <p className="text-gray-600 mb-6 min-h-[48px] flex items-center justify-center">
-                {aiProcessingStage === 0 && "Analyzing your campaign requirements..."}
-                {aiProcessingStage === 1 && "Searching through 37,000+ creators..."}
-                {aiProcessingStage === 2 && "AI matching creators to your criteria..."}
-                {aiProcessingStage === 3 && "Calculating engagement scores..."}
-                {aiProcessingStage === 4 && "Finalizing top recommendations..."}
-                {aiProcessingStage === 5 && "Successfully matched creators to your campaign!"}
+              <p className="text-[10px] uppercase tracking-wider text-zinc-400 mb-6 min-h-[48px] flex items-center justify-center font-bold px-4 leading-normal font-space">
+                {aiProcessingStage === 0 && "Analyzing campaign parameters..."}
+                {aiProcessingStage === 1 && "Querying database of 37,000+ creators..."}
+                {aiProcessingStage === 2 && "Filtering by categories and location fit..."}
+                {aiProcessingStage === 3 && "Evaluating engagement quality score..."}
+                {aiProcessingStage === 4 && "Finalizing curated matching recommendation list..."}
+                {aiProcessingStage === 5 && "Creators matched successfully!"}
               </p>
 
-              {/* Progress Bar */}
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+              {/* Progress Line */}
+              <div className="w-full bg-zinc-900 rounded-full h-1 mb-4 overflow-hidden border border-zinc-800">
                 <div 
-                  className="bg-gradient-to-r from-purple-600 to-blue-500 h-2 rounded-full transition-all duration-500"
+                  className="bg-black h-full rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${((aiProcessingStage + 1) / 6) * 100}%` }}
                 ></div>
               </div>
 
               {/* Stage Indicators */}
-              <div className="flex justify-center space-x-2 mb-6">
+              <div className="flex justify-center space-x-2.5 mb-6">
                 {[0, 1, 2, 3, 4, 5].map((stage) => (
                   <div
                     key={stage}
                     className={cn(
-                      "w-2 h-2 rounded-full transition-all duration-300",
+                      "w-1.5 h-1.5 rounded-full transition-all duration-300",
                       stage <= aiProcessingStage 
-                        ? "bg-purple-600 scale-110" 
-                        : "bg-gray-300"
+                        ? "bg-black scale-110 shadow-[0_0_8px_#000000]" 
+                        : "bg-zinc-800"
                     )}
                   />
                 ))}
               </div>
 
-              {/* Fun Facts */}
-              <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
-                <p className="text-sm text-purple-800 font-medium">
-                  💡 Did you know?
+              {/* Insight Box */}
+              <div className="bg-[#18181b] border border-zinc-800/80 rounded-2xl p-4 text-left">
+                <p className="text-[9px] text-black font-bold uppercase tracking-wider font-space">
+                  ⚡ ENGINE LOG
                 </p>
-                <p className="text-xs text-purple-600 mt-1">
-                  {aiProcessingStage === 0 && "Our AI analyzes over 50 data points per creator"}
-                  {aiProcessingStage === 1 && "We have creators across 50+ categories"}
-                  {aiProcessingStage === 2 && "Matching considers engagement, reach, and niche fit"}
-                  {aiProcessingStage === 3 && "Higher engagement = better ROI for your campaign"}
-                  {aiProcessingStage === 4 && "We're selecting the perfect creators for you"}
-                  {aiProcessingStage === 5 && "You're about to see your personalized matches!"}
+                <p className="text-[10px] text-zinc-400 mt-1 uppercase tracking-wider font-semibold leading-relaxed font-mono">
+                  {aiProcessingStage === 0 && "> initializing parameter matrices..."}
+                  {aiProcessingStage === 1 && "> executing full index scan on indexed pools..."}
+                  {aiProcessingStage === 2 && "> pruning non-matching sectors and tiers..."}
+                  {aiProcessingStage === 3 && "> normalizing audit scores for audience segments..."}
+                  {aiProcessingStage === 4 && "> rank-sorting candidates based on alignment..."}
+                  {aiProcessingStage === 5 && "> compilation done. loading matched dashboard..."}
                 </p>
               </div>
             </div>

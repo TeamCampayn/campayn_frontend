@@ -29,8 +29,8 @@ interface Campaign {
   campaign_name: string;
   brand_id: string;
   brand_name: string;
-  phase: 'creator_selection' | 'payment_pending' | 'content_approval' | 'campaign_active' | 'campaign_complete';
-  status: 'active' | 'paused' | 'completed' | 'cancelled';
+  phase: 'approval_pending' | 'approved_pending_funds' | 'creator_selection' | 'payment_pending' | 'content_approval' | 'campaign_active' | 'campaign_complete';
+  status: 'active' | 'paused' | 'completed' | 'cancelled' | 'pending_admin';
   budget: number;
   start_date: string;
   end_date: string;
@@ -53,7 +53,7 @@ interface Campaign {
 const BrandCampaignManagement: React.FC = () => {
   const { brand } = useAuth();
   const navigate = useNavigate();
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
   const [selectedPhase, setSelectedPhase] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,7 +68,7 @@ const BrandCampaignManagement: React.FC = () => {
     if (brand?.id) {
       fetchCampaigns();
     }
-  }, [selectedPhase, brand?.id]);
+  }, [brand?.id]);
 
   const fetchCampaigns = async (isRefresh = false) => {
     try {
@@ -82,20 +82,17 @@ const BrandCampaignManagement: React.FC = () => {
 
       const params = new URLSearchParams();
       params.append('brand_id', brand.id);
-      if (selectedPhase !== 'all') {
-        params.append('phase', selectedPhase);
-      }
 
       const response = await fetch(getApiUrl(`api/campaigns?${params}`));
       const data = await response.json();
 
       if (data.success) {
-        setCampaigns(data.campaigns || []);
+        setAllCampaigns(data.campaigns || []);
         calculateStats(data.campaigns || []);
       }
     } catch (error) {
       console.error('Error fetching campaigns:', error);
-      setCampaigns([]);
+      setAllCampaigns([]);
       calculateStats([]);
     } finally {
       if (isRefresh) {
@@ -115,15 +112,35 @@ const BrandCampaignManagement: React.FC = () => {
     });
   };
 
+  const filteredCampaigns = React.useMemo(() => {
+    if (selectedPhase === 'all') return allCampaigns;
+    if (selectedPhase === 'creator_selection') {
+      return allCampaigns.filter(c => c.phase === 'creator_selection' || c.phase === 'approval_pending');
+    }
+    if (selectedPhase === 'payment_pending') {
+      return allCampaigns.filter(c => c.phase === 'payment_pending' || c.phase === 'approved_pending_funds');
+    }
+    if (selectedPhase === 'content_approval') {
+      return allCampaigns.filter(c => c.phase === 'content_approval');
+    }
+    if (selectedPhase === 'campaign_active') {
+      return allCampaigns.filter(c => c.phase === 'campaign_active');
+    }
+    if (selectedPhase === 'campaign_complete') {
+      return allCampaigns.filter(c => c.phase === 'campaign_complete');
+    }
+    return allCampaigns;
+  }, [allCampaigns, selectedPhase]);
+
   const getPhaseColor = (phase: string) => {
     switch (phase) {
-      case 'approval_pending': return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'creator_selection': return 'bg-blue-100 text-blue-800';
-      case 'payment_pending': return 'bg-yellow-100 text-yellow-800';
-      case 'content_approval': return 'bg-purple-100 text-purple-800';
-      case 'campaign_active': return 'bg-green-100 text-green-800';
-      case 'campaign_complete': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'approval_pending': return 'bg-zinc-50 text-zinc-700 border border-zinc-200';
+      case 'creator_selection': return 'bg-zinc-50 text-zinc-700 border border-zinc-200';
+      case 'payment_pending': return 'bg-zinc-50 text-zinc-700 border border-zinc-200';
+      case 'content_approval': return 'bg-zinc-50 text-zinc-700 border border-zinc-200';
+      case 'campaign_active': return 'bg-neutral-900 text-white border border-neutral-900';
+      case 'campaign_complete': return 'bg-zinc-50 text-zinc-700 border border-zinc-200';
+      default: return 'bg-zinc-50 text-zinc-700 border border-zinc-200';
     }
   };
 
@@ -168,7 +185,7 @@ const BrandCampaignManagement: React.FC = () => {
         };
       case 'creator_selection':
         return {
-          label: 'View Creator Recommendations',
+          label: 'View Recommendations',
           action: () => navigate(`/dashboard/campaigns/${campaign.id}`),
           variant: 'default' as const,
           disabled: false
@@ -220,12 +237,12 @@ const BrandCampaignManagement: React.FC = () => {
       <div className="p-6">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">My Campaigns</h1>
-            <p className="text-gray-600">Multi-phase campaign management dashboard</p>
+            <h1 className="text-3xl font-bold font-space uppercase text-zinc-900 mb-2">My Campaigns</h1>
+            <p className="text-xs font-space uppercase text-zinc-500">Multi-phase campaign management dashboard</p>
           </div>
         </div>
         <div className="flex items-center justify-center h-64">
-          <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+          <RefreshCw className="h-8 w-8 animate-spin text-zinc-400" />
         </div>
       </div>
     );
@@ -236,74 +253,77 @@ const BrandCampaignManagement: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-800">My Campaigns</h1>
-          <p className="text-xs text-gray-500 mt-1">Multi-phase campaign management dashboard</p>
+          <h1 className="text-2xl font-bold font-space tracking-tight text-neutral-900 uppercase">My Campaigns</h1>
+          <p className="text-xs font-space text-zinc-500 uppercase tracking-wider mt-1">Multi-phase campaign management dashboard</p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <button 
             onClick={handleRefresh}
             disabled={refreshing}
-            className="border-gray-200 hover:bg-gray-50 text-gray-600 text-xs px-3.5 py-1.5 h-auto rounded-xl"
+            className="btn-secondary-pill py-1.5 px-3.5"
           >
-            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button 
+            <span className="flex items-center">
+              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </span>
+          </button>
+          <button 
             onClick={() => navigate('/create-campaign')}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs px-4 py-2 h-auto border-0 shadow-sm rounded-xl font-medium"
+            className="btn-primary-pill"
           >
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            Create Campaign
-          </Button>
+            <span className="flex items-center gap-1.5">
+              <Plus className="h-3.5 w-3.5" />
+              Create Campaign
+            </span>
+          </button>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+        <Card className="bg-white border border-zinc-200/80 shadow-none rounded-2xl">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Total Campaigns</p>
-              <div className="text-xl font-bold text-gray-800">{stats.total}</div>
+              <p className="text-[10px] font-bold font-space text-zinc-400 uppercase tracking-wider mb-1.5">Total Campaigns</p>
+              <div className="text-xl font-bold font-space text-neutral-900">{stats.total}</div>
             </div>
-            <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-xl text-blue-600">
+            <div className="p-2 bg-zinc-50 border border-zinc-100 rounded-xl text-neutral-800">
               <FileText className="h-4 w-4" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+        <Card className="bg-white border border-zinc-200/80 shadow-none rounded-2xl">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Active Campaigns</p>
-              <div className="text-xl font-bold text-gray-800">{stats.active}</div>
+              <p className="text-[10px] font-bold font-space text-zinc-400 uppercase tracking-wider mb-1.5">Active Campaigns</p>
+              <div className="text-xl font-bold font-space text-neutral-900">{stats.active}</div>
             </div>
-            <div className="p-2.5 bg-green-50 border border-green-100 rounded-xl text-green-600">
+            <div className="p-2 bg-zinc-50 border border-zinc-100 rounded-xl text-black">
               <PlayCircle className="h-4 w-4" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+        <Card className="bg-white border border-zinc-200/80 shadow-none rounded-2xl">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Completed</p>
-              <div className="text-xl font-bold text-gray-800">{stats.completed}</div>
+              <p className="text-[10px] font-bold font-space text-zinc-400 uppercase tracking-wider mb-1.5">Completed</p>
+              <div className="text-xl font-bold font-space text-neutral-900">{stats.completed}</div>
             </div>
-            <div className="p-2.5 bg-purple-50 border border-purple-100 rounded-xl text-purple-600">
+            <div className="p-2 bg-zinc-50 border border-zinc-100 rounded-xl text-neutral-800">
               <CheckCircle className="h-4 w-4" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm">
+        <Card className="bg-white border border-zinc-200/80 shadow-none rounded-2xl">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Total Investment</p>
-              <div className="text-xl font-bold text-gray-800">₹{formatNumber(stats.revenue)}</div>
+              <p className="text-[10px] font-bold font-space text-zinc-400 uppercase tracking-wider mb-1.5">Total Investment</p>
+              <div className="text-xl font-bold font-space text-black">₹{formatNumber(stats.revenue)}</div>
             </div>
-            <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-600">
+            <div className="p-2 bg-zinc-50 border border-zinc-100 rounded-xl text-black">
               <DollarSign className="h-4 w-4" />
             </div>
           </CardContent>
@@ -312,136 +332,208 @@ const BrandCampaignManagement: React.FC = () => {
 
       {/* Phase Filter Tabs */}
       <Tabs value={selectedPhase} onValueChange={setSelectedPhase} className="w-full">
-        <TabsList className="bg-gray-100/50 border border-gray-200/30 p-1 rounded-xl h-auto flex flex-wrap gap-1">
-          <TabsTrigger value="all" className="rounded-lg text-xs py-1.5 px-3">All Campaigns</TabsTrigger>
-          <TabsTrigger value="creator_selection" className="rounded-lg text-xs py-1.5 px-3">Creator Selection</TabsTrigger>
-          <TabsTrigger value="payment_pending" className="rounded-lg text-xs py-1.5 px-3">Payment Pending</TabsTrigger>
-          <TabsTrigger value="content_approval" className="rounded-lg text-xs py-1.5 px-3">Content Approval</TabsTrigger>
-          <TabsTrigger value="campaign_active" className="rounded-lg text-xs py-1.5 px-3">Campaign Active</TabsTrigger>
-          <TabsTrigger value="campaign_complete" className="rounded-lg text-xs py-1.5 px-3">Completed</TabsTrigger>
-        </TabsList>
+        <div className="flex overflow-x-auto pb-2 scrollbar-none border-b border-neutral-200/80 mb-6">
+          <TabsList className="bg-neutral-100 border border-neutral-200/60 p-1 rounded-xl h-auto flex flex-nowrap whitespace-nowrap gap-1">
+            <TabsTrigger 
+              value="all" 
+              className="rounded-lg text-xs py-2 px-4 font-bold font-space uppercase tracking-wider transition-all data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm text-neutral-500 hover:text-neutral-800"
+            >
+              All Campaigns
+            </TabsTrigger>
+            <TabsTrigger 
+              value="creator_selection" 
+              className="rounded-lg text-xs py-2 px-4 font-bold font-space uppercase tracking-wider transition-all data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm text-neutral-500 hover:text-neutral-800"
+            >
+              Creator Selection
+            </TabsTrigger>
+            <TabsTrigger 
+              value="payment_pending" 
+              className="rounded-lg text-xs py-2 px-4 font-bold font-space uppercase tracking-wider transition-all data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm text-neutral-500 hover:text-neutral-800"
+            >
+              Payment Pending
+            </TabsTrigger>
+            <TabsTrigger 
+              value="content_approval" 
+              className="rounded-lg text-xs py-2 px-4 font-bold font-space uppercase tracking-wider transition-all data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm text-neutral-500 hover:text-neutral-800"
+            >
+              Content Approval
+            </TabsTrigger>
+            <TabsTrigger 
+              value="campaign_active" 
+              className="rounded-lg text-xs py-2 px-4 font-bold font-space uppercase tracking-wider transition-all data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm text-neutral-500 hover:text-neutral-800"
+            >
+              Campaign Active
+            </TabsTrigger>
+            <TabsTrigger 
+              value="campaign_complete" 
+              className="rounded-lg text-xs py-2 px-4 font-bold font-space uppercase tracking-wider transition-all data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm text-neutral-500 hover:text-neutral-800"
+            >
+              Completed
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value={selectedPhase} className="mt-6 focus-visible:outline-none">
-          {campaigns.length === 0 ? (
-            <Card className="border border-gray-200/40 bg-white/80 rounded-2xl">
-              <CardContent className="p-8 text-center">
-                <FileText className="h-10 w-10 mx-auto mb-3 text-gray-300" />
-                <h3 className="text-sm font-semibold text-gray-800 mb-1">
-                  {selectedPhase === 'all' ? 'No campaigns yet' : `No campaigns in ${formatPhaseLabel(selectedPhase)} phase`}
+          {filteredCampaigns.length === 0 ? (
+            <Card className="border border-neutral-200 bg-white rounded-2xl">
+              <CardContent className="p-16 text-center max-w-md mx-auto">
+                <div className="mx-auto w-12 h-12 bg-neutral-50 border border-neutral-200/80 rounded-xl flex items-center justify-center mb-4 text-neutral-400">
+                  <FileText className="h-6 w-6" />
+                </div>
+                <h3 className="text-sm font-extrabold font-space uppercase tracking-wider text-neutral-800 mb-2">
+                  {selectedPhase === 'all' ? 'No campaigns yet' : `No campaigns in ${formatPhaseLabel(selectedPhase)}`}
                 </h3>
-                <p className="text-xs text-gray-500 mb-6">
+                <p className="text-[11px] font-medium leading-relaxed text-neutral-400 mb-6 uppercase tracking-wider">
                   {selectedPhase === 'all' 
-                    ? 'Create your first campaign to start connecting with creators'
-                    : `Switch to "All Campaigns" to see your complete campaign list`
+                    ? 'Launch your first campaign today to connect with top-tier creators and drive high impact.'
+                    : `Try switching to another tab or check your active setups.`
                   }
                 </p>
                 {selectedPhase === 'all' && (
-                  <Button 
+                  <button 
                     onClick={() => navigate('/create-campaign')}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs px-4 py-2 h-auto border-0 shadow-sm rounded-xl font-medium"
+                    className="btn-primary-pill inline-flex items-center gap-1.5 px-6 py-2.5"
                   >
-                    <Plus className="h-3.5 w-3.5 mr-1.5" />
+                    <Plus className="h-4 w-4" />
                     Create Your First Campaign
-                  </Button>
+                  </button>
                 )}
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4">
-              {campaigns.map((campaign) => {
+            <div className="grid gap-6">
+              {filteredCampaigns.map((campaign) => {
                 const nextAction = getNextAction(campaign);
+                
+                // Enhanced color helper
+                const getPhaseClasses = (phase: string) => {
+                  switch (phase) {
+                    case 'approval_pending': 
+                      return 'bg-zinc-50 text-zinc-600 border border-zinc-200';
+                    case 'creator_selection': 
+                      return 'bg-zinc-50 text-zinc-600 border border-zinc-200';
+                    case 'approved_pending_funds':
+                    case 'payment_pending': 
+                      return 'bg-zinc-50 text-zinc-600 border border-zinc-200';
+                    case 'content_approval': 
+                      return 'bg-zinc-50 text-zinc-600 border border-zinc-200';
+                    case 'campaign_active': 
+                      return 'bg-neutral-900 text-white border border-neutral-900';
+                    case 'campaign_complete': 
+                      return 'bg-zinc-50 text-zinc-650 border border-zinc-200';
+                    default: 
+                      return 'bg-zinc-50 text-zinc-650 border border-zinc-200';
+                  }
+                };
+
                 return (
-                  <Card key={campaign.id} className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all duration-300 rounded-2xl overflow-hidden group">
-                    <CardHeader className="pb-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-400">{getPhaseIcon(campaign.phase)}</span>
-                            <CardTitle className="text-base font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
-                              {campaign.campaign_name}
-                            </CardTitle>
-                          </div>
-                          <Badge className={`${getPhaseColor(campaign.phase)} border-0 text-[10px] py-0.5 px-2 rounded-full font-medium shadow-none`}>
-                            {formatPhaseLabel(campaign.phase)}
-                          </Badge>
+                  <Card key={campaign.id} className="bg-white border border-neutral-200/80 hover:border-neutral-400 shadow-sm hover:shadow transition-all duration-300 rounded-2xl overflow-hidden group">
+                    <CardHeader className="pb-3 p-6">
+                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                         <div className="space-y-1.5">
+                           <div className="flex flex-wrap items-center gap-2">
+                             <span className="text-neutral-400 group-hover:text-neutral-900 transition-colors">
+                               {getPhaseIcon(campaign.phase)}
+                             </span>
+                             <CardTitle className="text-base font-extrabold font-space text-neutral-800 uppercase tracking-wide group-hover:text-neutral-900 transition-colors">
+                               {campaign.campaign_name}
+                             </CardTitle>
+                             <span className={`${getPhaseClasses(campaign.phase)} text-[9px] py-0.5 px-2.5 rounded-full font-bold font-space uppercase tracking-wider ml-1`}>
+                               {formatPhaseLabel(campaign.phase)}
+                             </span>
+                           </div>
+                          {campaign.description && (
+                            <p className="text-xs text-neutral-500 leading-relaxed font-sans max-w-3xl">
+                              {campaign.description}
+                            </p>
+                          )}
                         </div>
-                        <div className="flex flex-wrap items-center gap-3 justify-between sm:justify-end w-full sm:w-auto pt-2 sm:pt-0 border-t border-gray-100/60 sm:border-t-0">
-                          <span className="text-xs font-semibold text-gray-600">
-                            Budget: ₹{formatNumber(campaign.budget)}
+                        <div className="flex flex-col items-end shrink-0">
+                          <span className="text-xs font-bold font-space text-neutral-400 uppercase tracking-wider">
+                            Total Budget
                           </span>
-                          <Button
-                            variant={nextAction.variant}
-                            size="sm"
-                            onClick={nextAction.action}
-                            disabled={nextAction.disabled || campaign.status === 'pending_admin'}
-                            className={`text-xs px-3 py-1.5 h-auto rounded-lg ${
-                              nextAction.variant === 'default'
-                                ? 'bg-indigo-600 hover:bg-indigo-700 text-white border-0'
-                                : nextAction.variant === 'secondary'
-                                ? 'bg-gray-100 text-gray-400 border-0 cursor-not-allowed'
-                                : 'border-gray-200 hover:bg-gray-50 text-gray-600'
-                            }`}
-                          >
-                            <span>{nextAction.label}</span>
-                            <Eye className="h-3.5 w-3.5 ml-1.5" />
-                          </Button>
+                          <span className="text-lg font-extrabold font-space text-neutral-900 mt-0.5">
+                            ₹{formatNumber(campaign.budget)}
+                          </span>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      {campaign.description && (
-                        <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{campaign.description}</p>
-                      )}
-                      
-                      {/* Progress Bar */}
-                      <div>
-                        <div className="flex justify-between items-center mb-1.5">
-                          <span className="text-xs font-medium text-gray-500">Campaign Progress</span>
-                          <span className="text-xs font-semibold text-gray-700">{getPhaseProgress(campaign.phase)}%</span>
+                    
+                    <CardContent className="px-6 pb-6 pt-0 space-y-5">
+                      {/* Custom Modern Gradient Progress Bar */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-[10px] font-bold font-space uppercase tracking-wider text-neutral-400">
+                          <span>Campaign Phase Progress</span>
+                          <span className="text-neutral-800 font-extrabold">{getPhaseProgress(campaign.phase)}%</span>
                         </div>
-                        <Progress value={getPhaseProgress(campaign.phase)} className="h-1.5 bg-gray-100 rounded-full [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-purple-500" />
+                        <div className="w-full bg-neutral-100 rounded-full h-1.5 overflow-hidden">
+                          <div 
+                            className="h-full bg-neutral-900 rounded-full transition-all duration-500"
+                            style={{ width: `${getPhaseProgress(campaign.phase)}%` }}
+                          />
+                        </div>
                       </div>
-
-                      {/* Campaign Metrics */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-gray-100/60 text-xs">
-                        <div className="flex items-center gap-2">
-                          <Users className="h-3.5 w-3.5 text-blue-500" />
-                          <span className="text-gray-400">Creators:</span>
-                          <span className="font-semibold text-gray-700">{campaign.approved_creators || 0}/{campaign.total_creators || 0}</span>
+                      
+                      {/* Campaign Metrics & CTA Actions */}
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between pt-4 border-t border-neutral-150 gap-4">
+                        <div className="flex items-center gap-4 text-[10px] uppercase font-bold tracking-wider font-space text-neutral-500 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-neutral-400" />
+                            <span>Creators:</span>
+                            <span className="text-neutral-800 font-extrabold">
+                              {campaign.approved_creators || 0}/{campaign.total_creators || 0}
+                            </span>
+                          </div>
+                          <div className="hidden sm:block w-px h-4 bg-neutral-200" />
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-neutral-400" />
+                            <span>Content:</span>
+                            <span className="text-neutral-800 font-extrabold">
+                              {campaign.approved_contents || 0}/{campaign.total_contents || 0}
+                            </span>
+                          </div>
+                          <div className="hidden sm:block w-px h-4 bg-neutral-200" />
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-neutral-400" />
+                            <span>Created:</span>
+                            <span className="text-neutral-800 font-extrabold">
+                              {new Date(campaign.created_at).toLocaleDateString('en-IN', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </span>
+                          </div>
+                          <div className="hidden sm:block w-px h-4 bg-neutral-200" />
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-neutral-400" />
+                            <span>Status:</span>
+                            <span className={`text-[9px] py-0.5 px-2 rounded-full font-bold border ${
+                              campaign.status === 'active' 
+                                ? 'border-green-200 text-green-700 bg-green-50/50' 
+                                : campaign.status === 'pending_admin' 
+                                ? 'border-amber-200 text-amber-700 bg-amber-50/50' 
+                                : 'border-neutral-200 text-neutral-600 bg-neutral-50'
+                            }`}>
+                              {campaign.status === 'pending_admin' ? 'PENDING APPROVAL' : campaign.status.toUpperCase()}
+                            </span>
+                          </div>
                         </div>
                         
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-3.5 w-3.5 text-purple-500" />
-                          <span className="text-gray-400">Content:</span>
-                          <span className="font-semibold text-gray-700">{campaign.approved_contents || 0}/{campaign.total_contents || 0}</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-3.5 w-3.5 text-green-500" />
-                          <span className="text-gray-400">Created:</span>
-                          <span className="font-semibold text-gray-700">
-                            {new Date(campaign.created_at).toLocaleDateString('en-IN', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-3.5 w-3.5 text-orange-500" />
-                          <span className="text-gray-400">Status:</span>
-                          <Badge 
-                            variant={campaign.status === 'active' ? 'default' : campaign.status === 'pending_admin' ? 'outline' : 'secondary'} 
-                            className={`text-[10px] py-0.5 px-2 shadow-none font-semibold uppercase tracking-wider ${
-                              campaign.status === 'pending_admin' 
-                                ? 'border-amber-200 bg-amber-50 text-amber-800' 
-                                : ''
-                            }`}
-                          >
-                            {campaign.status === 'pending_admin' ? 'Pending Approval' : campaign.status}
-                          </Badge>
-                        </div>
+                        <button
+                          onClick={nextAction.action}
+                          disabled={nextAction.disabled || campaign.status === 'pending_admin'}
+                          className={`text-xs uppercase font-extrabold tracking-wider px-5 py-2.5 rounded-full transition-all duration-200 flex items-center gap-1.5 h-auto ${
+                            nextAction.variant === 'default'
+                              ? 'btn-primary-pill'
+                              : nextAction.variant === 'secondary'
+                              ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed border border-transparent'
+                              : 'btn-secondary-pill'
+                          }`}
+                        >
+                          <span>{nextAction.label}</span>
+                          <Eye className="h-4 w-4" />
+                        </button>
                       </div>
                     </CardContent>
                   </Card>

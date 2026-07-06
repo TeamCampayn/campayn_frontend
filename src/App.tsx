@@ -8,6 +8,7 @@ import Index from './pages/Index';
 import CreatorsPage from './pages/CreatorsPage';
 import AboutPage from './pages/AboutPage';
 import Auth from './pages/Auth';
+import Onboarding from './pages/Onboarding';
 import BrandDashboard from './pages/BrandDashboard';
 import CreateCampaign from './pages/CreateCampaign';
 import { AuthProvider } from './contexts/AuthContext';
@@ -24,20 +25,12 @@ import CreatorProfile from './pages/dashboard/CreatorProfile';
 import Support from './pages/dashboard/Support';
 import BrandAnalytics from './pages/dashboard/BrandAnalytics';
 import WalletPage from './pages/dashboard/WalletPage';
+import AssetVault from './pages/dashboard/AssetVault';
 
-import AdminDashboard from './pages/AdminDashboard';
-import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
-import AdminCreators from './pages/AdminCreators';
-import AdminCampaignDetail from './pages/AdminCampaignDetail';
-import AdminPaymentDashboard from './pages/AdminPaymentDashboard';
-import AdminContentReview from './pages/AdminContentReview';
 import BrandContentReview from './pages/BrandContentReview';
-import CampaignAnalytics from './pages/dashboard/CampaignAnalytics';
 
-// Multi-Phase Campaign Components
-import CampaignManagement from './components/CampaignManagement';
-import AdminCreatorSelection from './components/AdminCreatorSelection';
-import AdminLinkManager from './components/AdminLinkManager';
+import CampaignAnalytics from './pages/dashboard/CampaignAnalytics';
+import SharedAnalytics from './pages/SharedAnalytics';
 
 // Legal Pages
 import TermsAndConditions from './pages/legal/TermsAndConditions';
@@ -49,7 +42,7 @@ import DataDeletion from './pages/legal/DataDeletion';
 
 // Razorpay Payment Link Pages
 import RazorpayPaymentLink from './pages/RazorpayPaymentLink';
-import AdminRazorpayVerification from './pages/AdminRazorpayVerification';
+
 
 const queryClient = new QueryClient();
 
@@ -75,6 +68,13 @@ function App() {
                   <BrandDashboard />
                 </ProtectedRoute>
               } />
+
+              {/* Brand Onboarding Wizard */}
+              <Route path="/onboarding" element={
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              } />
               
               {/* Main Dashboard Routes */}
               <Route path="/dashboard" element={
@@ -91,6 +91,7 @@ function App() {
                 <Route path="creators/:id" element={<CreatorProfile />} />
                 <Route path="analytics" element={<BrandAnalytics />} />
                 <Route path="wallet" element={<WalletPage />} />
+                <Route path="vault" element={<AssetVault />} />
                 <Route path="support" element={<Support />} />
                 {/* Brand content review for a specific campaign */}
                 <Route path="campaigns/:id/content" element={<BrandContentReview />} />
@@ -105,6 +106,15 @@ function App() {
                 <Route index element={<MyCampaigns />} />
                 <Route path=":id" element={<CampaignDetail />} />
               </Route>
+
+              {/* Shortcut route for wallet */}
+              <Route path="/wallet" element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<WalletPage />} />
+              </Route>
               
               {/* Create Campaign */}
               <Route path="/create-campaign" element={
@@ -113,58 +123,7 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              {/* Admin Routes */}
-              <Route path="/admin" element={
-                <AdminProtectedRoute>
-                  <AdminDashboard />
-                </AdminProtectedRoute>
-              } />
-              {/* Multi-Phase Campaign Routes */}
-              <Route path="/admin/campaigns" element={
-                <AdminProtectedRoute>
-                  <CampaignManagement />
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/campaigns/:id" element={
-                <AdminProtectedRoute>
-                  <AdminCampaignDetail />
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/campaigns/:campaignId/creators" element={
-                <AdminProtectedRoute>
-                  <AdminCreatorSelection />
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/campaigns/:campaignId/payment" element={
-                <AdminProtectedRoute>
-                  <AdminCampaignDetail />
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/campaigns/:id/content" element={
-                <AdminProtectedRoute>
-                  <AdminContentReview />
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/campaigns/:id/links" element={
-                <AdminProtectedRoute>
-                  <AdminLinkManager />
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/creators" element={
-                <AdminProtectedRoute>
-                  <AdminCreators />
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/payments" element={
-                <AdminProtectedRoute>
-                  <AdminPaymentDashboard />
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/razorpay-verification" element={
-                <AdminProtectedRoute>
-                  <AdminRazorpayVerification />
-                </AdminProtectedRoute>
-              } />
+
               
               {/* Brand Payment Routes */}
               <Route path="/campaigns/:campaignId/payment" element={
@@ -173,6 +132,9 @@ function App() {
                 </ProtectedRoute>
               } />
               
+              {/* Shared Analytics - Public Read-Only */}
+              <Route path="/shared/analytics/:brandId" element={<SharedAnalytics />} />
+
               {/* Legal Pages - Public Access */}
               <Route path="/terms" element={<TermsAndConditions />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />

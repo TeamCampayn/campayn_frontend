@@ -93,7 +93,7 @@ export const Navbar = () => {
                 <Link to="/auth">
                   <Button variant="outline">Sign In</Button>
                 </Link>
-                <Link to="/auth">
+                <Link to="/auth?mode=signup">
                   <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
                     Get Started
                   </Button>
@@ -175,7 +175,7 @@ export const Navbar = () => {
                     Sign In
                   </Link>
                   <Link 
-                    to="/auth" 
+                    to="/auth?mode=signup" 
                     className="block font-medium text-gray-600 hover:text-blue-600"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >

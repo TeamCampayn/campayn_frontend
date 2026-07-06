@@ -9,9 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Mail, MessageSquare, User, Sparkles } from 'lucide-react';
+import { Mail, MessageSquare, User, Sparkle } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -38,22 +38,22 @@ export const CreatorContactForm = () => {
   const onSubmit = async (data: ContactForm) => {
     setIsSubmitting(true);
     try {
-      const response = await fetch('https://mailing-service-zeta.vercel.app/api/generic-mail', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...data,
-          heading: 'Creator Contact Form'
-        }),
-      });
+      const { error } = await supabase
+        .from('creator_contact_submissions')
+        .insert({
+          name: data.name,
+          email: data.email,
+          platform: data.platform,
+          followers: data.followers,
+          message: data.message,
+        });
 
-      if (response.ok) {
-        toast.success('Message sent successfully! We\'ll get back to you soon.');
-        reset();
-      } else {
+      if (error) {
+        console.error('Contact form error:', error);
         toast.error('Failed to send message. Please try again.');
+      } else {
+        toast.success("Message sent successfully! We'll get back to you soon.");
+        reset();
       }
     } catch (error) {
       console.error('Form submission error:', error);
@@ -64,156 +64,157 @@ export const CreatorContactForm = () => {
   };
 
   return (
-    <section className="py-20 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-50/30 to-pink-50/30" />
-      <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-purple-200/20 to-pink-200/20 rounded-full blur-3xl" />
-      <div className="absolute bottom-10 right-10 w-40 h-40 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-full blur-3xl" />
-      
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-4xl mx-auto">
+    <section className="px-3 pb-4 pt-2 md:px-4">
+      <div className="grain rounded-[2rem] bg-panel border border-foreground/10 shadow-sm px-6 py-12 md:px-12 md:py-16">
+        <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-100 to-pink-100 px-4 py-2 rounded-full mb-6">
-              <Sparkles className="w-4 h-4 text-purple-600" />
-              <span className="text-purple-700 font-medium">Contact Information</span>
+            <div className="inline-flex items-center gap-2 border border-foreground/10 bg-background/60 px-4 py-2 rounded-full mb-5">
+              <Sparkle className="w-3.5 h-3.5 fill-blue text-blue" />
+              <span className="font-sans text-xs font-semibold uppercase tracking-widest text-foreground/60">
+                Contact Information
+              </span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-purple-800 to-pink-800 bg-clip-text text-transparent mb-4">
+            <h2 className="font-display text-4xl md:text-5xl font-extrabold text-zinc-900 mb-4 tracking-tight">
               Ready to Collaborate?
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Have questions about joining our platform? Want to discuss partnership opportunities? 
+            <p className="font-sans text-base md:text-lg text-zinc-500 max-w-2xl mx-auto leading-relaxed">
+              Have questions about joining our platform? Want to discuss partnership opportunities?
               We'd love to hear from you and help you grow your creator journey.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12 items-start">
+          <div className="grid md:grid-cols-2 gap-10 items-start">
             {/* Contact Info */}
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">Let's Connect</h3>
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                      <Mail className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Email Us</h4>
-                      <p className="text-gray-600">contact@campayn.in</p>
-                    </div>
+            <div className="space-y-6">
+              <h3 className="font-heading text-2xl font-bold text-zinc-900 mb-2 tracking-tight">Let's Connect</h3>
+              <div className="space-y-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 bg-zinc-950 rounded-2xl flex items-center justify-center shrink-0">
+                    <Mail className="w-5 h-5 text-white" />
                   </div>
-                  
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                      <MessageSquare className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Quick Response</h4>
-                      <p className="text-gray-600">We typically respond within 24 hours</p>
-                    </div>
+                  <div>
+                    <h4 className="font-heading font-bold text-zinc-900 text-sm mb-0.5">Email Us</h4>
+                    <p className="font-sans text-sm text-zinc-500">contact@campayn.in</p>
                   </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 bg-zinc-950 rounded-2xl flex items-center justify-center shrink-0">
+                    <MessageSquare className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-heading font-bold text-zinc-900 text-sm mb-0.5">Quick Response</h4>
+                    <p className="font-sans text-sm text-zinc-500">We typically respond within 24 hours</p>
+                  </div>
+                </div>
 
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-xl flex items-center justify-center">
-                      <User className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Dedicated Support</h4>
-                      <p className="text-gray-600">Personal support for every creator</p>
-                    </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 bg-zinc-950 rounded-2xl flex items-center justify-center shrink-0">
+                    <User className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-heading font-bold text-zinc-900 text-sm mb-0.5">Dedicated Support</h4>
+                    <p className="font-sans text-sm text-zinc-500">Personal support for every creator</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Contact Form */}
-            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-              <CardHeader className="pb-6">
-                <CardTitle className="text-2xl font-bold text-gray-900">Send us a Message</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="text-gray-700 font-medium">Your Name</Label>
-                      <Input
-                        id="name"
-                        {...register('name')}
-                        placeholder="John Doe"
-                        className="border-gray-200 focus:border-purple-500 focus:ring-purple-500/20"
-                      />
-                      {errors.name && (
-                        <p className="text-sm text-red-500">{errors.name.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-gray-700 font-medium">Email Address</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        {...register('email')}
-                        placeholder="john@example.com"
-                        className="border-gray-200 focus:border-purple-500 focus:ring-purple-500/20"
-                      />
-                      {errors.email && (
-                        <p className="text-sm text-red-500">{errors.email.message}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="platform" className="text-gray-700 font-medium">Primary Platform</Label>
-                      <Input
-                        id="platform"
-                        {...register('platform')}
-                        placeholder="Instagram, YouTube, etc."
-                        className="border-gray-200 focus:border-purple-500 focus:ring-purple-500/20"
-                      />
-                      {errors.platform && (
-                        <p className="text-sm text-red-500">{errors.platform.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="followers" className="text-gray-700 font-medium">Follower Count</Label>
-                      <Input
-                        id="followers"
-                        {...register('followers')}
-                        placeholder="10K, 100K, 1M+"
-                        className="border-gray-200 focus:border-purple-500 focus:ring-purple-500/20"
-                      />
-                      {errors.followers && (
-                        <p className="text-sm text-red-500">{errors.followers.message}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="message" className="text-gray-700 font-medium">Your Message</Label>
-                    <Textarea
-                      id="message"
-                      {...register('message')}
-                      placeholder="Tell us about yourself, your content, and how we can help you grow..."
-                      rows={5}
-                      className="border-gray-200 focus:border-purple-500 focus:ring-purple-500/20 resize-none"
+            <div className="bg-white border border-zinc-200/80 rounded-[1.5rem] p-7 shadow-sm">
+              <h3 className="font-heading text-xl font-bold text-zinc-900 mb-6 tracking-tight">Send us a Message</h3>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="name" className="font-sans text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                      Your Name
+                    </Label>
+                    <Input
+                      id="name"
+                      {...register('name')}
+                      placeholder="John Doe"
+                      className="font-sans border-zinc-200 bg-zinc-50 focus:border-zinc-900 focus:ring-0 rounded-xl text-zinc-900 placeholder:text-zinc-400 text-sm"
                     />
-                    {errors.message && (
-                      <p className="text-sm text-red-500">{errors.message.message}</p>
+                    {errors.name && (
+                      <p className="text-xs text-red-500 font-sans">{errors.name.message}</p>
                     )}
                   </div>
 
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
-                    {isSubmitting ? 'Sending Message...' : 'Send Message'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email" className="font-sans text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                      Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      {...register('email')}
+                      placeholder="john@example.com"
+                      className="font-sans border-zinc-200 bg-zinc-50 focus:border-zinc-900 focus:ring-0 rounded-xl text-zinc-900 placeholder:text-zinc-400 text-sm"
+                    />
+                    {errors.email && (
+                      <p className="text-xs text-red-500 font-sans">{errors.email.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="platform" className="font-sans text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                      Primary Platform
+                    </Label>
+                    <Input
+                      id="platform"
+                      {...register('platform')}
+                      placeholder="Instagram, YouTube, etc."
+                      className="font-sans border-zinc-200 bg-zinc-50 focus:border-zinc-900 focus:ring-0 rounded-xl text-zinc-900 placeholder:text-zinc-400 text-sm"
+                    />
+                    {errors.platform && (
+                      <p className="text-xs text-red-500 font-sans">{errors.platform.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="followers" className="font-sans text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                      Follower Count
+                    </Label>
+                    <Input
+                      id="followers"
+                      {...register('followers')}
+                      placeholder="10K, 100K, 1M+"
+                      className="font-sans border-zinc-200 bg-zinc-50 focus:border-zinc-900 focus:ring-0 rounded-xl text-zinc-900 placeholder:text-zinc-400 text-sm"
+                    />
+                    {errors.followers && (
+                      <p className="text-xs text-red-500 font-sans">{errors.followers.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="message" className="font-sans text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                    Your Message
+                  </Label>
+                  <Textarea
+                    id="message"
+                    {...register('message')}
+                    placeholder="Tell us about yourself, your content, and how we can help you grow..."
+                    rows={5}
+                    className="font-sans border-zinc-200 bg-zinc-50 focus:border-zinc-900 focus:ring-0 rounded-xl text-zinc-900 placeholder:text-zinc-400 text-sm resize-none"
+                  />
+                  {errors.message && (
+                    <p className="text-xs text-red-500 font-sans">{errors.message.message}</p>
+                  )}
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-zinc-950 hover:bg-zinc-800 text-white font-heading font-bold text-sm py-3 rounded-2xl transition-all duration-200 shadow-sm tracking-tight"
+                >
+                  {isSubmitting ? 'Sending Message...' : 'Send Message'}
+                </Button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
