@@ -1,244 +1,120 @@
+
 "use client"
 
 import * as React from "react"
-import { useState, useRef } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import {
+  CardTransformed,
+  CardsContainer,
+  ContainerScroll,
+  ReviewStars,
+} from "../ui/animated-cards-stack"
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 
 const TESTIMONIALS = [
   {
     id: "testimonial-1",
     name: "Manasi Sawant",
     profession: "CMO, Wow Skin Science",
+    rating: 5,
     description:
       "Campayn transformed our creator marketing strategy. The AI matching connected us with perfect micro-influencers who drove 300% higher engagement than traditional campaigns.",
-    rating: 5,
+    avatarUrl:
+      "https://images.unsplash.com/photo-1494790108755-2616b9dc17aa?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0",
     companyLogo: "/company-logos/wow-skin-science.png",
-    logoBg: "#fef08a",
   },
   {
     id: "testimonial-2",
     name: "Harsh Jha",
     profession: "Co-Founder, Flabs",
+    rating: 4.5,
     description:
       "The local reach feature helped us tap into Tier 2 cities we never could access before. Our sales increased by 150% in just 3 months using Campayn's creator network.",
-    rating: 4.5,
+    avatarUrl:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0",
     companyLogo: "/company-logos/flabs.png",
-    logoBg: "#e0f2fe",
   },
   {
     id: "testimonial-3",
     name: "Shivendra Sharma",
     profession: "Founder, JASTRO",
+    rating: 5,
     description:
       "Finally, a platform that understands the Indian market! The ROI tracking and authentic creator partnerships have made our campaigns 5x more effective than agency work.",
-    rating: 5,
+    avatarUrl:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0",
     companyLogo: "/company-logos/jastro.png",
-    logoBg: "#dcfce7",
   },
   {
     id: "testimonial-4",
     name: "Vinaya T",
     profession: "Founder, Glodemi",
+    rating: 4.5,
     description:
       "Campayn's trust system and verified creator network gave us confidence in every partnership. Our brand safety improved while reaching 10x more potential customers.",
-    rating: 4.5,
+    avatarUrl:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0",
     companyLogo: "/company-logos/glodemi.png",
-    logoBg: "#fce7f3",
   },
 ]
 
-const len = TESTIMONIALS.length
-const wrap = (i: number) => ((i % len) + len) % len
-
-/* Positions: -1 = left, 0 = center, 1 = right, everything else = hidden offscreen */
-const bubbleVariants = {
-  enter: (dir: number) => ({
-    x: dir > 0 ? 160 : -160,
-    scale: 0.5,
-    opacity: 0,
-  }),
-  left: {
-    x: -100,
-    scale: 0.55,
-    opacity: 0.7,
-    zIndex: 1,
-    transition: { type: "spring", stiffness: 350, damping: 35, mass: 0.8 },
-  },
-  center: {
-    x: 0,
-    scale: 1,
-    opacity: 1,
-    zIndex: 3,
-    transition: { type: "spring", stiffness: 350, damping: 35, mass: 0.8 },
-  },
-  right: {
-    x: 100,
-    scale: 0.55,
-    opacity: 0.7,
-    zIndex: 1,
-    transition: { type: "spring", stiffness: 350, damping: 35, mass: 0.8 },
-  },
-  exit: (dir: number) => ({
-    x: dir > 0 ? -160 : 160,
-    scale: 0.5,
-    opacity: 0,
-    zIndex: 0,
-    transition: { type: "spring", stiffness: 350, damping: 35, mass: 0.8 },
-  }),
-}
-
-/* Size classes per position */
-const sizeClasses: Record<string, string> = {
-  left: "w-14 h-14 sm:w-[4.5rem] sm:h-[4.5rem] p-2.5 border cursor-pointer",
-  center: "w-28 h-28 sm:w-36 sm:h-36 p-4 sm:p-5 border-2 shadow-lg",
-  right: "w-14 h-14 sm:w-[4.5rem] sm:h-[4.5rem] p-2.5 border cursor-pointer",
-}
-
 export const TestimonialsSection: React.FC = () => {
-  const [index, setIndex] = useState(0)
-  const dirRef = useRef(1) // 1 = going right, -1 = going left
-
-  const handleNext = () => {
-    dirRef.current = 1
-    setIndex((prev) => wrap(prev + 1))
-  }
-  const handlePrev = () => {
-    dirRef.current = -1
-    setIndex((prev) => wrap(prev - 1))
-  }
-
-  const leftIdx = wrap(index - 1)
-  const rightIdx = wrap(index + 1)
-  const current = TESTIMONIALS[index]
-
-  /* The 3 visible slots keyed by their actual testimonial id */
-  const visibleSlots = [
-    { idx: leftIdx, position: "left" as const },
-    { idx: index, position: "center" as const },
-    { idx: rightIdx, position: "right" as const },
-  ]
-
   return (
-    <section className="px-3 py-4 md:px-4">
-      <div className="grain rounded-[2rem] bg-panel px-5 py-16 md:px-12 md:py-24 border border-foreground/10">
-        <div className="mx-auto flex flex-col items-center">
-
-          {/* ─── Brand-logo carousel ─── */}
-          <div className="relative flex items-center justify-center mb-6 h-36 sm:h-40 w-full max-w-xs sm:max-w-sm">
-            <AnimatePresence initial={false} custom={dirRef.current} mode="popLayout">
-              {visibleSlots.map(({ idx, position }) => {
-                const t = TESTIMONIALS[idx]
-                return (
-                  <motion.div
-                    key={t.id}
-                    custom={dirRef.current}
-                    variants={bubbleVariants}
-                    initial="enter"
-                    animate={position}
-                    exit="exit"
-                    className={`absolute rounded-full overflow-hidden border-foreground/15 flex items-center justify-center shrink-0 ${sizeClasses[position]}`}
-                    style={{ backgroundColor: t.logoBg }}
-                    onClick={
-                      position === "left"
-                        ? handlePrev
-                        : position === "right"
-                        ? handleNext
-                        : undefined
-                    }
-                    whileHover={
-                      position !== "center"
-                        ? { scale: 0.62, transition: { duration: 0.2 } }
-                        : undefined
-                    }
-                  >
-                    <img
-                      src={t.companyLogo}
-                      alt={t.name}
-                      className="max-w-full max-h-full object-contain"
-                      draggable={false}
-                    />
-                  </motion.div>
-                )
-              })}
-            </AnimatePresence>
+    <section className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 px-4 sm:px-8 py-8 sm:py-12">
+      <ContainerScroll className="container h-[200vh]">
+        <div className="sticky left-0 top-0 h-screen w-full flex flex-col items-center justify-center py-4 sm:py-8">
+          {/* Heading inside sticky container */}
+          <div className="max-w-4xl mx-auto text-center mb-4 sm:mb-6 px-2">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 sm:mb-4">
+              Loved by Brands Across India
+            </h2>
+            <p className="text-sm sm:text-base md:text-lg text-slate-600 leading-relaxed font-medium">
+              See how brands are achieving unprecedented success with our creator marketing platform
+            </p>
           </div>
-
-          {/* ─── Navigation & identity ─── */}
-          <div className="flex items-center justify-center gap-6 sm:gap-12 w-full max-w-lg mt-4">
-            <button
-              onClick={handlePrev}
-              className="w-10 h-10 rounded-full border border-foreground/30 flex items-center justify-center bg-card text-foreground hover:bg-foreground hover:text-background transition-colors shrink-0"
-              aria-label="Previous testimonial"
-            >
-              <ArrowLeft className="size-4" />
-            </button>
-
-            <div className="text-center min-w-[150px] sm:min-w-[200px]">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={current.id}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <h3 className="font-display text-lg sm:text-xl font-bold tracking-tight text-foreground">
-                    {current.name}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-foreground/60 mt-0.5">
-                    {current.profession}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            <button
-              onClick={handleNext}
-              className="w-10 h-10 rounded-full border border-foreground/30 flex items-center justify-center bg-card text-foreground hover:bg-foreground hover:text-background transition-colors shrink-0"
-              aria-label="Next testimonial"
-            >
-              <ArrowRight className="size-4" />
-            </button>
-          </div>
-
-          {/* ─── Quote ─── */}
-          <div className="mt-8 text-center max-w-4xl px-2">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={current.id}
-                className="font-display text-xl sm:text-2xl md:text-4xl text-foreground leading-snug tracking-tight"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.3 }}
+          
+          {/* Cards */}
+          <CardsContainer className="mx-auto h-[350px] sm:h-[400px] md:h-[420px] w-[280px] sm:w-[320px] md:w-[350px]">
+            {TESTIMONIALS.map((testimonial, index) => (
+              <CardTransformed
+                arrayLength={TESTIMONIALS.length}
+                key={testimonial.id}
+                variant="light"
+                index={index + 2}
+                role="article"
+                aria-labelledby={`card-${testimonial.id}-title`}
+                aria-describedby={`card-${testimonial.id}-content`}
               >
-                &ldquo;{current.description}&rdquo;
-              </motion.p>
-            </AnimatePresence>
-          </div>
-
-          {/* ─── Dot indicators ─── */}
-          <div className="flex items-center gap-2 mt-8">
-            {TESTIMONIALS.map((t, i) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  dirRef.current = i > index ? 1 : -1
-                  setIndex(i)
-                }}
-                className={`rounded-full transition-all duration-300 ${
-                  i === index
-                    ? "w-8 h-2.5 bg-blue"
-                    : "w-2.5 h-2.5 bg-foreground/20 hover:bg-foreground/40"
-                }`}
-                aria-label={`Go to testimonial ${i + 1}`}
-              />
+                <div className="flex flex-col items-center space-y-3 sm:space-y-4 text-center">
+                  <ReviewStars
+                    className="text-yellow-500"
+                    rating={testimonial.rating}
+                  />
+                  <div className="mx-auto w-[90%] sm:w-4/5 text-sm sm:text-base md:text-lg text-gray-700">
+                    <blockquote cite="#">"{testimonial.description}"</blockquote>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center bg-white rounded-lg border border-gray-200 p-1">
+                    <img
+                      src={testimonial.companyLogo}
+                      alt={`${testimonial.profession.split(', ')[1]} logo`}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-sm sm:text-base md:text-lg font-semibold tracking-tight text-gray-900">
+                      {testimonial.name}
+                    </span>
+                    <span className="block text-xs sm:text-sm text-gray-600">
+                      {testimonial.profession}
+                    </span>
+                  </div>
+                </div>
+              </CardTransformed>
             ))}
-          </div>
-
+          </CardsContainer>
         </div>
-      </div>
+      </ContainerScroll>
     </section>
   )
 }

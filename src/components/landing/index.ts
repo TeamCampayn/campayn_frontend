@@ -1,11 +1,8 @@
-export { LandingHeader } from './LandingHeader';
 export { HeroSection } from './HeroSection';
-export { Marquee } from './Marquee';
-export { Brands } from './Brands';
-export { ContentSection } from './ContentSection';
-export { Regions } from './Regions';
-export { CTA } from './CTA';
-export { Steps } from './Steps';
+export { FeaturesSection } from './FeaturesSection';
+export { ContactSection } from './ContactSection';
+export { LandingHeader } from './LandingHeader';
+export { VerticalScrollCards } from './VerticalScrollCards';
 export { VideoCarousel } from './VideoCarousel';
-export { TestimonialsSection } from './TestimonialsSection';
 export { Footer } from './Footer';
+export { TestimonialsSection } from './TestimonialsSection';

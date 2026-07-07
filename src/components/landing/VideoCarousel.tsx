@@ -93,6 +93,7 @@ const VideoCardComponent: React.FC<VideoCardComponentProps> = ({ card, isHovered
 
   useEffect(() => {
     if (videoRef.current) {
+      // Always play videos continuously
       videoRef.current.play().catch(() => {
         // Handle autoplay restrictions gracefully
       });
@@ -101,8 +102,8 @@ const VideoCardComponent: React.FC<VideoCardComponentProps> = ({ card, isHovered
 
   return (
     <div
-      className={`relative w-48 sm:w-60 h-72 sm:h-96 rounded-2xl shadow-md overflow-hidden bg-card transition-transform duration-300 flex-shrink-0 border border-foreground/10 ${
-        isHovered ? 'scale-105 border-foreground/30 shadow-lg' : ''
+      className={`relative w-48 sm:w-60 h-72 sm:h-96 rounded-xl shadow-lg overflow-hidden bg-white transition-transform duration-300 flex-shrink-0 ${
+        isHovered ? 'scale-105' : ''
       }`}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
@@ -121,7 +122,7 @@ const VideoCardComponent: React.FC<VideoCardComponentProps> = ({ card, isHovered
       </video>
       
       {/* Category Label */}
-      <div className="absolute top-3 left-3 bg-ink/75 text-ink-foreground px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm font-space">
+      <div className="absolute top-3 left-3 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
         {card.category}
       </div>
       
@@ -144,49 +145,48 @@ export const VideoCarousel: React.FC = () => {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   
+  // Duplicate the data for seamless loop
   const duplicatedData = [...videoData, ...videoData];
 
   return (
-    <section className="px-3 py-4 md:px-4">
-      <div className="grain rounded-[2rem] bg-panel py-14 md:py-20 overflow-hidden">
-        <div className="w-full">
-          <div className="text-center mb-10 sm:mb-16 px-4">
-            <h2 className="font-display text-4xl sm:text-5xl md:text-6xl text-foreground mb-4">
-              Creator Content in Action
-            </h2>
-            <p className="text-base sm:text-lg text-foreground/70 max-w-3xl mx-auto leading-relaxed">
-              See how creators bring brands to life with authentic, engaging content across different categories
-            </p>
-          </div>
-          
-          <div className="relative">
-            <div className="overflow-hidden">
-              <div
-                className={`flex gap-6 ${isPaused ? 'animate-infinite-scroll-paused' : 'animate-infinite-scroll'}`}
-                style={{
-                  width: `${duplicatedData.length * 264}px`, // 264px = 240px width + 24px gap
-                }}
-              >
-                {duplicatedData.map((card, index) => (
-                  <VideoCardComponent
-                    key={`${card.id}-${index}`}
-                    card={card}
-                    isHovered={hoveredCard === `${card.id}-${index}`}
-                    onHover={() => {
-                      setHoveredCard(`${card.id}-${index}`);
-                      setIsPaused(true);
-                    }}
-                    onLeave={() => {
-                      setHoveredCard(null);
-                      setIsPaused(false);
-                    }}
-                  />
-                ))}
-              </div>
+    <div className="py-12 sm:py-20 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden">
+      <div className="w-full">
+        <div className="text-center mb-10 sm:mb-16 px-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4 sm:mb-6">
+            Creator Content in Action
+          </h2>
+          <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-medium">
+            See how creators bring brands to life with authentic, engaging content across different categories
+          </p>
+        </div>
+        
+        <div className="relative">
+          <div className="overflow-hidden">
+            <div
+              className={`flex gap-6 ${isPaused ? 'animate-infinite-scroll-paused' : 'animate-infinite-scroll'}`}
+              style={{
+                width: `${duplicatedData.length * 264}px`, // 264px = 240px width + 24px gap
+              }}
+            >
+              {duplicatedData.map((card, index) => (
+                <VideoCardComponent
+                  key={`${card.id}-${index}`}
+                  card={card}
+                  isHovered={hoveredCard === `${card.id}-${index}`}
+                  onHover={() => {
+                    setHoveredCard(`${card.id}-${index}`);
+                    setIsPaused(true);
+                  }}
+                  onLeave={() => {
+                    setHoveredCard(null);
+                    setIsPaused(false);
+                  }}
+                />
+              ))}
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
