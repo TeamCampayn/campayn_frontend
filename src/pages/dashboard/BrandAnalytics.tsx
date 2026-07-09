@@ -30,7 +30,8 @@ import {
   Share2,
   Zap,
   SlidersHorizontal,
-  Loader2
+  Loader2,
+  Instagram
 } from 'lucide-react';
 import {
   LineChart,
@@ -86,6 +87,7 @@ interface CreatorPerformance {
   total_posts: number;
   total_engagement: number;
   avg_engagement_rate: number;
+  avatar_url?: string | null;
 }
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
@@ -226,6 +228,8 @@ const BrandAnalytics: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [creatorPerformance, setCreatorPerformance] = useState<CreatorPerformance[]>([]);
+  const [demographicsData, setDemographicsData] = useState<any>(null);
+  const [isLoadingDemo, setIsLoadingDemo] = useState(true);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [widgetConfig, setWidgetConfig] = useState<{ [key: string]: boolean }>({
     campaigns: true,
@@ -294,6 +298,20 @@ const BrandAnalytics: React.FC = () => {
             avg_engagement_rate: c.avg_engagement_rate || (c.total_engagement && c.total_reach ? (c.total_engagement / c.total_reach * 100) : 3.2 + Math.random() * 2)
           }));
         setCreatorPerformance(creatorsFromOverview.length > 0 ? creatorsFromOverview : []);
+      }
+
+      // Fetch brand demographics
+      setIsLoadingDemo(true);
+      try {
+        const demoRes = await fetch(getApiUrl(`api/dashboard/demographics/${brand?.id}`));
+        const demoDataJson = await demoRes.json();
+        if (demoDataJson.success) {
+          setDemographicsData(demoDataJson.demographics);
+        }
+      } catch (err) {
+        console.error('Error fetching brand demographics:', err);
+      } finally {
+        setIsLoadingDemo(false);
       }
 
     } catch (error) {
@@ -881,7 +899,7 @@ const BrandAnalytics: React.FC = () => {
       };
     });
 
-  const demoData = getBrandDemographics(brand?.brand_name);
+  const demoData = demographicsData || getBrandDemographics(brand?.brand_name);
   const clickCount = Math.round(analytics.totalReach * (demoData.cpc_clicks / 100));
   const cpmVal = analytics.totalReach > 0 ? (analytics.totalBudgetSpent / analytics.totalReach) * 1000 : 0;
   const cpcVal = clickCount > 0 ? analytics.totalBudgetSpent / clickCount : 0;
@@ -1285,12 +1303,22 @@ const BrandAnalytics: React.FC = () => {
                 {creatorPerformance.map((creator, index) => (
                   <div key={creator.creator_id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gray-100 bg-white/60 hover:bg-slate-50/80 transition-all duration-200 gap-4">
                     <div className="flex items-center gap-3.5">
-                      <div className="h-9 w-9 bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-indigo-100/30 rounded-xl flex items-center justify-center text-indigo-600 font-bold text-sm">
-                        #{index + 1}
+                      <div className="relative">
+                        <img
+                          src={creator.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.creator_name)}&background=EBF4FF&color=3B82F6&bold=true`}
+                          alt={creator.creator_name}
+                          className="h-10 w-10 object-cover border border-slate-200/60 rounded-xl shadow-sm"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.creator_name)}&background=EBF4FF&color=3B82F6&bold=true`;
+                          }}
+                        />
+                        <div className="absolute -top-1.5 -left-1.5 h-4.5 w-4.5 bg-indigo-600 border border-white rounded-full flex items-center justify-center text-[9px] text-white font-extrabold shadow-sm">
+                          {index + 1}
+                        </div>
                       </div>
                       <div>
                         <h4 className="text-sm font-semibold text-gray-800">{creator.creator_name}</h4>
-                        <p className="text-xs text-gray-400 mt-0.5">{creator.ig_handle}</p>
+                        <p className="text-xs text-indigo-600 font-semibold mt-0.5">{creator.ig_handle}</p>
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-6 text-[11px] font-medium text-gray-500">
@@ -1395,6 +1423,34 @@ const BrandAnalytics: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="demographics" className="space-y-6 focus-visible:outline-none">
+          {/* Data Source Status Banner */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-50 border border-slate-200 rounded-2xl p-4 gap-4 animate-in fade-in duration-300">
+            <div className="flex items-center space-x-3">
+              <div className={`p-2 rounded-xl ${demoData.dataSource === 'meta_api' ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                <Instagram className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  {demoData.dataSource === 'meta_api' ? 'Verified Meta Graph Insights' : 'Calibrated Demographic Insights'}
+                  {demoData.dataSource === 'meta_api' && (
+                    <span className="flex h-2 w-2 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                  )}
+                </p>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                  {demoData.dataSource === 'meta_api' 
+                    ? 'Direct brand-wide aggregated real-time feed from Instagram Graph API connected creator accounts.' 
+                    : 'Madhya Pradesh demographic model calibrated to the target brand category niche.'}
+                </p>
+              </div>
+            </div>
+            <Badge className={`text-[10px] px-2.5 py-1 font-bold border tracking-wider rounded-lg shadow-none ${demoData.dataSource === 'meta_api' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-100'}`}>
+              {demoData.dataSource === 'meta_api' ? 'LIVE SYNCED' : 'CALIBRATED PRIORS'}
+            </Badge>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-3 duration-350">
             {/* Age Distribution */}
             <Card className="bg-white/80 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.01)] rounded-2xl backdrop-blur-sm lg:col-span-2">

@@ -560,7 +560,8 @@ const CampaignAnalytics: React.FC = () => {
       niches,
       keywords,
       sentiment,
-      cpc_clicks
+      cpc_clicks,
+      dataSource: 'simulated_fallback'
     };
   }, [postedApplications, campaign, metrics.avgEngagement]);
 

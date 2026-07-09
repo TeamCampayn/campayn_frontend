@@ -41,6 +41,7 @@ interface CampaignFormData {
   requiredHashtags: string;
   timelineDays: string;
   requiresScript: boolean;
+  coverImageUrl?: string;
 }
 
 const CampaignForm: React.FC = () => {
@@ -93,7 +94,14 @@ const CampaignForm: React.FC = () => {
     requiredHashtags: '',
     timelineDays: '14',
     requiresScript: true,
+    coverImageUrl: '',
   });
+
+  // State for cover image
+  const [coverMode, setCoverMode] = useState<'upload' | 'url'>('upload');
+  const [coverUrlInput, setCoverUrlInput] = useState('');
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState('');
 
   // State for recommendation system
   const [creatorCategories, setCreatorCategories] = useState<any[]>([]);
@@ -106,6 +114,70 @@ const CampaignForm: React.FC = () => {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please select an image file (PNG, JPG, WEBP).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > 5) {
+      toast({
+        title: 'File too large',
+        description: 'Cover photo must be under 5MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUploadingCover(true);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `covers/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      
+      const { error: uploadErr } = await supabase.storage
+        .from('campaigns')
+        .upload(path, file, { cacheControl: '3600', upsert: true, contentType: file.type });
+
+      if (uploadErr) {
+        throw new Error(uploadErr.message);
+      }
+
+      const { data: pub } = supabase.storage.from('campaigns').getPublicUrl(path);
+      const publicUrl = pub?.publicUrl;
+
+      if (publicUrl) {
+        setCoverPreviewUrl(publicUrl);
+        updateFormData('coverImageUrl', publicUrl);
+        toast({
+          title: 'Success',
+          description: 'Cover photo uploaded successfully!',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Upload failed',
+        description: error.message || 'Failed to upload cover photo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
+
+  const clearCoverImage = () => {
+    setCoverPreviewUrl('');
+    setCoverUrlInput('');
+    updateFormData('coverImageUrl', '');
   };
 
   const handleCreateProfile = async () => {
@@ -341,6 +413,7 @@ const CampaignForm: React.FC = () => {
         .from('campaigns')
         .insert({
           brand_id: brandId,
+          cover_image_url: formData.coverImageUrl || null,
           campaign_name: `${formData.productName || 'Untitled'} Campaign`,
           campaign_type: formData.category || 'Instagram',
           campaign_description: formData.brief || `Content: ${formData.contentType}, Creator: ${formData.creatorType}, Quality: ${formData.qualityLevel}. Product: ${formData.productName}${formData.productLink ? `. Link: ${formData.productLink}` : ''}`,
@@ -395,6 +468,7 @@ const CampaignForm: React.FC = () => {
           id: campaignData.id, // SAME UUID!
           brand_name: brand?.brand_name || 'Brand',
           title: campaignData.campaign_name,
+          cover_image_url: formData.coverImageUrl || null,
           tagline: `Promote ${formData.productName}`,
           brief: formData.brief,
           deliverables: [formData.contentType || '30 seconds Reel'],
@@ -606,6 +680,94 @@ const CampaignForm: React.FC = () => {
                   onChange={(e) => updateFormData('productLink', e.target.value)}
                   className="w-full h-11 rounded-xl border-zinc-200 focus:border-black focus:ring-black"
                 />
+              </div>
+
+              <div>
+                <Label className="text-[10px] font-bold font-space uppercase tracking-wider text-zinc-500 mb-2 block">
+                  Campaign Cover Photo (Upload or URL)
+                </Label>
+                <div className="flex gap-2 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setCoverMode('upload')}
+                    className={cn(
+                      "px-4 py-2 rounded-xl text-[10px] font-bold font-space uppercase tracking-wider transition-colors border",
+                      coverMode === 'upload'
+                        ? "bg-black text-white border-black"
+                        : "bg-zinc-50 text-zinc-650 border-zinc-200 hover:bg-zinc-100"
+                    )}
+                  >
+                    Upload File
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCoverMode('url')}
+                    className={cn(
+                      "px-4 py-2 rounded-xl text-[10px] font-bold font-space uppercase tracking-wider transition-colors border",
+                      coverMode === 'url'
+                        ? "bg-black text-white border-black"
+                        : "bg-zinc-50 text-zinc-650 border-zinc-200 hover:bg-zinc-100"
+                    )}
+                  >
+                    Image URL
+                  </button>
+                </div>
+
+                {coverMode === 'url' ? (
+                  <div className="space-y-2">
+                    <Input
+                      type="url"
+                      placeholder="https://example.com/cover-image.jpg"
+                      value={coverUrlInput}
+                      onChange={(e) => {
+                        setCoverUrlInput(e.target.value);
+                        updateFormData('coverImageUrl', e.target.value);
+                        setCoverPreviewUrl(e.target.value);
+                      }}
+                      className="w-full h-11 rounded-xl border-zinc-200 focus:border-black focus:ring-black text-xs"
+                    />
+                    <p className="text-[10px] text-zinc-400 uppercase font-space tracking-wider">Provide a high-quality web URL for your campaign cover photo.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="relative border-2 border-dashed border-zinc-200 hover:border-zinc-300 rounded-xl p-5 text-center transition-colors bg-zinc-50/50 cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCoverUpload}
+                        disabled={isUploadingCover}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <div className="flex flex-col items-center justify-center space-y-1">
+                        <Image className="h-6 w-6 text-zinc-400 mb-1" />
+                        <p className="text-[11px] font-bold font-space uppercase tracking-wider text-zinc-700">
+                          {isUploadingCover ? "Uploading Cover..." : "Click or drag to upload cover photo"}
+                        </p>
+                        <p className="text-[9px] text-zinc-400 font-space uppercase tracking-wider">PNG, JPG, WEBP up to 5MB</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {coverPreviewUrl && (
+                  <div className="mt-4 relative rounded-xl overflow-hidden border border-zinc-200 aspect-[16/9] max-h-40 bg-zinc-50">
+                    <img
+                      src={coverPreviewUrl}
+                      alt="Cover Preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={clearCoverImage}
+                      className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/50 hover:bg-black/75 backdrop-blur flex items-center justify-center text-white transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div>
